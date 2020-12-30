@@ -5,8 +5,7 @@ const leagueSchema = Schema({
     name: {
         type: String,
         required: true
-    },
-    teamIds: []
+    }
 })
 
 export default model("league", leagueSchema);

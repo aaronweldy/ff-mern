@@ -10,6 +10,10 @@ const teamSchema = Schema({
         type: String,
         required: true
     },
+    ownerName: {
+        type: String,
+        required: true
+    },
     logo: {
         type: String,
         default: './football.jfif'

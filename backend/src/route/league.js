@@ -7,7 +7,9 @@ const router = Router();
 
 
 router.get('/:id/', async (req, res) => {
-    
+    const leagueId = req.params['id'];
+    const teams = await Team.find({league: leagueId});
+    res.status(200).json({teams});
 });
 
 router.post('/create/', async (req, res) => {
@@ -15,12 +17,12 @@ router.post('/create/', async (req, res) => {
     const newLeague = new League({name: league});
     await newLeague.save();
     teams.forEach(async team => {
-        completed++;
         let uid = (await User.findOne({username: team.teamOwner}));
         if (uid) uid = uid.id;
         const newTeam = new Team({
             name: team.teamName,
             owner: uid || "default",
+            ownerName: team.teamOwner || "default",
             isCommissioner: team.isCommissioner,
             league: newLeague.id,
             leagueName: newLeague.name

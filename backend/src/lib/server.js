@@ -6,8 +6,10 @@ import bodyParser from 'body-parser';
 import InitiateMongoServer from '../config/db.js';
 import user from '../route/user.js';
 import league from '../route/league.js';
+import env from 'dotenv';
 
 const app = express();
+env.config();
 
 InitiateMongoServer();
 
