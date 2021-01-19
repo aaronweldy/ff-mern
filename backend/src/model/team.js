@@ -29,7 +29,10 @@ const teamSchema = Schema({
     isCommissioner: {
         type: Boolean,
         default: false
-    }
+    },
+    players: [],
+    weekScores: [],
+    addedPoints: [...Array(17)].fill(0)
 })
 
 export default model("team", teamSchema);

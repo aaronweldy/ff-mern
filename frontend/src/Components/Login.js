@@ -21,21 +21,26 @@ const Login = () => {
           headers : {'content-type' : 'application/json'},
           body : JSON.stringify(body)
         };
-        let resp = await fetch("/api/v1/user/login/", reqdict);
-        let json = await resp.json();
-        localStorage.setItem("userToken", json.token);
-        dispatch(login());
-        setSubmitted(true);
-        fetch('/api/v1/user/me/', {
-            credentials : "include",
-            headers : {
-                'content-type' : 'application/json', 'token' : localStorage.getItem('userToken')}
-            }).then((res) => {
-                if (!res.ok) throw Error(res.statusText);
-                return res.json();
-            }).then((data) => {
-                dispatch(setUser(data));
-            }).catch((e) => console.log(e));
+        await fetch("/api/v1/user/login/", reqdict).then(resp => {
+            if (!resp.ok) throw Error(resp.statusText);
+            return resp.json();
+        }).then(data => {
+            localStorage.setItem('userToken', data.token);
+            localStorage.setItem('refreshToken', data.refreshToken);
+            fetch('/api/v1/user/me/', {
+                credentials : "include",
+                headers : {
+                    'content-type' : 'application/json', 'token' : localStorage.getItem('userToken')}
+                }).then((res) => {
+                    if (!res.ok) throw Error(res.statusText);
+                    return res.json();
+                }).then((data) => {
+                    dispatch(setUser({id: data._id, username: data.username}));
+                }).catch((e) => console.log(e));
+            dispatch(login());
+        }).catch(_ => {
+            setSubmitted(true);
+        })
     }
     if(loggedIn) return <Redirect to="/"></Redirect>;
     return (

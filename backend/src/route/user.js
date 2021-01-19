@@ -1,14 +1,18 @@
 import { Router } from "express";
 import { check, validationResult } from "express-validator";
 import Team  from '../model/team.js'
+import RefreshToken from '../model/refreshToken.js'
 import pkg from "bcryptjs";
 import pkg2 from "jsonwebtoken";
 import auth from '../middleware/auth.js';
+import env from 'dotenv';
 const router = Router();
 const { genSalt, hash, compare } = pkg;
-const { sign } = pkg2;
+const { sign, verify } = pkg2;
 
 import User from "../model/user.js";
+
+env.config();
 
 /**
  * @method - POST
@@ -75,17 +79,19 @@ router.post("/signup/",
                 }
             };
             console.log(user);
-            sign(
-                payload,
-                "secret", {
-                    expiresIn: 10000
-                },
-                (err, token) => {
-                    if (err) throw err;
-                    res.status(200).json({
-                        token
-                    });
-                }
+            const refreshToken = sign(payload, process.env.APP_SECRET, {expiresIn: 2500000});
+            sign(payload, process.env.APP_SECRET,
+              {
+                expiresIn: 360000
+              },
+              async (err, token) => {
+                if (err) throw err;
+                const newToken = new RefreshToken({refreshToken, token});
+                await newToken.save();
+                res.status(200).json({
+                  token, refreshToken
+                });
+              }
             );
         } catch (err) {
             console.log(err.message);
@@ -129,15 +135,17 @@ router.post("/login/",
             id: user.id
           }
         };
-  
-        sign(payload, "secret",
+        const refreshToken = sign(payload, process.env.APP_SECRET, {expiresIn: 2500000});
+        sign(payload, process.env.APP_SECRET,
           {
-            expiresIn: 3600
+            expiresIn: 360000
           },
-          (err, token) => {
+          async (err, token) => {
             if (err) throw err;
+            const newToken = new RefreshToken({refreshToken, token});
+            await newToken.save();
             res.status(200).json({
-              token
+              token, refreshToken
             });
           }
         );
@@ -149,5 +157,28 @@ router.post("/login/",
       }
     }
   );
+
+  router.post('/refresh/', async (req, res) => {
+    const reqToken = req.body.refreshToken;
+    const refreshToken = await RefreshToken.findOne({refreshToken: reqToken});
+    if (!refreshToken) res.status(401).send('Invalid request.');
+    else {
+      try {
+        const oldPayload = verify(refreshToken.refreshToken, process.env.APP_SECRET);
+        const newUser = {
+          user: {
+            id: oldPayload.user.id
+          }
+        }
+        const newToken = sign(newUser, process.env.APP_SECRET, {expiresIn: 25000});
+        await RefreshToken.findByIdAndUpdate(refreshToken._id, {token: newToken}, {useFindAndModify: false});
+        res.status(200).json({newToken});
+      }
+      catch (e) {
+        console.log(e);
+        res.status(401).send('Unable to verify user.');
+      }
+    }
+  })
 
 export default router;

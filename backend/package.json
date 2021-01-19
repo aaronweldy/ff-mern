@@ -25,7 +25,8 @@
     "http-errors": "^1.8.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.11.8",
-    "superagent": "^6.1.0"
+    "superagent": "^6.1.0",
+    "table-scraper": "^1.0.3"
   },
   "devDependencies": {
     "eslint": "^7.16.0",

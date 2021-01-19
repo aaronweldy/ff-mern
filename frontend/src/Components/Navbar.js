@@ -1,6 +1,6 @@
 import React from 'react';
 import {Navbar, Nav, Button} from 'react-bootstrap'
-import {Redirect, withRouter} from 'react-router-dom'
+import {useHistory} from 'react-router-dom'
 import {useSelector, useDispatch} from 'react-redux'
 import {selectStatus, logout, selectUser} from '../Redux/userSlice.js'
 
@@ -34,24 +34,22 @@ function LoginButtons() {
 
 function LogOutButtons() {
     const dispatch = useDispatch();
-    const loggedIn = useSelector(selectStatus);
+    const history = useHistory();
     const user = useSelector(selectUser);
     function handleClick(e) {
         e.preventDefault();
         localStorage.removeItem('userToken');
         dispatch(logout());
+        history.push('/login/');
     }
-    const ret = loggedIn ? 
-    (<Navbar.Collapse className="justify-content-end">
+    return (<Navbar.Collapse className="justify-content-end">
         <Navbar.Text className="mr-3">
             Welcome, {user.username}!
         </Navbar.Text>
         <Button variant="primary" onClick={handleClick} type="submit">
             Logout
         </Button>
-    </Navbar.Collapse>) 
-    : <Redirect to="/"></Redirect>;
-    return ret;
+    </Navbar.Collapse>);
 }
 
-export default withRouter(MainNav);
+export default MainNav;

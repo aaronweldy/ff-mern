@@ -1,11 +1,15 @@
 import React, {useEffect, useState} from 'react'
-import {useSelector} from 'react-redux'
-import {selectStatus, selectUser } from '../Redux/userSlice.js'
-import { Card, CardDeck, Navbar, Button, Container, Row } from 'react-bootstrap'
+import {useSelector, useDispatch} from 'react-redux'
+import {selectStatus, selectUser, logout } from '../Redux/userSlice.js'
+import {useHistory} from 'react-router-dom'
+import { Card, CardDeck, Navbar, Button, Container, Row, Col } from 'react-bootstrap'
+import '../CSS/LeaguePages.css'
 
 const TeamHub = () => {
+  const dispatch = useDispatch();
   const loggedIn = useSelector(selectStatus);
   const currUser = useSelector(selectUser);
+  const history = useHistory();
   let [teams, setTeams] = useState([]);
   useEffect(() => {
     async function fetchTeams() {
@@ -13,37 +17,66 @@ const TeamHub = () => {
       const reqDict = {
         token: localStorage.getItem('userToken'),
       }
-      const resp = await fetch(url, {credentials: "include", headers: reqDict});
-      const data = await resp.json();
-      setTeams(data.teams);
+      await fetch(url, {credentials: "include", headers: reqDict}).then(resp => {
+        if(!resp.ok) throw Error(resp.statusText);
+        return resp.json();
+      }).then(data => {
+        setTeams(data.teams);
+      }).catch(error => {
+        const body = {
+          refreshToken: localStorage.getItem('refershToken')
+        }
+        const reqdict = {
+          method : 'POST', 
+          headers : {'content-type' : 'application/json'},
+          body : JSON.stringify(body)
+        };
+        const url = '/api/v1/user/refresh/';
+        fetch(url, reqdict).then(resp => {
+          if (!resp.ok) throw Error(resp.statusText);
+          return resp.json();
+        }).then(data => {
+          localStorage.setItem('userToken', data.newToken);
+          window.location.reload();
+        }).catch(_ => {
+          localStorage.removeItem('userToken');
+          dispatch(logout());
+          history.push('/');
+        })
+      });
+      
     }
     if(loggedIn) {
       fetchTeams();
     }
-  }, [loggedIn, currUser])
-  const teamCards = !loggedIn ? (<h1>Please <a href='/login/'>log in.</a></h1>) :
-  (teams.map((team, index) => {
-    return <Card key={index}>
-      <Card.Img variant="top" src={team.logo} className="card-img-top"></Card.Img>
-      <Card.Title>
-        <Navbar.Brand href={'/team/' + team.name + '/'}>{team.name}</Navbar.Brand>
-      </Card.Title>
-      <Card.Text>
-        {team.leagueName}
-      </Card.Text>
-      {team.isCommissioner ? <Card.Footer>Commissioner</Card.Footer> : ''}
-    </Card>
-  }));
+  }, [dispatch, history, currUser, loggedIn])
   return (
     <Container fluid>
-      <Row className="justify-content-center">
-        <CardDeck>
-          {teamCards}
-        </CardDeck>
-      </Row>
-      <Row className="justify-content-center">
-        <Button className="m-3" variant="primary" size="lg" href="/league/create/">Create a league</Button>
-      </Row>
+      {!loggedIn ? <Row className='justify-content-center'><h1>Please <a href='/login/'>log in.</a></h1></Row> :
+      <Col>
+        <Row className="justify-content-center">
+          <Col sm={10}>
+            <CardDeck id="teamCards">
+            {teams.map((team, index) => {
+              return (
+              <Card key={index} className="m-2">
+                <Card.Img variant="top" src={team.logo} className="card-img-top"></Card.Img>
+                <Card.Title>
+                  <Navbar.Brand href={'/league/' + team.league + '/team/' + team._id + '/'}>{team.name}</Navbar.Brand>
+                </Card.Title>
+                <Card.Text>
+                  <a href={'/league/' + team.league + '/'}>{team.leagueName}</a>
+                </Card.Text>
+                {team.isCommissioner ? <Card.Footer>Commissioner</Card.Footer> : ''}
+              </Card>);
+              })}
+            </CardDeck>
+          </Col>
+        </Row>
+        <Row className="justify-content-center">
+          <Button className="m-3" variant="primary" size="lg" href="/league/create/">Create a league</Button>
+        </Row>
+      </Col>}
     </Container>
   );
 }

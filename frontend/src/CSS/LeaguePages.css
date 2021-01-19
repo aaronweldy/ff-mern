@@ -1,0 +1,21 @@
+.no-background {
+    background-color: transparent !important;
+}
+
+#teamCards .card {
+    min-width: 18rem;
+    max-width: 18rem;
+}
+
+.bordered-row {
+    border: 1pt solid;
+}
+
+#small-left {
+    margin-left: 1.5rem;
+}
+
+.left-corner {
+    margin-left: 5px;
+    margin-top: 5px;
+}

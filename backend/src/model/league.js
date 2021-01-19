@@ -5,7 +5,10 @@ const leagueSchema = Schema({
     name: {
         type: String,
         required: true
-    }
+    },
+    commissioners: [],
+    lineupSettings: {},
+    scoringSettings: []
 })
 
 export default model("league", leagueSchema);

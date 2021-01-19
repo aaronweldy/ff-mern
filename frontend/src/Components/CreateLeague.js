@@ -1,12 +1,18 @@
 import React, {useState} from 'react'
-import {Container, Col, Table, Form, Dropdown, DropdownButton, Button} from 'react-bootstrap'
+import {Container, Col, Table, Form, Dropdown, DropdownButton, Button, Row} from 'react-bootstrap'
+import {Redirect} from 'react-router-dom'
+
+const positionTypes = ["QB", "RB", "WR", "TE", "K", "WR/RB", "WR/RB/TE", "QB/WR/RB/TE"];
 
 function CreateLeague() {
     const [numTeams, setNumTeams] = useState(0);
     const [teams, setTeams] = useState([]);
     const [partTwo, setPartTwo] = useState(false);
+    const [partThree, setPartThree] = useState(false);
     const [redirect, setRedirect] = useState(false);
     const [leagueName, setLeagueName] = useState('');
+    const [posInfo, setPosInfo] = useState({});
+    const [leagueId, setLeagueId] = useState(0);
     function handleTeamChange(e) {
         const tempTeams = [...teams];
         if(e.target.name === 'isCommissioner') {
@@ -19,23 +25,27 @@ function CreateLeague() {
         setNumTeams(parseInt(evtKey));
         setTeams(Array(parseInt(evtKey)).fill().map((_, i) => ({teamName: 'Team ' + i, teamOwner: '', isCommissioner: false})));
     }
-    function handleLeagueSubmission(e) {
+    function handleInfoChange(e) {
+        const tempInfo = {...posInfo};
+        tempInfo[e.target.name] = e.target.value;
+        setPosInfo(tempInfo);
+    }
+    async function handleLeagueSubmission(e) {
         e.preventDefault();
         const reqBody = {
             "league": leagueName,
-            "teams": teams
+            "teams": teams,
+            posInfo
         }
-        fetch('/api/v1/league/create/', {method: 'POST', body: JSON.stringify(reqBody), headers: {'content-type' : 'application/json'}}).then((resp) => {
-            if(!resp.ok) throw Error(resp.statusText);
-            return resp.json();
-        }).then((_) => {
-            setRedirect(true);
-        }).catch(e => {
-            console.log(e);
-            setRedirect(false)
-        });
+        const resp = await fetch('/api/v1/league/create/', {method: 'POST', body: JSON.stringify(reqBody), headers: {'content-type' : 'application/json'}});
+        const json = await resp.json();
+        setLeagueId(json.id);
+        setRedirect(true);
     }
-    const subButton = partTwo ? <Button variant="primary" onClick={handleLeagueSubmission}>&gt;&gt;</Button> : <Button variant="primary" onClick={_ => setPartTwo(true)}>&gt;&gt;</Button>
+    if (redirect) {
+        return <Redirect to={'/league/' + leagueId + '/'}></Redirect>
+    }
+    const subButton = partThree ? <Button variant="primary" onClick={handleLeagueSubmission}>&gt;&gt;</Button> : <Button variant="primary" onClick={_ => partTwo ? setPartThree(true) : setPartTwo(true)}>&gt;&gt;</Button>
     return (
         <Container>
             <Form.Row className="align-items-center mt-5">
@@ -75,7 +85,22 @@ function CreateLeague() {
                 </tbody>
             </Table> 
             : ''}
-            <Form.Row>{subButton}</Form.Row>
+            {partThree ?
+            <Form>
+                <h4>Set number of players per position.</h4>
+                {positionTypes.map((type, i) => {
+                return(
+                    <Form.Group key={i} as={Row} md={6}>
+                        <Col>
+                            <Form.Label md={2}>{type}:</Form.Label>
+                        </Col>
+                        <Col md={1}>
+                            <Form.Control data-id={i} name={type} onChange={handleInfoChange} size="md" type="text"></Form.Control>
+                        </Col>
+                    </Form.Group>
+                )})}
+            </Form> : ''}
+            <Form.Row className="mb-3">{subButton}</Form.Row>
         </Container>
     )
 }
