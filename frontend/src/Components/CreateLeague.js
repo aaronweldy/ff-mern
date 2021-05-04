@@ -13,6 +13,7 @@ function CreateLeague() {
     const [leagueName, setLeagueName] = useState('');
     const [posInfo, setPosInfo] = useState({});
     const [leagueId, setLeagueId] = useState(0);
+    const [scoring, setScoring] = useState("Standard");
     function handleTeamChange(e) {
         const tempTeams = [...teams];
         if(e.target.name === 'isCommissioner') {
@@ -35,7 +36,8 @@ function CreateLeague() {
         const reqBody = {
             "league": leagueName,
             "teams": teams,
-            posInfo
+            posInfo,
+            scoring
         }
         const resp = await fetch('/api/v1/league/create/', {method: 'POST', body: JSON.stringify(reqBody), headers: {'content-type' : 'application/json'}});
         const json = await resp.json();
@@ -87,7 +89,7 @@ function CreateLeague() {
             : ''}
             {partThree ?
             <Form>
-                <h4>Set number of players per position.</h4>
+                <h4>Lineup Settings</h4>
                 {positionTypes.map((type, i) => {
                 return(
                     <Form.Group key={i} as={Row} md={6}>
@@ -99,8 +101,16 @@ function CreateLeague() {
                         </Col>
                     </Form.Group>
                 )})}
-            </Form> : ''}
-            <Form.Row className="mb-3">{subButton}</Form.Row>
+                <hr></hr>
+                <h4>Scoring Settings</h4>
+                <Form.Group>
+                    <Form.Check type="radio" name="scoring-setting" value="Standard" label="Standard" onClick={e => setScoring(e.target.value)} checked={scoring === "Standard"}></Form.Check>
+                    <Form.Check type="radio" name="scoring-setting" value="PPR" label="PPR" onClick={e => setScoring(e.target.value)} checked={scoring === "PPR"}></Form.Check>
+                    <Form.Check type="radio" name="scoring-setting" value="Custom" label="Custom" onClick={e => setScoring(e.target.value)} checked={scoring === "Custom"}></Form.Check>
+                </Form.Group>
+            </Form>
+            : ''}
+            <Form.Row className="mb-3 mt-3">{subButton}</Form.Row>
         </Container>
     )
 }

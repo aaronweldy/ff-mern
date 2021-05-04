@@ -71,12 +71,16 @@ function ScoringSettings() {
     if (redirect) return <Redirect to={'/league/' + id + '/'}></Redirect>
     return (
         <Container fluid>
-            <LeagueButton id={id}></LeagueButton>
-            <h2 className="ml-4">Scoring Settings</h2>
+            <Row>
+                <LeagueButton id={id}></LeagueButton>
+            </Row>
+            <Row>
+                <h2 className="ml-3">Scoring Settings</h2>
+            </Row>
             {settings ? settings.map((setting, i) => {
                 return (<Row key={i} className="mt-3 mb-5">
                     <Col sm={1} className="text-center">
-                        <Button data-setting={i} onClick={handleRemoveSetting} variant="danger">X</Button>
+                        <Button data-setting={i} onClick={handleRemoveSetting} variant="danger" size="sm">X</Button>
                     </Col>
                     <Col md={2}>
                         <Form.Control name="position" data-setting={i} as="select" defaultValue={setting.position} onChange={handleSettingChange}>
