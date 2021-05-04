@@ -2,18 +2,11 @@ import Team  from '../model/team.js'
 import League from '../model/league.js'
 import WeekStats from '../model/weekStats.js'
 import User from '../model/user.js'
-import auth from '../middleware/auth.js'
 import scraper from 'table-scraper'
+import {convertedScoringTypes, defaultScoringSettings} from "../constants/league.js"
 import { Router } from 'express'
 
 const router = Router();
-
-const convertedScoringTypes = { "QB" : {"ATT" : "ATT",  "PASS YD" : "YDS", "RUSH YD" : "YDS_2", "CARRIES" : "ATT_2", "PASS TD" : "TD", "RUSH TD" : "TD_2", "YD PER ATT" : "Y/A", "CP%" : "CP%", "INT" : "INT",  "FUM" : "FL"},
-    "RB" : {"REC YD" : "YDS_2",  "RUSH YD" : "YDS", "CARRIES" : "ATT", "YD PER CARRY" : "Y/A", "YD PER CATCH" : "Y/R",  "REC" : "REC",  "TARGETS" : "TGT", "RUSH TD" : "TD",  "REC TD" : "TD_2", "FUM" : "FL"},
-    "WR" :  {"REC YD" : "YDS",  "RUSH YD" : "YDS_2", "CARRIES" : "ATT", "YD PER CARRY" : "Y/A", "YD PER CATCH" : "Y/R",  "REC" : "REC",  "TARGETS" : "TGT", "RUSH TD" : "TD_2",  "REC TD" : "TD", "FUM" : "FL"},
-    "TE" :  {"REC YD" : "YDS",  "RUSH YD" : "YDS_2", "CARRIES" : "ATT", "YD PER CARRY" : "Y/A", "YD PER CATCH" : "Y/R",  "REC" : "REC",  "TARGETS" : "TGT", "RUSH TD" : "TD_2",  "REC TD" : "TD", "FUM" : "FL"},
-    "K" : {'FG 1-19' : "1-19",   'FG 20-29' : '20-29',  'FG 30-39' : '30-39',  'FG 40-49' : '40-49',  'FG 50+' : '50+'}
-}
 
 const positions = ['qb', 'rb', 'wr', 'te', 'k'];
 
@@ -25,7 +18,7 @@ router.get('/:id/', async (req, res) => {
 });
 
 router.post('/create/', async (req, res) => {
-    const {league, teams, posInfo} = req.body;
+    const {league, teams, posInfo, scoring} = req.body;
     const newLeague = new League({name: league, lineupSettings: posInfo});
     await newLeague.save();
     let comms = [];
@@ -43,7 +36,8 @@ router.post('/create/', async (req, res) => {
         if(uid && team.isCommissioner) comms.push(uid);
         await newTeam.save();
     }
-    await League.findByIdAndUpdate(newLeague.id, {commissioners: comms}, {useFindAndModify: false});
+    console.log(defaultScoringSettings[scoring]);
+    await League.findByIdAndUpdate(newLeague.id, {commissioners: comms, scoringSettings : scoring === "Custom" ? {} : defaultScoringSettings[scoring]}, {useFindAndModify: false});
     res.status(200).json({"id" : newLeague.id});
 });
 
@@ -110,29 +104,36 @@ router.post('/:leagueId/runScores/', async (req, res) => {
         team.players.filter(player => player.lineup !== 'bench').forEach(player => {
             const catPoints = league.scoringSettings.filter(set => set.position.indexOf(player.position) >= 0).map(category => {
                 const cat = category['category'];
-                let points = 0;
-                const statNumber = Number.parseFloat(statsAtt.playerMap[player.name][convertedScoringTypes[player.position][cat.statType]]);
-                switch (cat.qualifier) {
-                    case "per":
-                        console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`)
-                        points = (statNumber / Number.parseFloat(cat.threshold)) * Number.parseFloat(category.points);
-                        break;
-                    case "greater than":
-                        console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`)
-                        if (statNumber > Number.parseFloat(cat.threshold)) points = Number.parseFloat(category.points);
-                        break;
-                    case "between":
-                        if (statNumber >= cat.threshold_1 && statNumber <= cat.threshold_2) points =  Number.parseFloat(category.points);
-                        break;
-                }
-                const successMins = category.minimums.filter(min => {
-                    const statNumber = Number.parseFloat(statsAtt.playerMap[player.name][convertedScoringTypes[player.position][min.statType]]);
-                    return statNumber > Number.parseFloat(min.threshold);
-                });
-                const retObj = {};
                 const hashVal = cat.qualifier === 'between' ? `${cat.qualifier}|${cat.threshold_1}${cat.threshold_2}|${cat.statType}` : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
-                retObj[hashVal] =  successMins.length === category.minimums.length ? points : 0;
-                return  retObj;
+                let points = 0;
+                try {
+                    const statNumber = Number.parseFloat(statsAtt.playerMap[player.name][convertedScoringTypes[player.position][cat.statType]]);
+                    if (isNaN(statNumber)) return {hashVal : 0};
+                    console.log(statNumber);
+                    switch (cat.qualifier) {
+                        case "per":
+                            console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`)
+                            points = (statNumber / Number.parseFloat(cat.threshold)) * Number.parseFloat(category.points);
+                            break;
+                        case "greater than":
+                            console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`)
+                            if (statNumber > Number.parseFloat(cat.threshold)) points = Number.parseFloat(category.points);
+                            break;
+                        case "between":
+                            if (statNumber >= cat.threshold_1 && statNumber <= cat.threshold_2) points =  Number.parseFloat(category.points);
+                            break;
+                    }
+                    const successMins = category.minimums.filter(min => {
+                        const statNumber = Number.parseFloat(statsAtt.playerMap[player.name][convertedScoringTypes[player.position][min.statType]]);
+                        return statNumber > Number.parseFloat(min.threshold);
+                    });
+                    const retObj = {};
+                    retObj[hashVal] =  successMins.length === category.minimums.length ? points : 0;
+                    return retObj;
+                } catch(error) {
+                    console.log(`Error finding stats for player ${player.name}, ${player.lineup}`);
+                    return {hashVal : 0};
+                }
             });
             player.weekStats[week] = Object.assign({}, ...catPoints);
             player.points[week] = Number.parseFloat(catPoints.reduce(((acc, i) => acc + Object.values(i)[0]), 0).toPrecision(4));

@@ -2,7 +2,6 @@
 
 import cors from 'cors';
 import express from 'express';
-import bodyParser from 'body-parser';
 import InitiateMongoServer from '../config/db.js';
 import user from '../route/user.js';
 import league from '../route/league.js';
@@ -10,13 +9,12 @@ import env from 'dotenv';
 
 const app = express();
 env.config();
-
 InitiateMongoServer();
 
 // env variables
 const PORT = process.env.PORT || 3001;
 
-app.use(bodyParser.json(),cors())
+app.use(express.json(),cors())
 
 app.get('/', (req, res) => {
     console.log("receiving message");
