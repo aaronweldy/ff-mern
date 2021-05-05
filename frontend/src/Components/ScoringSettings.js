@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
-import {Container, Col, Form, Button, Row} from 'react-bootstrap'
+import {Container, Col, Form, Button, Row, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import LeagueButton from './LeagueButton'
 
 const positionTypes = ["QB", "RB", "WR", "TE", "K", "WR/RB", "WR/RB/TE", "QB/WR/RB/TE"];
@@ -75,13 +75,11 @@ function ScoringSettings() {
                 <LeagueButton id={id}></LeagueButton>
             </Row>
             <Row>
-                <h2 className="ml-3">Scoring Settings</h2>
+                <h2 className="ml-3 mb-5">Scoring Settings</h2>
             </Row>
             {settings ? settings.map((setting, i) => {
-                return (<Row key={i} className="mt-3 mb-5">
-                    <Col sm={1} className="text-center">
-                        <Button data-setting={i} onClick={handleRemoveSetting} variant="danger" size="sm">X</Button>
-                    </Col>
+                return (<OverlayTrigger key={i} placement="top-start" delay="1000" overlay={<Button data-setting={i} onClick={handleRemoveSetting} variant="danger" size="sm" className="ml-2 mb-2">Remove setting</Button>}>
+                    <Row key={i} className="mt-3 mb-5">
                     <Col md={2}>
                         <Form.Control name="position" data-setting={i} as="select" defaultValue={setting.position} onChange={handleSettingChange}>
                             {positionTypes.map((type, j) => {
@@ -129,38 +127,36 @@ function ScoringSettings() {
                     </Col>
                     {setting.minimums.map((min, j) => {
                         return (
-                            <Col key={j} md={2}>
-                                <Row>
-                                    <Col>
-                                        <span>Minimum:</span>
-                                    </Col>
-                                </Row>
-                                <Row>
-                                    <Col>
-                                        <Form.Control name="threshold" data-setting={i} data-min={j} value={min.threshold || ''} onChange={handleMinimumChange} type="text"></Form.Control>
-                                    </Col>
-                                </Row>
-                                <Row>
-                                    <Col>
-                                        <Form.Control name="statType" data-setting={i} data-min={j} as="select" defaultValue={min.statType} onChange={handleMinimumChange}>
-                                            {scoringTypes.map((type, i) => {
-                                                return <option key={i} value={type}>{type}</option>
-                                            })}
-                                        </Form.Control>
-                                    </Col>
-                                </Row>
-                                <Row>
-                                    <Col className="text-center">
-                                        <Button data-setting={i} data-min={j} variant="danger" onClick={handleRemoveMinimum}>X</Button>
-                                    </Col>
-                                </Row>
-                            </Col>
+                            <OverlayTrigger key={i} placement="bottom" delay="1000" overlay={<Button data-setting={i} size="sm" data-min={j} variant="danger" onClick={handleRemoveMinimum}>Remove Minimum</Button>}>
+                                <Col key={j} md={2}>
+                                    <Row>
+                                        <Col>
+                                            <span>Minimum:</span>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col>
+                                            <Form.Control name="threshold" data-setting={i} data-min={j} value={min.threshold || ''} onChange={handleMinimumChange} type="text"></Form.Control>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col>
+                                            <Form.Control name="statType" data-setting={i} data-min={j} as="select" defaultValue={min.statType} onChange={handleMinimumChange}>
+                                                {scoringTypes.map((type, i) => {
+                                                    return <option key={i} value={type}>{type}</option>
+                                                })}
+                                            </Form.Control>
+                                        </Col>
+                                    </Row>
+                                </Col>
+                            </OverlayTrigger>
                         );
                     })}
                     <Col sm={2}>
                         <Button data-setting={i} onClick={handleAddMinimum} className="mt-4" variant="primary">Add new minimum</Button>
                     </Col>
                 </Row>
+                </OverlayTrigger>
             )}) : ''}
             <Row className="justify-content-center">
                 <Col className="ml-4">

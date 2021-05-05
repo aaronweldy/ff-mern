@@ -103,8 +103,13 @@ router.post('/:leagueId/runScores/', async (req, res) => {
     for await (const team of teams) {
         team.players.filter(player => player.lineup !== 'bench').forEach(player => {
             const catPoints = league.scoringSettings.filter(set => set.position.indexOf(player.position) >= 0).map(category => {
+                player.error = false;
                 const cat = category['category'];
                 const hashVal = cat.qualifier === 'between' ? `${cat.qualifier}|${cat.threshold_1}${cat.threshold_2}|${cat.statType}` : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
+                if (!Object.keys(statsAtt.playerMap).includes(player.name)) {
+                    player["error"] = true;
+                    return {hashVal : 0};
+                }
                 let points = 0;
                 try {
                     const statNumber = Number.parseFloat(statsAtt.playerMap[player.name][convertedScoringTypes[player.position][cat.statType]]);

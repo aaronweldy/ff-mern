@@ -92,10 +92,10 @@ function TeamPage() {
     <Container>
         <LeagueButton id={leagueId}></LeagueButton>
         {team ? 
-        <Jumbotron className="no-background">
-            <h1>{team.name}</h1>
-            {team.owner === currUser ? <span><a href="/">Edit Team</a></span> : <span>{team.ownerName}</span>}
-        </Jumbotron>
+        <h1 className="mt-5 ml-3">
+        {team.name}
+        <div className="subtitle mb-5 mt-2">{team.owner === currUser ? <a href="/">Edit Team</a> : team.ownerName}</div>
+        </h1>
         : ''}
         {team ? 
         <Col>

@@ -19,3 +19,12 @@
     margin-left: 5px;
     margin-top: 5px;
 }
+
+.error-background {
+    background-color: red;
+}
+
+.subtitle {
+    font-size: medium;
+    color: gray;
+}

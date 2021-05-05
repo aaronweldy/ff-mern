@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import {useParams} from 'react-router-dom'
 import LeagueButton from './LeagueButton'
-import {Container, Table, Col, Form, Button, Alert} from 'react-bootstrap'
+import {Container, Table, Col, Form, Button, Alert, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import {useSelector} from 'react-redux'
 import {selectUser} from '../Redux/userSlice.js'
 import '../CSS/LeaguePages.css'
@@ -63,6 +63,15 @@ const RunScores = () => {
                         </thead>
                         <tbody>
                             {team.players.filter(player => player.lineup !== 'bench').map((player, i) => {
+                                const nameCard = player.error ?
+                                <OverlayTrigger key={i} placement="top" overlay={<Tooltip id="tooltip-top">
+                                    Player not found in database. Make sure the name is spelled correctly.
+                                </Tooltip>}>
+                                <td className="error-background">
+                                    <span>{player.name}</span>
+                                </td>
+                                </OverlayTrigger>
+                                : <td><span>{player.name}</span></td>
                                 return (<tr key={i}>
                                     <td>
                                         <span>{player.lineup}</span>
@@ -70,9 +79,7 @@ const RunScores = () => {
                                     <td>
                                         <span>{player.position}</span>
                                     </td>
-                                    <td>
-                                        <span>{player.name}</span>
-                                    </td>
+                                    {nameCard}
                                     <td>
                                         <span>{player.points[week] || 0}</span>
                                     </td>
