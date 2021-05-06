@@ -1,7 +1,8 @@
 import {Table, Dropdown, DropdownButton} from 'react-bootstrap'
 
 export default function TeamTable(props) {
-    const {players, oppPlayers, name} = props;
+    const {players, oppPlayers, name, week} = props;
+    console.log(oppPlayers);
     return (
     <Table striped bordered hover>
         <thead>
@@ -16,11 +17,11 @@ export default function TeamTable(props) {
             <tr key={i}>
                 <td>
                     <DropdownButton name="position" title="">
-                        {oppPlayers.filter(oppPlayer => oppPlayer.lineup.indexOf(player.position) >= 0 || player.lineup.indexOf(oppPlayer.position) >= 0).map((starter, j) => {
+                        {oppPlayers.filter(oppPlayer => oppPlayer.lineup[week].indexOf(player.position) >= 0 || player.lineup[week].indexOf(oppPlayer.position) >= 0).map((starter, j) => {
                             const swapPlayer = oppPlayers.findIndex(player => player.name === starter.name && player.position === starter.position);
                             return (
                             <Dropdown.Item key={j} onClick={ _ => props.handlePlayerChange(i, name, swapPlayer)}>
-                                {starter.lineup}: {starter.name}
+                                {starter.lineup[week]}: {starter.name}
                             </Dropdown.Item>
                             );
                         })}
@@ -28,7 +29,7 @@ export default function TeamTable(props) {
                     </DropdownButton>
                 </td>
                 <td>
-                    <span>{name === 'starters' ? player.lineup : player.position}</span>
+                    <span>{name === 'starters' ? player.lineup[week] : player.position}</span>
                 </td>
                 <td>
                     <span>{player.name}</span>

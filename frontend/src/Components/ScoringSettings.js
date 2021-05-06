@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
-import {Container, Col, Form, Button, Row, OverlayTrigger, Tooltip} from 'react-bootstrap'
+import {Container, Col, Form, Button, Row, OverlayTrigger} from 'react-bootstrap'
 import LeagueButton from './LeagueButton'
 
 const positionTypes = ["QB", "RB", "WR", "TE", "K", "WR/RB", "WR/RB/TE", "QB/WR/RB/TE"];

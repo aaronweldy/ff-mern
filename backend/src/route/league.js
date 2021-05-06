@@ -101,7 +101,7 @@ router.post('/:leagueId/runScores/', async (req, res) => {
         statsAtt = stats;
     }
     for await (const team of teams) {
-        team.players.filter(player => player.lineup !== 'bench').forEach(player => {
+        team.players.filter(player => player.lineup[week] !== 'bench').forEach(player => {
             const catPoints = league.scoringSettings.filter(set => set.position.indexOf(player.position) >= 0).map(category => {
                 player.error = false;
                 const cat = category['category'];
@@ -136,7 +136,7 @@ router.post('/:leagueId/runScores/', async (req, res) => {
                     retObj[hashVal] =  successMins.length === category.minimums.length ? points : 0;
                     return retObj;
                 } catch(error) {
-                    console.log(`Error finding stats for player ${player.name}, ${player.lineup}`);
+                    console.log(`Error finding stats for player ${player.name}, ${player.lineup[week]}`);
                     return {hashVal : 0};
                 }
             });
@@ -144,7 +144,7 @@ router.post('/:leagueId/runScores/', async (req, res) => {
             player.points[week] = Number.parseFloat(catPoints.reduce(((acc, i) => acc + Object.values(i)[0]), 0).toPrecision(4));
         });
         console.log(team.players);
-        const weekScore = team.players.reduce(((acc, player) => player.points[week] ? acc + player.points[week] : acc), 0);
+        const weekScore = team.players.filter(player => player.lineup[week] !== 'bench').reduce(((acc, player) => player.points[week] ? acc + player.points[week] : acc), 0);
         team.weekScores[week] = weekScore;
         await Team.findByIdAndUpdate(team._id, {...team}, {useFindAndModify: false});
     }

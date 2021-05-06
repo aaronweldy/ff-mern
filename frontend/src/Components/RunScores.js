@@ -1,17 +1,19 @@
 import React, {useState, useEffect} from 'react'
 import {useParams} from 'react-router-dom'
 import LeagueButton from './LeagueButton'
-import {Container, Table, Col, Form, Button, Alert, OverlayTrigger, Tooltip} from 'react-bootstrap'
+import {Container, Table, Col, Form, Button, OverlayTrigger, Tooltip, Row} from 'react-bootstrap'
 import {useSelector} from 'react-redux'
 import {selectUser} from '../Redux/userSlice.js'
 import '../CSS/LeaguePages.css'
+
+const background_iters = ["first-background", "second-background", "third-background"]
 
 const RunScores = () => {
     const currUser = useSelector(selectUser);
     const {id} = useParams();
     const [teams, setTeams] = useState([]);
     const [league, setLeague] = useState(null);
-    const [weekError, setError] = useState(false);
+    const [isCommissioner, setIsCommissioner] = useState(false);
     const [week, setWeek] = useState(1);
     useEffect(() => {
         const url = `/api/v1/league/${id}/`;
@@ -21,15 +23,11 @@ const RunScores = () => {
             console.log(json);
             setTeams(json.teams);
             setLeague(json.scoringSettings);
+            setIsCommissioner(json.commissioners.includes(currUser.id));
         }
         fetchTeams();
     }, [id, currUser]);
     const sendData = _ => {
-        if (week === -1) {
-            setError(true);
-            setTimeout(() => setError(false), 8000);
-            return;
-        }
         const url = `/api/v1/league/${id}/runScores/`;
         const body = {week};
         const reqDict = {
@@ -41,9 +39,21 @@ const RunScores = () => {
             setTeams(data.teams);
         });
     }
+    const teamSorter = (a, b) => {
+        const reducer = (acc, i) => acc + i ? i : 0;
+        return a.weekScores.reduce(reducer, 0) + a.addedPoints.reduce(reducer, 0) > b.weekScores.reduce(reducer, 0) + b.addedPoints.reduce(reducer, 0) ? -1 : 1;
+    };
     return (
         <Container className="ml-5"> 
             <LeagueButton id={id}></LeagueButton>
+            <Col md={1} className="mb-4">
+                <Form.Label>Week:</Form.Label>
+                <Form.Control as="select" defaultValue={week} onChange={e => setWeek(e.target.value)}>
+                    {[...Array(17)].map((_, i) => {
+                        return <option value={i+1} key={i}>{i+1}</option>;
+                    })}
+                </Form.Control>
+            </Col>
             {teams.length > 0 ? teams.map((team, i) => {
                 return <Col md={12} key={i}>
                     <h3>{team.name}</h3>
@@ -62,7 +72,7 @@ const RunScores = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {team.players.filter(player => player.lineup !== 'bench').map((player, i) => {
+                            {team.players.filter(player => player.lineup[week] !== 'bench').map((player, i) => {
                                 const nameCard = player.error ?
                                 <OverlayTrigger key={i} placement="top" overlay={<Tooltip id="tooltip-top">
                                     Player not found in database. Make sure the name is spelled correctly.
@@ -74,7 +84,7 @@ const RunScores = () => {
                                 : <td><span>{player.name}</span></td>
                                 return (<tr key={i}>
                                     <td>
-                                        <span>{player.lineup}</span>
+                                        <span>{player.lineup[week]}</span>
                                     </td>
                                     <td>
                                         <span>{player.position}</span>
@@ -112,18 +122,33 @@ const RunScores = () => {
                     </Table>
                 </Col>
             }) : ''}
-            <Col md={1} className="mb-4">
-                <Form.Label>Week:</Form.Label>
-                <Form.Control as="select" defaultValue={week} onChange={e => setWeek(e.target.value)}>
-                    {[...Array(17)].map((_, i) => {
-                        return <option value={i+1} key={i}>{i+1}</option>;
-                    })}
-                </Form.Control>
-            </Col>
-            {weekError ? <Col md={3}><Alert className="mb-4" variant="warning">Invalid week entered</Alert></Col> : ''}
-            <Col className="mb-5"> 
+            <Row>
+                <Col md={4}>
+                    <Table striped bordered hover>
+                        <thead>
+                            <tr>
+                                <th style={{width: "15%"}}>Place</th>
+                                <th style={{width: "35%"}}>Team Name</th>
+                                <th style={{width: "60"}}>Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {teams.sort(teamSorter).map((team, i) => {
+                                return (
+                                    <tr key={i} id={i <= 2 ? background_iters[i] : ''}>
+                                        <td>{i+1}</td>
+                                        <td>{team.name}</td>
+                                        <td>{team.weekScores[week] + team.addedPoints[week]}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </Table>
+                </Col>
+            </Row>
+            {isCommissioner ? <Col className="mb-5"> 
                 <Button variant="success" onClick={sendData}>Calculate Scores</Button>
-            </Col>
+            </Col> : ''}
         </Container>
     );
 }

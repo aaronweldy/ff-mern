@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
-import {Table, Alert, Container, Col, Row, DropdownButton, Dropdown, Button} from 'react-bootstrap'
+import {Table, Alert, Container, Col, Row, DropdownButton, Dropdown, Button, Form} from 'react-bootstrap'
 import {useSelector} from 'react-redux'
 import {selectUser} from '../Redux/userSlice.js'
 import LeagueButton from './LeagueButton'
@@ -13,6 +13,7 @@ export default function AdjustLineups() {
     const [isCommissioner, setIsCommissioner] = useState(false);
     const [lineupSettings, setLineupSettings] = useState({});
     const [success, setSuccess] = useState(false);
+    const [week, setWeek] = useState(1);
     useEffect(() => {
         async function fetchTeam() {
             const url = `/api/v1/league/${id}/`;
@@ -20,29 +21,28 @@ export default function AdjustLineups() {
             const data = await resp.json();
             setIsCommissioner(data.commissioners.includes(currUser.id));
             setTeams(data.teams);
+            console.log(data.teams);
             setLineupSettings(data.lineupSettings);
         }
         fetchTeam();
-    }, [id, currUser]);
+    }, [id, currUser, week]);
     const handlePlayerChange = (selectedPlayer, name, swapPlayer) => {
         if (name === "starters") {
-            swapPlayer['lineup'] = selectedPlayer['lineup'];
-            selectedPlayer['lineup'] = 'bench';
+            swapPlayer['lineup'][week] = selectedPlayer['lineup'][week];
+            selectedPlayer['lineup'][week] = 'bench';
         }
         else {
             if(swapPlayer.name !== '') {
-                swapPlayer['lineup'] = 'bench';
+                swapPlayer['lineup'][week] = 'bench';
             }
-            selectedPlayer['lineup'] = swapPlayer['lineup'];
+            selectedPlayer['lineup'][week] = swapPlayer['lineup'][week];
         }
         setTeams([...teams]);
     };
     const handleBenchPlayer = (selectedPlayer, tableId) => {
-        const playerToBench = {...selectedPlayer};
         const tempTeams = [...teams];
-        playerToBench['lineup'] = 'bench';
-        selectedPlayer['name'] = '';
-        tempTeams[tableId]['players'].push(playerToBench);
+        console.log(tempTeams);
+        selectedPlayer['lineup'][week] = 'bench';
         setTeams(tempTeams);
     }
     const submitLineups = _ => {
@@ -69,24 +69,32 @@ export default function AdjustLineups() {
     return (
         <Container id="small-left">
             <LeagueButton id={id}></LeagueButton>
+            <Col md={1} className="mt-5 mb-4">
+                <Form.Label>Week:</Form.Label>
+                <Form.Control as="select" defaultValue={week} onChange={e => setWeek(e.target.value)}>
+                    {[...Array(17)].map((_, i) => {
+                        return <option value={i+1} key={i}>{i+1}</option>;
+                    })}
+                </Form.Control>
+            </Col>
             {teams ? teams.map((team, i) => {
                 const starters = (Object.keys(lineupSettings).map(pos => {
-                    return [...Array(parseInt(lineupSettings[pos])).fill().map(_ => { return {"position" : pos, "name" : '', "lineup" : pos} })];
+                    return [...Array(parseInt(lineupSettings[pos])).fill().map(_ => { return {"position" : pos, "name" : '', "lineup" : [...Array(17).fill(pos)]} })];
                 }).flat());
                 console.log(lineupSettings);
-                team.players.filter(player => player.lineup !== 'bench').forEach(starter => {
+                team.players.filter(player => player.lineup[week] !== 'bench').forEach(starter => {
                     starters[starters.findIndex(player => player.position === starter.position && player.name === '')] = starter;
                 });
-                const bench = team.players.filter(player => player.lineup === 'bench');
+                const bench = team.players.filter(player => player.lineup[week] === 'bench');
                 return (
                 <Col key={i}>
                     <div>
                         <h2>{team.name}</h2>
                     </div>
                     <h4>Starters</h4>
-                    <IterableTeamTable players={starters} tableId={i} oppPlayers={bench} name="starters" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange}></IterableTeamTable>
+                    <IterableTeamTable players={starters} week={week} tableId={i} oppPlayers={bench} name="starters" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange}></IterableTeamTable>
                     <h4>Bench</h4>
-                    <IterableTeamTable players={bench} tableId={i} oppPlayers={starters} name="bench" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange}></IterableTeamTable>
+                    <IterableTeamTable players={bench} week={week} tableId={i} oppPlayers={starters} name="bench" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange}></IterableTeamTable>
                 </Col>
                 );
             }) : ''}
@@ -99,7 +107,7 @@ export default function AdjustLineups() {
 }
 
 function IterableTeamTable(props) {
-    const {players, oppPlayers, name, tableId} = props;
+    const {players, oppPlayers, name, tableId, week} = props;
     return (
     <Table striped bordered hover>
         <thead>
@@ -114,11 +122,11 @@ function IterableTeamTable(props) {
             <tr key={i}>
                 <td>
                     <DropdownButton name="position" title="">
-                        {oppPlayers.filter(oppPlayer => oppPlayer.lineup.indexOf(player.position) >= 0 || player.lineup.indexOf(oppPlayer.position) >= 0).map((starter, j) => {
+                        {oppPlayers.filter(oppPlayer => oppPlayer.lineup[week].indexOf(player.position) >= 0 || player.lineup[week].indexOf(oppPlayer.position) >= 0).map((starter, j) => {
                             const swapPlayer = oppPlayers.findIndex(player => player.name === starter.name && player.position === starter.position);
                             return (
                             <Dropdown.Item key={j} onClick={ _ => props.handlePlayerChange(player, name, oppPlayers[swapPlayer], tableId)}>
-                                {starter.lineup}: {starter.name}
+                                {starter.lineup[week]}: {starter.name}
                             </Dropdown.Item>
                             );
                         })}
@@ -126,7 +134,7 @@ function IterableTeamTable(props) {
                     </DropdownButton>
                 </td>
                 <td>
-                    <span>{name === 'starters' ? player.lineup : player.position}</span>
+                    <span>{name === 'starters' ? player.lineup[week] : player.position}</span>
                 </td>
                 <td>
                     <span>{player.name}</span>

@@ -11,13 +11,12 @@ import reportWebVitals from './reportWebVitals';
 const persistedStore = persistStore(store);
 
 ReactDOM.render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <PersistGate persistor={persistedStore}>
-        <App />
-      </PersistGate>
-    </Provider>
-  </React.StrictMode>,
+  <Provider store={store}>
+    <PersistGate persistor={persistedStore}>
+      <App />
+    </PersistGate>
+  </Provider>
+  ,
   document.getElementById('root')
 );
 

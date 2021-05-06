@@ -24,6 +24,18 @@
     background-color: red;
 }
 
+#first-background {
+    background-color: yellowgreen;
+}
+
+#second-background {
+    background-color: silver;
+}
+
+#third-background {
+    background-color: orange;
+}
+
 .subtitle {
     font-size: medium;
     color: gray;

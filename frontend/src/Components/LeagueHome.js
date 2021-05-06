@@ -85,7 +85,8 @@ function LeagueHome() {
                 </tbody>
             </Table>
         </Col>
-        {isCommissioner ? <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>Run Scores</Button> : ''}
+        {isCommissioner ? <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>Run Scores</Button>
+        : <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>View Weekly Scoring Breakdown</Button>}
     </Container>);
 }
 
