@@ -11,6 +11,8 @@ import RunScores from './RunScores'
 import ScoringSettings from './ScoringSettings'
 import AddPoints from './AddPoints'
 import AdjustLineups from './AdjustLineups'
+import User from './User'
+import SecureRoute from './SecureRoute'
 import React from 'react'
 import { BrowserRouter as Router, Route, Switch} from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -28,6 +30,7 @@ const App = () => {
         <Route path="/league/:id/addPoints/" component={AddPoints}></Route>
         <Route path="/league/:id/adjustLineups/" component={AdjustLineups}></Route>
         <Route path="/league/:id/" component={LeagueHome}></Route>
+        <SecureRoute path="/user/:username" component={User}></SecureRoute>
         <Route path="/create/" component={CreateAccount}></Route>
         <Route path="/login/" component={Login}></Route>
         <Route path="/" component={TeamHub}></Route>

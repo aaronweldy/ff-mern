@@ -1,5 +1,8 @@
 import pkg from 'mongoose';
+import env from 'dotenv';
 const { Schema, model } = pkg;
+
+env.config();
 
 const teamSchema = Schema({
     name: {
@@ -16,7 +19,7 @@ const teamSchema = Schema({
     },
     logo: {
         type: String,
-        default: './football.jfif'
+        default: `http://${process.env.FRONTEND_URI}/football.jfif`
     },
     league: {
         type: String,

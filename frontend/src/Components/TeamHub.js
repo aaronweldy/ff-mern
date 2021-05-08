@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import {useSelector, useDispatch} from 'react-redux'
-import {selectStatus, selectUser, logout } from '../Redux/userSlice.js'
+import {selectStatus, selectUser } from '../Redux/userSlice.js'
 import {useHistory} from 'react-router-dom'
 import { Card, CardDeck, Navbar, Button, Container, Row, Col } from 'react-bootstrap'
 import '../CSS/LeaguePages.css'
@@ -18,31 +18,12 @@ const TeamHub = () => {
         token: localStorage.getItem('userToken'),
       }
       await fetch(url, {credentials: "include", headers: reqDict}).then(resp => {
-        if(!resp.ok) throw Error(resp.statusText);
-        return resp.json();
-      }).then(data => {
-        setTeams(data.teams);
-      }).catch(error => {
-        const body = {
-          refreshToken: localStorage.getItem('refershToken')
-        }
-        const reqdict = {
-          method : 'POST', 
-          headers : {'content-type' : 'application/json'},
-          body : JSON.stringify(body)
-        };
-        const url = '/api/v1/user/refresh/';
-        fetch(url, reqdict).then(resp => {
-          if (!resp.ok) throw Error(resp.statusText);
+          if(!resp.ok) throw Error(resp.statusText);
           return resp.json();
         }).then(data => {
-          localStorage.setItem('userToken', data.newToken);
-          window.location.reload();
-        }).catch(_ => {
-          localStorage.removeItem('userToken');
-          dispatch(logout());
-          history.push('/');
-        })
+          setTeams(data.teams);
+        }).catch(e => {
+          console.log(e);
       });
       
     }

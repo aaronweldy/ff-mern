@@ -14,17 +14,11 @@ import User from "../model/user.js";
 
 env.config();
 
-/**
- * @method - POST
- * @param - /signup
- * @description - User SignUp
- */
 router.get('/:username/leagues/', auth, async (req, res) => {
     const teams = [];
     for await (const team of Team.find({owner: req.user.id})) {
         teams.push(team);
     }
-    console.log(teams);
     res.json({teams});
 });
 
@@ -102,10 +96,7 @@ router.post("/signup/",
 
 router.post("/login/",
     [
-      check("email", "Please enter a valid email").isEmail(),
-      check("password", "Please enter a valid password").isLength({
-        min: 6
-      })
+      check("email", "Please enter a valid email").isEmail()
     ],
     async (req, res) => {
       const errors = validationResult(req);
@@ -116,9 +107,7 @@ router.post("/login/",
       }
       const { email, password } = req.body;
       try {
-        let user = await User.findOne({
-          email
-        });
+        let user = await User.findOne({email});
         if (!user)
           return res.status(400).json({
             message: "User does not exist"
@@ -126,19 +115,17 @@ router.post("/login/",
   
         const isMatch = await compare(password, user.password);
         if (!isMatch)
-          return res.status(400).json({
-            message: "Incorrect Password !"
-          });
+          return res.status(400).json({message: "Incorrect Password!"});
         console.log("Password matches");
         const payload = {
           user: {
             id: user.id
           }
         };
-        const refreshToken = sign(payload, process.env.APP_SECRET, {expiresIn: 2500000});
+        const refreshToken = sign(payload, process.env.APP_SECRET, {expiresIn: 604800});
         sign(payload, process.env.APP_SECRET,
           {
-            expiresIn: 360000
+            expiresIn: 86400
           },
           async (err, token) => {
             if (err) throw err;
@@ -170,7 +157,7 @@ router.post("/login/",
             id: oldPayload.user.id
           }
         }
-        const newToken = sign(newUser, process.env.APP_SECRET, {expiresIn: 25000});
+        const newToken = sign(newUser, process.env.APP_SECRET, {expiresIn: 86400});
         await RefreshToken.findByIdAndUpdate(refreshToken._id, {token: newToken}, {useFindAndModify: false});
         res.status(200).json({newToken});
       }
@@ -179,6 +166,20 @@ router.post("/login/",
         res.status(401).send('Unable to verify user.');
       }
     }
-  })
+  });
+
+  router.post('/updatePassword/', auth, async (req, res) => {
+    const {oldPassword, newPassword} = req.body;
+    const user = await User.findById(req.user.id);
+    const isMatch = await compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(412).send("Password does not match");
+    }
+    const salt = await genSalt(10);
+    user.password = await hash(newPassword, salt);
+    await user.save();
+    res.status(200).send("Updated password successfully");
+
+  });  
 
 export default router;

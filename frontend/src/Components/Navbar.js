@@ -44,7 +44,7 @@ function LogOutButtons() {
     }
     return (<Navbar.Collapse className="justify-content-end">
         <Navbar.Text className="mr-3">
-            Welcome, {user.username}!
+            Welcome, <a href={`/user/${user.username}/`}>{user.username}</a>!
         </Navbar.Text>
         <Button variant="primary" onClick={handleClick} type="submit">
             Logout

@@ -20,7 +20,7 @@ export default function TeamTable(props) {
                         {oppPlayers.filter(oppPlayer => oppPlayer.lineup[week].indexOf(player.position) >= 0 || player.lineup[week].indexOf(oppPlayer.position) >= 0).map((starter, j) => {
                             const swapPlayer = oppPlayers.findIndex(player => player.name === starter.name && player.position === starter.position);
                             return (
-                            <Dropdown.Item key={j} onClick={ _ => props.handlePlayerChange(i, name, swapPlayer)}>
+                            <Dropdown.Item key={j} onClick={ _ => props.handlePlayerChange(player, name, oppPlayers[swapPlayer])}>
                                 {starter.lineup[week]}: {starter.name}
                             </Dropdown.Item>
                             );

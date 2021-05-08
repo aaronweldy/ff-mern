@@ -10,7 +10,6 @@ function LeagueHome() {
     const {id} = useParams();
     const [teams, setTeams] = useState([]);
     const [isCommissioner, setIsCommissioner] = useState(false);
-    const [expandSettings, setExpandSettings] = useState(false);
     const [runScores, setRunScores] = useState(false);
     useEffect(() => {
         const url = `/api/v1/league/${id}/`;
@@ -31,8 +30,7 @@ function LeagueHome() {
     <Container id="small-left">
         <Jumbotron className="no-background">
             <h1>{teams.length > 0 ? teams[0].leagueName : ''}</h1>
-            {isCommissioner ? <span onClick={() => setExpandSettings(!expandSettings)}>League Settings</span> : ''}
-            {expandSettings ?
+            {isCommissioner ?
             <div>
                 <div>
                     <a href={"/league/" + id + "/editTeams/"}>Edit Teams</a>
