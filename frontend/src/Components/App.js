@@ -29,11 +29,11 @@ const App = () => {
         <Route path="/league/:id/runScores/" component={RunScores}></Route>
         <Route path="/league/:id/addPoints/" component={AddPoints}></Route>
         <Route path="/league/:id/adjustLineups/" component={AdjustLineups}></Route>
-        <Route path="/league/:id/" component={LeagueHome}></Route>
+        <SecureRoute path="/league/:id/" component={LeagueHome}></SecureRoute>
         <SecureRoute path="/user/:username" component={User}></SecureRoute>
         <Route path="/create/" component={CreateAccount}></Route>
         <Route path="/login/" component={Login}></Route>
-        <Route path="/" component={TeamHub}></Route>
+        <SecureRoute path="/" component={TeamHub}></SecureRoute>
       </Switch>
     </Router>
   );

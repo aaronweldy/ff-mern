@@ -14,7 +14,7 @@ router.get('/:id/', async (req, res) => {
     const leagueId = req.params['id'];
     const teams = await Team.find({league: leagueId});
     const comms = await League.findById(leagueId);
-    res.status(200).json({teams, commissioners: comms.commissioners, scoringSettings: comms.scoringSettings, lineupSettings: comms.lineupSettings});
+    res.status(200).json({teams, commissioners: comms.commissioners, scoringSettings: comms.scoringSettings, lineupSettings: comms.lineupSettings, name: comms.name});
 });
 
 router.post('/create/', async (req, res) => {
@@ -39,6 +39,16 @@ router.post('/create/', async (req, res) => {
     console.log(defaultScoringSettings[scoring]);
     await League.findByIdAndUpdate(newLeague.id, {commissioners: comms, scoringSettings : scoring === "Custom" ? {} : defaultScoringSettings[scoring]}, {useFindAndModify: false});
     res.status(200).json({"id" : newLeague.id});
+});
+
+router.post('/:id/delete/', async (req, res) => {
+    const {id} = req.params;
+    const {user} = req.body;
+    const leagueToDelete = await League.findById(id);
+    if (!leagueToDelete.commissioners.includes(user)) return res.status(403).send("User is not a commissioner, and is therefore unauthorized to delete this league.");
+    await Team.deleteMany({league: id});
+    await leagueToDelete.delete();
+    return res.status(200).send({"message" : "League deleted successfully"});
 });
 
 

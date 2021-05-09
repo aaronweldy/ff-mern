@@ -40,3 +40,10 @@
     font-size: medium;
     color: gray;
 }
+
+#inline-button {
+    padding: 0;
+    border-radius: 0;
+    color: red;
+    border: none;
+}

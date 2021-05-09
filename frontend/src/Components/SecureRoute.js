@@ -8,6 +8,7 @@ const SecureRoute = ({ component: Component, ...rest }) => {
     const loggedIn = useSelector(selectStatus);
     const url = "/api/v1/user/me/";
     let [redirect, setRedirect] = useState(false);
+    let [id, setId] = useState("");
     useEffect(() => {
         async function checkStatus() {
             const reqDict = {
@@ -16,6 +17,8 @@ const SecureRoute = ({ component: Component, ...rest }) => {
             await fetch(url, {credentials: "include", headers: reqDict}).then(resp => {
                 if(!resp.ok) throw Error(resp.statusText);
                 return resp.json();
+            }).then(data => {
+                setId(data._id);
             }).catch(_ => {
                 const body = {
                     refreshToken: localStorage.getItem('refreshToken')
@@ -27,22 +30,23 @@ const SecureRoute = ({ component: Component, ...rest }) => {
                 };
                 const url = '/api/v1/user/refresh/';
                 fetch(url, reqdict).then(resp => {
-                    if (!resp.ok) throw Error(resp.statusText);
+                        if (!resp.ok) throw Error(resp.statusText);
                         return resp.json();
                     }).then(data => {
                         localStorage.setItem('userToken', data.newToken);
+                        setId(data._id);
                     }).catch(_ => {
                         localStorage.removeItem('userToken');
                         dispatch(logout());
                         setRedirect(true);
-                    })
+                });
             });
         }
         checkStatus();
-    });
-    if (!loggedIn || redirect) return <Redirect to="/"></Redirect>
+    }, [dispatch, url]);
+    if (!loggedIn || redirect) return <Redirect to="/login"></Redirect>
     return (
-        <Route {...rest} component={props => <Component {...rest} {...props}/>}/>
+        <Route {...rest} component={props => <Component {...rest} {...props} userId={id}/>}/>
     )
 }
 

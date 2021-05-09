@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import {useSelector, useDispatch} from 'react-redux'
 import {selectStatus, selectUser } from '../Redux/userSlice.js'
-import {useHistory} from 'react-router-dom'
 import { Card, CardDeck, Navbar, Button, Container, Row, Col } from 'react-bootstrap'
 import '../CSS/LeaguePages.css'
 
@@ -9,15 +8,11 @@ const TeamHub = () => {
   const dispatch = useDispatch();
   const loggedIn = useSelector(selectStatus);
   const currUser = useSelector(selectUser);
-  const history = useHistory();
   let [teams, setTeams] = useState([]);
   useEffect(() => {
     async function fetchTeams() {
       const url = `/api/v1/user/${currUser.username}/leagues/`;
-      const reqDict = {
-        token: localStorage.getItem('userToken'),
-      }
-      await fetch(url, {credentials: "include", headers: reqDict}).then(resp => {
+      await fetch(url).then(resp => {
           if(!resp.ok) throw Error(resp.statusText);
           return resp.json();
         }).then(data => {
@@ -30,7 +25,7 @@ const TeamHub = () => {
     if(loggedIn) {
       fetchTeams();
     }
-  }, [dispatch, history, currUser, loggedIn])
+  }, [dispatch, currUser, loggedIn])
   return (
     <Container fluid>
       {!loggedIn ? <Row className='justify-content-center'><h1>Please <a href='/login/'>log in.</a></h1></Row> :

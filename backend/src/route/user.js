@@ -14,9 +14,11 @@ import User from "../model/user.js";
 
 env.config();
 
-router.get('/:username/leagues/', auth, async (req, res) => {
+router.get('/:username/leagues/', async (req, res) => {
     const teams = [];
-    for await (const team of Team.find({owner: req.user.id})) {
+    const {username} = req.params;
+    const user = await User.findOne({username});
+    for await (const team of Team.find({owner: user._id})) {
         teams.push(team);
     }
     res.json({teams});

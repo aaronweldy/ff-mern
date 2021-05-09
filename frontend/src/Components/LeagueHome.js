@@ -1,16 +1,20 @@
 import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
-import {Table, Form, Container, Col, Jumbotron, Button} from 'react-bootstrap'
+import {Table, Form, Container, Col, Jumbotron, Button, Modal, Row} from 'react-bootstrap'
 import {useSelector} from 'react-redux'
 import {selectUser} from '../Redux/userSlice.js'
 import '../CSS/LeaguePages.css'
 
-function LeagueHome() {
+function LeagueHome(props) {
     const currUser = useSelector(selectUser);
     const {id} = useParams();
     const [teams, setTeams] = useState([]);
     const [isCommissioner, setIsCommissioner] = useState(false);
     const [runScores, setRunScores] = useState(false);
+    const [showDelete, setDelete] = useState(false);
+    const [leagueName, setLeagueName] = useState("");
+    const [deleteName, setName] = useState("");
+    const [redirect, setRedirect] = useState(false);
     useEffect(() => {
         const url = `/api/v1/league/${id}/`;
         async function fetchTeams() {
@@ -22,12 +26,56 @@ function LeagueHome() {
             })
             setTeams(sortedTeams);
             setIsCommissioner(json.commissioners.includes(currUser.id));
+            setLeagueName(json.name);
         }
         fetchTeams();
     }, [id, currUser]);
     if (runScores) return <Redirect to={'/league/' + id + '/runScores/'}></Redirect>;
-    return(
+
+    const deleteLeague = _ => {
+        const url = `/api/v1/league/${id}/delete/`;
+        const body = {user: props.userId};
+        console.log(body);
+        const reqDict = {
+            headers: {"content-type" : "application/json"},
+            method: 'POST',
+            body: JSON.stringify(body)
+        }
+        fetch(url, reqDict).then(resp => {
+            if (!resp.ok) throw Error(resp.statusText);
+            return resp.json();
+        }).then(_ => {
+            setRedirect(true);
+        }).catch(e => {
+            console.log(e);
+        });
+    }
+
+    if (redirect) return <Redirect to="/"></Redirect>;
+
+    return (
     <Container id="small-left">
+        <Modal show={showDelete} onHide={() => setDelete(false)}>
+            <Modal.Header closeButton>
+                <Modal.Title>Delete League</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                Type the name of the league to confirm deletion:
+                <Form.Group className="mt-3" as={Row}>
+                    <Col md={6}>
+                        <Form.Control type="text" onChange={e => setName(e.target.value)}></Form.Control>
+                    </Col>
+                </Form.Group>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={() => setDelete(false)}>
+                    Close
+                </Button>
+                <Button disabled={deleteName !== leagueName} variant="danger" onClick={deleteLeague}>
+                    Confirm Deletion
+                </Button>
+            </Modal.Footer>
+        </Modal>
         <Jumbotron className="no-background">
             <h1>{teams.length > 0 ? teams[0].leagueName : ''}</h1>
             {isCommissioner ?
@@ -43,6 +91,9 @@ function LeagueHome() {
                 </div>
                 <div>
                     <a href={"/league/" + id + "/adjustLineups/"}>Adjust Starting Lineups</a>
+                </div>
+                <div>
+                    <Button id="inline-button" variant="link" onClick={() => setDelete(true)}>Delete League</Button>
                 </div>
             </div>  : ''}
         </Jumbotron>
