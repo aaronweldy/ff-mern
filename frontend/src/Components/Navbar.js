@@ -13,11 +13,6 @@ const MainNav = () => {
             <img src={process.env.REACT_APP_PUBLIC_URL + '/orca.jfif'} className="d-inline-block align-top mr-2" width="35" height="35" alt="League logo"></img>
             Orca Fantasy
             </Navbar.Brand>
-            {loggedIn ? <Navbar.Collapse className="collapse navbar-collapse" id="navbar-nav">
-                <Nav className="navbar-nav mr-auto">
-                    <Nav.Link className="nav-item" href="/team/">My Team</Nav.Link>
-                </Nav>
-            </Navbar.Collapse> : ''}
             {buttons}
         </Navbar>
     );

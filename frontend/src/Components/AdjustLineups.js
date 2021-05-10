@@ -32,10 +32,10 @@ export default function AdjustLineups() {
             selectedPlayer['lineup'][week] = 'bench';
         }
         else {
+            selectedPlayer['lineup'][week] = swapPlayer['lineup'][week];
             if(swapPlayer.name !== '') {
                 swapPlayer['lineup'][week] = 'bench';
             }
-            selectedPlayer['lineup'][week] = swapPlayer['lineup'][week];
         }
         setTeams([...teams]);
     };

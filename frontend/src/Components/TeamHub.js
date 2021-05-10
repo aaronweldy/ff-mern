@@ -36,13 +36,18 @@ const TeamHub = () => {
             {teams.map((team, index) => {
               return (
               <Card key={index} className="m-2">
-                <Card.Img variant="top" src={team.logo} className="card-img-top"></Card.Img>
-                <Card.Title>
-                  <Navbar.Brand href={'/league/' + team.league + '/team/' + team._id + '/'}>{team.name}</Navbar.Brand>
-                </Card.Title>
-                <Card.Text>
-                  <a href={'/league/' + team.league + '/'}>{team.leagueName}</a>
-                </Card.Text>
+                  <a href={'/league/' + team.league + '/team/' + team._id + '/'}>
+                  <Card.Img variant="top" src={team.logo} className="card-img-top"></Card.Img>
+                  </a>
+                <Card.Body>
+                  <Card.Title>
+                    {team.name}
+                  </Card.Title>
+                  <Card.Text>
+                    {team.leagueName}
+                  </Card.Text>
+                  <Button href={'/league/' + team.league + '/'}>Go to league</Button>
+                </Card.Body>
                 {team.isCommissioner ? <Card.Footer>Commissioner</Card.Footer> : ''}
               </Card>);
               })}

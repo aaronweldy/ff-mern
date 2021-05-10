@@ -23,7 +23,7 @@ const App = () => {
       <MainNav></MainNav>
       <Switch>
         <Route path="/league/create/" component={CreateLeague}></Route>
-        <Route path="/league/:leagueId/team/:id/" component={TeamPage}></Route>
+        <SecureRoute path="/league/:leagueId/team/:id/" component={TeamPage}></SecureRoute>
         <Route path="/league/:id/editTeams/" component={EditTeams}></Route>
         <Route path="/league/:id/editSettings/" component={ScoringSettings}></Route>
         <Route path="/league/:id/runScores/" component={RunScores}></Route>

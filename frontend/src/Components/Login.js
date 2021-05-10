@@ -36,8 +36,8 @@ const Login = () => {
                     return res.json();
                 }).then((data) => {
                     dispatch(setUser({id: data._id, username: data.username}));
+                    dispatch(login());
                 }).catch((e) => console.log(e));
-            dispatch(login());
         }).catch(_ => {
             setSubmitted(true);
         })

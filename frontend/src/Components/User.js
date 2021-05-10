@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react'
 import {useSelector, useDispatch} from 'react-redux'
 import {selectStatus, selectUser } from '../Redux/userSlice.js'
-import {useHistory, useParams} from 'react-router-dom'
-import { Card, CardDeck, Navbar, Container, Row, Col, Button, Form, Alert } from 'react-bootstrap'
+import {Redirect, useHistory, useParams} from 'react-router-dom'
+import { Card, CardDeck, Navbar, Container, Row, Col, Button, Form, Alert, Modal, ModalBody } from 'react-bootstrap'
 import '../CSS/LeaguePages.css'
 
 const User = () => {
@@ -18,6 +18,7 @@ const User = () => {
     let [unmatched, setUnmatched] = useState(true);
     let [incorrectPassword, setIncorrectPassword] = useState(false);
     let [success, setSuccess] = useState(false);
+    let [redirect, setRedirect] = useState(false);
     useEffect(() => {
         async function fetchTeams() {
         const url = `/api/v1/user/${username}/leagues/`;
@@ -31,6 +32,7 @@ const User = () => {
             setTeams(data.teams);
         }).catch(e => {
             console.log(e);
+            setRedirect(true);
         });
         
         }
@@ -38,6 +40,8 @@ const User = () => {
             fetchTeams();
         }
     }, [dispatch, history, username, loggedIn]);
+
+    if (redirect) return <Redirect to="/"></Redirect>;
 
     const handlePasswordChange = (e, ind) => {
         const tempPass = [...newPassword];
@@ -71,6 +75,9 @@ const User = () => {
 		}).then(_ => {
 			setSuccess(true);
             setIncorrectPassword(false);
+            setTimeout(() => {
+                setChangePassword(false);
+            }, 2000);
 		}).catch(_ => {
 			setIncorrectPassword(true);
             setSuccess(false);
@@ -90,57 +97,10 @@ const User = () => {
             </Row>
             : ''}
             {changePassword ?
-            <div>
-                <Form.Group as={Row} className="justify-content-center">
-                    <Form.Label column sm={2}>Old Password:</Form.Label>
-                    <Col sm={2}>
-                        <Form.Control type="text" onChange={e => setOldPassword(e.target.value)}></Form.Control>
-                    </Col>
-                    
-                </Form.Group>
-                <Form.Group as={Row} className="justify-content-center">
-                    <Form.Label column sm={2}>New Password:</Form.Label>
-                    <Col sm={2}>
-                        <Form.Control type="text" onChange={e => handlePasswordChange(e, 0)}></Form.Control>
-                    </Col>
-                </Form.Group>
-                <Form.Group as={Row} className="justify-content-center">
-                    <Form.Label column sm={2}>Retype New Password:</Form.Label>
-                    <Col sm={2}>
-                        <Form.Control type="text" onChange={e => handlePasswordChange(e, 1)}></Form.Control>
-                    </Col>
-                </Form.Group>
-                <Row className="justify-content-center mb-3">
-                    <Button disabled={unmatched} variant="success" onClick={handlePasswordSubmission}>Submit New Password</Button>
-                </Row>
-                {unmatched ? 
-                    <Row className="justify-content-center">
-                        <Col sm={4}>
-                            <Alert variant="danger">
-                                New passwords must match exactly.
-                            </Alert>
-                        </Col>
-                    </Row>
-                : ''}
-                {incorrectPassword ? 
-                    <Row className="justify-content-center">
-                        <Col sm={4}>
-                            <Alert variant="danger">
-                                Incorrect previous password entered.
-                            </Alert>
-                        </Col>
-                    </Row>
-                : ''}
-                {success ? 
-                    <Row className="justify-content-center">
-                        <Col sm={4}>
-                            <Alert variant="success">
-                                Successfully updated password!
-                            </Alert>
-                        </Col>
-                    </Row>
-                : ''}
-                </div>
+            <PasswordModal changePassword={changePassword} unmatched={unmatched} 
+            incorrectPassword={incorrectPassword} success={success} handlePasswordChange={handlePasswordChange} 
+            setOldPassword={setOldPassword} handlePasswordSubmission={handlePasswordSubmission}
+            handleHide={() => setChangePassword(false)}></PasswordModal>
             : ''}
             <Row className="justify-content-center">
             <Col sm={10}>
@@ -163,6 +123,70 @@ const User = () => {
             </Row>
         </Col>
         </Container>
+    );
+}
+
+const PasswordModal = (props) => {
+
+    return (
+        <Modal show={props.changePassword} onHide={props.handleHide}>
+            <Modal.Header>
+                <Modal.Title>
+                    Change Password
+                </Modal.Title>
+            </Modal.Header>
+            <ModalBody>
+            <Form.Group as={Row}>
+                <Form.Label column>Old Password:</Form.Label>
+                <Col>
+                    <Form.Control type="text" onChange={e => props.setOldPassword(e.target.value)}></Form.Control>
+                </Col>
+                
+            </Form.Group>
+            <Form.Group as={Row}>
+                <Form.Label column>New Password:</Form.Label>
+                <Col>
+                    <Form.Control type="text" onChange={e => props.handlePasswordChange(e, 0)}></Form.Control>
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row}>
+                <Form.Label column>Retype New Password:</Form.Label>
+                <Col>
+                    <Form.Control type="text" onChange={e => props.handlePasswordChange(e, 1)}></Form.Control>
+                </Col>
+            </Form.Group>
+            {props.unmatched ? 
+                <Row>
+                    <Col>
+                        <Alert variant="danger">
+                            New passwords must match exactly.
+                        </Alert>
+                    </Col>
+                </Row>
+            : ''}
+            {props.incorrectPassword ? 
+                <Row>
+                    <Col>
+                        <Alert variant="danger">
+                            Incorrect previous password entered.
+                        </Alert>
+                    </Col>
+                </Row>
+            : ''}
+            {props.success ? 
+                <Row>
+                    <Col>
+                        <Alert variant="success">
+                            Successfully updated password!
+                        </Alert>
+                    </Col>
+                </Row>
+            : ''}
+            </ModalBody>
+            <Modal.Footer>
+                <Button disabled={props.unmatched} variant="success" onClick={props.handlePasswordSubmission}>Submit New Password</Button>
+            </Modal.Footer>
+        </Modal>
     );
 }
 

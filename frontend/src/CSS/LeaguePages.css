@@ -47,3 +47,12 @@
     color: red;
     border: none;
 }
+
+.small-image {
+    width: 4rem;
+    height: 4rem;
+}
+
+.black-link {
+    color: black;
+}

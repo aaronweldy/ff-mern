@@ -17,11 +17,15 @@ env.config();
 router.get('/:username/leagues/', async (req, res) => {
     const teams = [];
     const {username} = req.params;
+    try {
     const user = await User.findOne({username});
     for await (const team of Team.find({owner: user._id})) {
         teams.push(team);
     }
     res.json({teams});
+    } catch (e) {
+      res.status(500).send("User does not exist");
+    }
 });
 
 router.get("/me/", auth, async (req, res) => {

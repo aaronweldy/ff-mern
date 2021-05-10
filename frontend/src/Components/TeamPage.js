@@ -1,18 +1,16 @@
 import React, {useState, useEffect} from 'react'
 import {useParams} from 'react-router-dom'
-import {useSelector} from 'react-redux'
-import {selectUser} from '../Redux/userSlice.js'
 import {Container, Col, Button, Alert, Row, Form} from 'react-bootstrap'
 import TeamTable from './TeamTable'
 import LeagueButton from './LeagueButton'
 
-function TeamPage() {
+function TeamPage(props) {
     const {id, leagueId} = useParams();
     const [team, setTeam] = useState(null);
     const [success, setSuccess] = useState(false);
     const [lineupSettings, setLineupSettings] = useState(null);
     const [week, setWeek] = useState(1);
-    const currUser = useSelector(selectUser);
+    const [userIsOwner, setIsOwner] = useState(false);
     const url = `/api/v1/league/${leagueId}/team/${id}/`;
     useEffect(() => {
         async function fetchTeam() {
@@ -20,9 +18,10 @@ function TeamPage() {
             const data = await resp.json();
             setTeam(data.team);
             setLineupSettings(data.league.lineupSettings);
+            setIsOwner(data.team.owner === props.userId);
         }
         fetchTeam();
-    }, [url, week]);
+    }, [url, week, props.userId]);
     const handlePlayerChange = (selectedPlayer, name, swapPlayer) => {
         console.log(`${selectedPlayer}, ${name}, ${swapPlayer}`);
         if (name === "starters") {
@@ -30,10 +29,10 @@ function TeamPage() {
             selectedPlayer['lineup'][week] = 'bench';
         }
         else {
+            selectedPlayer['lineup'][week] = swapPlayer['lineup'][week];
             if(swapPlayer.name !== '') {
                 swapPlayer['lineup'][week] = 'bench';
             }
-            selectedPlayer['lineup'][week] = swapPlayer['lineup'][week];
         }
         setTeam({...team});
     };
@@ -74,22 +73,33 @@ function TeamPage() {
             <LeagueButton id={leagueId}></LeagueButton>
             {team ?
             <Col>
-                <h1 className="mt-5">
+            <Row>
+                <Col>
+                <h1 className="mt-2">
                     {team.name}
-                    <div className="subtitle mb-5 mt-2">{team.owner === currUser ? <a href="/">Edit Team</a> : team.ownerName}</div>
+                    <div className="subtitle mb-3 mt-2">{team.ownerName}</div>
                 </h1>
+                </Col>
+            </Row>
+            <Row>
+                <Col sm="auto" className="mt-1">
                 <Form.Label>Week:</Form.Label>
+                </Col>
+                <Col sm="auto">
                 <Form.Control as="select" defaultValue={week} onChange={e => setWeek(e.target.value)}>
                     {[...Array(17)].map((_, i) => {
                         return <option value={i+1} key={i}>{i+1}</option>;
                     })}
                 </Form.Control>
+                </Col>
+            </Row>
                 <h3>Starters</h3>
-                <TeamTable players={starters} oppPlayers={bench} week={week} name="starters" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange}></TeamTable>
+                <TeamTable isOwner={userIsOwner} players={starters} oppPlayers={bench} week={week} name="starters" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange}></TeamTable>
                 <h3>Bench</h3>
-                <TeamTable players={bench} oppPlayers={starters} week={week} name="bench" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange}></TeamTable>
+                <TeamTable isOwner={userIsOwner} players={bench} oppPlayers={starters} week={week} name="bench" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange}></TeamTable>
                 <Button className="mb-3 mt-2" variant="success" onClick={sendUpdatedTeams}>Submit Lineup</Button>
                 {success ? <Row><Col sm={3}><Alert variant="success">Submitted lineup!</Alert></Col></Row> : ''}
+            
             </Col>
             : ''}
         </Container>);

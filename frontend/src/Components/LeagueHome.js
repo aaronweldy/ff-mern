@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
-import {Table, Form, Container, Col, Jumbotron, Button, Modal, Row} from 'react-bootstrap'
+import {Table, Form, Container, Col, Button, Modal, Row, Tooltip, OverlayTrigger} from 'react-bootstrap'
 import {useSelector} from 'react-redux'
 import {selectUser} from '../Redux/userSlice.js'
 import '../CSS/LeaguePages.css'
@@ -9,7 +9,7 @@ function LeagueHome(props) {
     const currUser = useSelector(selectUser);
     const {id} = useParams();
     const [teams, setTeams] = useState([]);
-    const [isCommissioner, setIsCommissioner] = useState(false);
+    const [commissioners, setCommissioners] = useState([]);
     const [runScores, setRunScores] = useState(false);
     const [showDelete, setDelete] = useState(false);
     const [leagueName, setLeagueName] = useState("");
@@ -25,7 +25,7 @@ function LeagueHome(props) {
                 return a.weekScores.reduce(reducer, 0) + a.addedPoints.reduce(reducer, 0) > b.weekScores.reduce(reducer, 0) + b.addedPoints.reduce(reducer, 0) ? -1 : 1;
             })
             setTeams(sortedTeams);
-            setIsCommissioner(json.commissioners.includes(currUser.id));
+            setCommissioners(json.commissioners);
             setLeagueName(json.name);
         }
         fetchTeams();
@@ -76,9 +76,10 @@ function LeagueHome(props) {
                 </Button>
             </Modal.Footer>
         </Modal>
-        <Jumbotron className="no-background">
+        <Col className="mb-3 mt-3">
             <h1>{teams.length > 0 ? teams[0].leagueName : ''}</h1>
-            {isCommissioner ?
+            <hr/>
+            {commissioners.includes(props.userId) ?
             <div>
                 <div>
                     <a href={"/league/" + id + "/editTeams/"}>Edit Teams</a>
@@ -95,15 +96,16 @@ function LeagueHome(props) {
                 <div>
                     <Button id="inline-button" variant="link" onClick={() => setDelete(true)}>Delete League</Button>
                 </div>
-            </div>  : ''}
-        </Jumbotron>
-        <Col sm={8}>
+                <hr/>
+            </div>
+            : ''}
+        </Col>
+        <Col sm="auto">
             <Table striped bordered hover>
                 <thead>
                     <tr>
                         <th>Team Name</th>
                         <th>Team Owner</th>
-                        <th>Commissioner</th>
                         {[...Array(17).fill().map((_, i) => {
                             return <th key={i}>{i+1}</th>
                         })]}
@@ -113,15 +115,16 @@ function LeagueHome(props) {
                 <tbody>
                     {teams.map((team, i) => {
                         console.log((team.weekScores[14] + (team.addedPoints[14] || 0)).toPrecision(5));
+                        const linked = team.ownerName !== 'default' ? <a href={process.env.REACT_APP_PUBLIC_URL + "/user/" + team.ownerName}>{team.ownerName}</a> : team.ownerName;
                         return (<tr key={i}>
                             <td>
                                 <a href={"/league/" + id + "/team/" + team._id + "/"}>{team.name}</a>
                             </td>
                             <td>
-                                <span>{team.ownerName}</span>
-                            </td>
-                            <td>
-                                <Form.Check checked={team.isCommissioner} disabled></Form.Check>
+                                {commissioners.includes(team.owner) ? 
+                                <OverlayTrigger position="top" overlay={<Tooltip>Commissioner</Tooltip>}>
+                                    <span><b>{linked}</b></span>
+                                </OverlayTrigger> : <span>{linked}</span>}
                             </td>
                             {[...Array(17).fill().map((_, i) => {
                                 return <td key={i}>{team.weekScores[i + 1] ? (team.weekScores[i+1] + (team.addedPoints[i+1] || 0)).toPrecision(5) : 0}</td>
@@ -134,7 +137,7 @@ function LeagueHome(props) {
                 </tbody>
             </Table>
         </Col>
-        {isCommissioner ? <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>Run Scores</Button>
+        {commissioners.includes(props.userId) ? <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>Run Scores</Button>
         : <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>View Weekly Scoring Breakdown</Button>}
     </Container>);
 }

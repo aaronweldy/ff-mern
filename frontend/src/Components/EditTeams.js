@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react'
 import {useSelector} from 'react-redux'
 import {selectUser} from '../Redux/userSlice'
 import {Redirect, useParams} from 'react-router-dom'
-import {Table, Container, Col, Form, Button, Row} from 'react-bootstrap'
+import {Table, Container, Col, Form, Button, Row, OverlayTrigger} from 'react-bootstrap'
 import LeagueButton from './LeagueButton'
 
 
@@ -59,11 +59,13 @@ const EditTeams = () => {
     if ((teams.length > 0 && !isCommissioner) || redirect) return <Redirect to={'/league/' + id + '/'}></Redirect>;
     return (
         <Container fluid>
-            <LeagueButton id={id}></LeagueButton>
+            <Row className="justify-content-center">
+                <LeagueButton id={id}></LeagueButton>
+            </Row>
             <Row className="justify-content-center">
             {teams ? teams.map((team, i) => {
                 return(
-                <Col md={4} key={i} className="bordered-row m-3">
+                <Col md={4} key={i} className="bordered-row m-3 p-3">
                     <Form.Group as={Row} className="mt-3">
                         <Form.Label column md={4}>Team Name</Form.Label>
                         <Col md={8}>
@@ -81,14 +83,14 @@ const EditTeams = () => {
                             <tr>
                                 <th>Position</th>
                                 <th>Player Name</th>
-                                <th>Remove Player</th>
                             </tr>
                         </thead>
                         <tbody>
                             {team.players.map((player, j) =>
-                            <tr key={j}>
+                            <OverlayTrigger key={j} placement="left" delay="1000" overlay={<Button onClick={handlePlayerChange} name="remove" variant="danger" data-team={i} data-id={j}>X</Button>}>
+                            <tr>
                                 <td>
-                                    <Form.Control name="position" data-team={i} data-id={j} as="select" defaultValue={player.position} onChange={handlePlayerChange}>
+                                    <Form.Control name="position" data-team={i} data-id={j} as="select" value={player.position} onChange={handlePlayerChange}>
                                         <option value="QB">QB</option>
                                         <option value="RB">RB</option>
                                         <option value="WR">WR</option>
@@ -99,10 +101,8 @@ const EditTeams = () => {
                                 <td>
                                     <input name="name" data-team={i} data-id={j} type="text" value={player.name} onChange={handlePlayerChange}></input>
                                 </td>
-                                <td>
-                                    <Button onClick={handlePlayerChange} name="remove" variant="danger" data-team={i} data-id={j}>X</Button>
-                                </td>
                             </tr>
+                            </OverlayTrigger>
                             )}
                         </tbody>
                     </Table>

@@ -40,22 +40,28 @@ const RunScores = () => {
         });
     }
     const teamSorter = (a, b) => {
-        const reducer = (acc, i) => acc + i ? i : 0;
-        return a.weekScores.reduce(reducer, 0) + a.addedPoints.reduce(reducer, 0) > b.weekScores.reduce(reducer, 0) + b.addedPoints.reduce(reducer, 0) ? -1 : 1;
+        return a.weekScores[week] + a.addedPoints[week] > b.weekScores[week] + b.addedPoints[week] ? -1 : 1;
     };
     return (
-        <Container className="ml-5"> 
-            <LeagueButton id={id}></LeagueButton>
-            <Col md={1} className="mb-4">
-                <Form.Label>Week:</Form.Label>
-                <Form.Control as="select" defaultValue={week} onChange={e => setWeek(e.target.value)}>
-                    {[...Array(17)].map((_, i) => {
-                        return <option value={i+1} key={i}>{i+1}</option>;
-                    })}
-                </Form.Control>
-            </Col>
+        <Container className="ml-5">
+            <Row>
+                <LeagueButton id={id}></LeagueButton>
+            </Row>
+            <Row className="mb-4 mt-4">
+                <Col sm="auto" className="mt-1">
+                    <Form.Label>Week:</Form.Label>
+                </Col>
+                <Col sm="auto">
+                    <Form.Control as="select" defaultValue={week} onChange={e => setWeek(e.target.value)}>
+                        {[...Array(17)].map((_, i) => {
+                            return <option value={i+1} key={i}>{i+1}</option>;
+                        })}
+                    </Form.Control>
+                </Col>
+            </Row>
             {teams.length > 0 ? teams.map((team, i) => {
-                return <Col md={12} key={i}>
+                return <Row key={i}>
+                    <Col>
                     <h3>{team.name}</h3>
                     <Table striped bordered hover>
                         <thead>
@@ -120,10 +126,11 @@ const RunScores = () => {
                             </tr>
                         </tbody>
                     </Table>
-                </Col>
+                    </Col>
+                </Row>
             }) : ''}
             <Row>
-                <Col md={4}>
+                <Col sm={4}>
                     <Table striped bordered hover>
                         <thead>
                             <tr>
@@ -146,9 +153,9 @@ const RunScores = () => {
                     </Table>
                 </Col>
             </Row>
-            {isCommissioner ? <Col className="mb-5"> 
+            {isCommissioner ? <Row><Col className="mb-5"> 
                 <Button variant="success" onClick={sendData}>Calculate Scores</Button>
-            </Col> : ''}
+            </Col></Row> : ''}
         </Container>
     );
 }
