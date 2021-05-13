@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
 import {Container, Col, Form, Button, Row, OverlayTrigger} from 'react-bootstrap'
 import LeagueButton from './LeagueButton'
+import {auth} from '../firebase-config'
 
 const positionTypes = ["QB", "RB", "WR", "TE", "K", "WR/RB", "WR/RB/TE", "QB/WR/RB/TE"];
 const scoringTypes = ["ATT", "PASS YD", "REC YD", "RUSH YD", "CARRIES", "YD PER CARRY", "YD PER CATCH", "REC", "TARGETS", "PASS TD", "RUSH TD", "REC TD", "YD PER ATT", "YD PER COMPLETION", "CP%", "INT", "FUM", 'FG 1-19', 'FG 20-29', 'FG 30-39', 'FG 40-49', 'FG 50+', 'FG/XP MISS']
@@ -11,13 +12,16 @@ function ScoringSettings() {
     const [redirect, setRedirect] = useState(false);
     const {id} = useParams();
     useEffect(() => {
-        async function fetchLeague() {
-            const url = `/api/v1/league/${id}/`;
-            const data = await fetch(url);
-            const json = await data.json();
-            setSettings(json.scoringSettings);
-        }
-        fetchLeague();
+        const unsub = auth.onAuthStateChanged(async user => {
+            if (user) {
+                const url = `/api/v1/league/${id}/`;
+                const data = await fetch(url);
+                const json = await data.json();
+                setSettings(json.scoringSettings);
+                if (!json.commissioners.includes(user.uid)) setRedirect(true);
+            }
+        });
+        return () => unsub();
     }, [id]);
     const handleSettingChange = e => {
         const tempSettings = [...settings];
@@ -67,7 +71,6 @@ function ScoringSettings() {
             setRedirect(true);
         });
     }
-    console.log(settings);
     if (redirect) return <Redirect to={'/league/' + id + '/'}></Redirect>
     return (
         <Container fluid>

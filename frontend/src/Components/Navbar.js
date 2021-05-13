@@ -1,8 +1,9 @@
-import React from 'react';
-import {Navbar, Nav, Button} from 'react-bootstrap'
-import {useHistory} from 'react-router-dom'
+import React, {useEffect, useState} from 'react';
+import {Navbar, Button} from 'react-bootstrap'
+import {Redirect} from 'react-router-dom'
 import {useSelector, useDispatch} from 'react-redux'
-import {selectStatus, logout, selectUser} from '../Redux/userSlice.js'
+import {selectStatus, logout} from '../Redux/userSlice.js'
+import {auth} from '../firebase-config'
 
 const MainNav = () => {
     const loggedIn = useSelector(selectStatus);
@@ -21,25 +22,44 @@ const MainNav = () => {
 function LoginButtons() {
     return (
         <Navbar.Collapse className="justify-content-end">
-            <Button className="mr-3" variant="primary" href="/login/">Login</Button>
-            <Button variant="primary" href="/create/">Create an account</Button>
+            <Button variant="primary" href="/login/">Login or Create Account</Button>
+
         </Navbar.Collapse>
     );
 }
 
 function LogOutButtons() {
     const dispatch = useDispatch();
-    const history = useHistory();
-    const user = useSelector(selectUser);
+    const [username, setUsername] = useState("");
+    const [redirect, setRedirect] = useState(false);
+    const user = auth.currentUser;
+    console.log(auth.currentUser);
+    useEffect(() => {
+        const authFunc = auth.onAuthStateChanged(user => {
+            if (user) {
+                setUsername(user.email);
+            } else {
+                setRedirect(true);
+            }
+        });
+        return () => authFunc();
+    }, [user]);
+    
     function handleClick(e) {
         e.preventDefault();
-        localStorage.removeItem('userToken');
-        dispatch(logout());
-        history.push('/login/');
+        auth.signOut().then(() => {
+            dispatch(logout());
+            setRedirect(true);
+        }).catch(e => console.log(e));
+        
     }
-    return (<Navbar.Collapse className="justify-content-end">
+
+    if (redirect) return <Redirect to="/login/"></Redirect>;
+    return (
+    <Navbar.Collapse className="justify-content-end">
         <Navbar.Text className="mr-3">
-            Welcome, <a href={`/user/${user.username}/`}>{user.username}</a>!
+            Welcome
+            {user ? <a href={`/user/${user.uid}/`}> {username}!</a> : '!'}
         </Navbar.Text>
         <Button variant="primary" onClick={handleClick} type="submit">
             Logout

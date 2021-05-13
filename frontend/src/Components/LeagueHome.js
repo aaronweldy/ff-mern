@@ -1,12 +1,11 @@
 import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
 import {Table, Form, Container, Col, Button, Modal, Row, Tooltip, OverlayTrigger} from 'react-bootstrap'
-import {useSelector} from 'react-redux'
-import {selectUser} from '../Redux/userSlice.js'
+import {auth} from '../firebase-config'
+import 'firebase/auth'
 import '../CSS/LeaguePages.css'
 
 function LeagueHome(props) {
-    const currUser = useSelector(selectUser);
     const {id} = useParams();
     const [teams, setTeams] = useState([]);
     const [commissioners, setCommissioners] = useState([]);
@@ -15,26 +14,31 @@ function LeagueHome(props) {
     const [leagueName, setLeagueName] = useState("");
     const [deleteName, setName] = useState("");
     const [redirect, setRedirect] = useState(false);
+    const user = auth.currentUser;
     useEffect(() => {
-        const url = `/api/v1/league/${id}/`;
-        async function fetchTeams() {
-            const resp = await fetch(url);
-            const json = await resp.json();
-            const sortedTeams = json.teams.sort((a, b) => {
-                const reducer = (acc, i) => acc + i ? i : 0;
-                return a.weekScores.reduce(reducer, 0) + a.addedPoints.reduce(reducer, 0) > b.weekScores.reduce(reducer, 0) + b.addedPoints.reduce(reducer, 0) ? -1 : 1;
-            })
-            setTeams(sortedTeams);
-            setCommissioners(json.commissioners);
-            setLeagueName(json.name);
-        }
-        fetchTeams();
-    }, [id, currUser]);
+        const unsub = auth.onAuthStateChanged(async user => {
+            if (user) {
+                const url = `/api/v1/league/${id}/`;
+                const resp = await fetch(url);
+                const json = await resp.json();
+                const sortedTeams = json.teams.sort((a, b) => {
+                    const reducer = (acc, i) => acc + i ? i : 0;
+                    return a.weekScores.reduce(reducer, 0) + a.addedPoints.reduce(reducer, 0) > b.weekScores.reduce(reducer, 0) + b.addedPoints.reduce(reducer, 0) ? -1 : 1;
+                })
+                setTeams(sortedTeams);
+                console.log(json.teams);
+                if (user) console.log(user.uid);
+                setCommissioners(json.commissioners);
+                setLeagueName(json.name);
+            }
+        });
+        return () => unsub();
+    }, [id, user]);
     if (runScores) return <Redirect to={'/league/' + id + '/runScores/'}></Redirect>;
 
     const deleteLeague = _ => {
         const url = `/api/v1/league/${id}/delete/`;
-        const body = {user: props.userId};
+        const body = {user: user ? user.uid : 0};
         console.log(body);
         const reqDict = {
             headers: {"content-type" : "application/json"},
@@ -79,7 +83,7 @@ function LeagueHome(props) {
         <Col className="mb-3 mt-3">
             <h1>{teams.length > 0 ? teams[0].leagueName : ''}</h1>
             <hr/>
-            {commissioners.includes(props.userId) ?
+            {user && commissioners.includes(user.uid) ?
             <div>
                 <div>
                     <a href={"/league/" + id + "/editTeams/"}>Edit Teams</a>
@@ -115,7 +119,7 @@ function LeagueHome(props) {
                 <tbody>
                     {teams.map((team, i) => {
                         console.log((team.weekScores[14] + (team.addedPoints[14] || 0)).toPrecision(5));
-                        const linked = team.ownerName !== 'default' ? <a href={process.env.REACT_APP_PUBLIC_URL + "/user/" + team.ownerName}>{team.ownerName}</a> : team.ownerName;
+                        const linked = team.ownerName !== 'default' ? <a href={process.env.REACT_APP_PUBLIC_URL + "/user/" + team.owner}>{team.ownerName}</a> : team.ownerName;
                         return (<tr key={i}>
                             <td>
                                 <a href={"/league/" + id + "/team/" + team._id + "/"}>{team.name}</a>
@@ -137,7 +141,7 @@ function LeagueHome(props) {
                 </tbody>
             </Table>
         </Col>
-        {commissioners.includes(props.userId) ? <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>Run Scores</Button>
+        {user && commissioners.includes(user.uid) ? <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>Run Scores</Button>
         : <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>View Weekly Scoring Breakdown</Button>}
     </Container>);
 }

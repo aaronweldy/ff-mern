@@ -1,13 +1,11 @@
 import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
 import {Table, Alert, Container, Col, Row, DropdownButton, Dropdown, Button, Form} from 'react-bootstrap'
-import {useSelector} from 'react-redux'
-import {selectUser} from '../Redux/userSlice.js'
+import {auth} from '../firebase-config'
 import LeagueButton from './LeagueButton'
 import '../CSS/LeaguePages.css'
 
 export default function AdjustLineups() {
-    const currUser = useSelector(selectUser);
     const {id} = useParams();
     const [teams, setTeams] = useState([]);
     const [isCommissioner, setIsCommissioner] = useState(false);
@@ -15,17 +13,16 @@ export default function AdjustLineups() {
     const [success, setSuccess] = useState(false);
     const [week, setWeek] = useState(1);
     useEffect(() => {
-        async function fetchTeam() {
+        const unsub = auth.onAuthStateChanged(async user => {
             const url = `/api/v1/league/${id}/`;
             const resp = await fetch(url);
             const data = await resp.json();
-            setIsCommissioner(data.commissioners.includes(currUser.id));
+            setIsCommissioner(data.commissioners.includes(user.uid));
             setTeams(data.teams);
-            console.log(data.teams);
             setLineupSettings(data.lineupSettings);
-        }
-        fetchTeam();
-    }, [id, currUser, week]);
+        });
+        return () => unsub();
+    }, [id, week]);
     const handlePlayerChange = (selectedPlayer, name, swapPlayer) => {
         if (name === "starters") {
             swapPlayer['lineup'][week] = selectedPlayer['lineup'][week];
@@ -37,7 +34,7 @@ export default function AdjustLineups() {
                 swapPlayer['lineup'][week] = 'bench';
             }
         }
-        setTeams([...teams]);
+        setTeams({...teams});
     };
     const handleBenchPlayer = (selectedPlayer, tableId) => {
         const tempTeams = [...teams];
@@ -83,7 +80,7 @@ export default function AdjustLineups() {
                 }).flat());
                 console.log(lineupSettings);
                 team.players.filter(player => player.lineup[week] !== 'bench').forEach(starter => {
-                    starters[starters.findIndex(player => player.position === starter.position && player.name === '')] = starter;
+                    starters[starters.findIndex(player => player.lineup[week] === starter.lineup[week] && player.name === '')] = starter;
                 });
                 const bench = team.players.filter(player => player.lineup[week] === 'bench');
                 return (

@@ -67,7 +67,7 @@ function CreateLeague() {
                 <thead>
                     <tr>
                         <th>Team Name</th>
-                        <th>Team Owner</th>
+                        <th>Team Owner Email</th>
                         <th>Commissioner</th>
                     </tr>
                 </thead>
@@ -104,9 +104,9 @@ function CreateLeague() {
                 <hr></hr>
                 <h4>Scoring Settings</h4>
                 <Form.Group>
-                    <Form.Check type="radio" name="scoring-setting" value="Standard" label="Standard" onClick={e => setScoring(e.target.value)} checked={scoring === "Standard"}></Form.Check>
-                    <Form.Check type="radio" name="scoring-setting" value="PPR" label="PPR" onClick={e => setScoring(e.target.value)} checked={scoring === "PPR"}></Form.Check>
-                    <Form.Check type="radio" name="scoring-setting" value="Custom" label="Custom" onClick={e => setScoring(e.target.value)} checked={scoring === "Custom"}></Form.Check>
+                    <Form.Check type="radio" name="scoring-setting" value="Standard" label="Standard" onClick={e => setScoring(e.target.value)} defaultChecked={scoring === "Standard"}></Form.Check>
+                    <Form.Check type="radio" name="scoring-setting" value="PPR" label="PPR" onClick={e => setScoring(e.target.value)} defaultChecked={scoring === "PPR"}></Form.Check>
+                    <Form.Check type="radio" name="scoring-setting" value="Custom" label="Custom" onClick={e => setScoring(e.target.value)} defaultChecked={scoring === "Custom"}></Form.Check>
                 </Form.Group>
             </Form>
             : ''}

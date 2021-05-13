@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import {useParams} from 'react-router-dom'
 import {Container, Col, Button, Alert, Row, Form} from 'react-bootstrap'
+import {auth} from '../firebase-config'
 import TeamTable from './TeamTable'
 import LeagueButton from './LeagueButton'
 
@@ -11,17 +12,19 @@ function TeamPage(props) {
     const [lineupSettings, setLineupSettings] = useState(null);
     const [week, setWeek] = useState(1);
     const [userIsOwner, setIsOwner] = useState(false);
-    const url = `/api/v1/league/${leagueId}/team/${id}/`;
     useEffect(() => {
-        async function fetchTeam() {
-            const resp = await fetch(url);
-            const data = await resp.json();
-            setTeam(data.team);
-            setLineupSettings(data.league.lineupSettings);
-            setIsOwner(data.team.owner === props.userId);
-        }
-        fetchTeam();
-    }, [url, week, props.userId]);
+        const url = `/api/v1/league/${leagueId}/team/${id}/`;
+        const unsub = auth.onAuthStateChanged(async user => {
+            if (user) {
+                const resp = await fetch(url);
+                const data = await resp.json();
+                setTeam(data.team);
+                setLineupSettings(data.league.lineupSettings);
+                setIsOwner(data.team.owner === user.uid);
+            }
+        });
+        return () => unsub();
+    }, [week, leagueId, id]);
     const handlePlayerChange = (selectedPlayer, name, swapPlayer) => {
         console.log(`${selectedPlayer}, ${name}, ${swapPlayer}`);
         if (name === "starters") {
@@ -63,7 +66,7 @@ function TeamPage(props) {
             return [...Array(parseInt(lineupSettings[pos])).fill().map(_ => { return {"position" : pos, "name" : '', "lineup" : [...Array(17).fill(pos)]} })];
         }).flat());
         team.players.filter(player => player.lineup[week] !== 'bench').forEach(starter => {
-            starters[starters.findIndex(player => player.position === starter.position && player.name === '')] = starter;
+            starters[starters.findIndex(player => player.lineup[week] === starter.lineup[week] && player.name === '')] = starter;
         });
         bench = team.players.filter(player => player.lineup[week] === 'bench');
         console.log(lineupSettings ? "true" : "false")

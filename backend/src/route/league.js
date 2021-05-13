@@ -3,6 +3,7 @@ import League from '../model/league.js'
 import WeekStats from '../model/weekStats.js'
 import User from '../model/user.js'
 import scraper from 'table-scraper'
+import admin from 'firebase-admin'
 import {convertedScoringTypes, defaultScoringSettings} from "../constants/league.js"
 import { Router } from 'express'
 
@@ -12,9 +13,14 @@ const positions = ['qb', 'rb', 'wr', 'te', 'k'];
 
 router.get('/:id/', async (req, res) => {
     const leagueId = req.params['id'];
-    const teams = await Team.find({league: leagueId});
-    const comms = await League.findById(leagueId);
-    res.status(200).json({teams, commissioners: comms.commissioners, scoringSettings: comms.scoringSettings, lineupSettings: comms.lineupSettings, name: comms.name});
+    try {
+        const teams = await Team.find({league: leagueId});
+        const comms = await League.findById(leagueId);
+        res.status(200).json({teams, commissioners: comms.commissioners, scoringSettings: comms.scoringSettings, lineupSettings: comms.lineupSettings, name: comms.name});
+    } catch (e) {
+        console.log(e);
+        res.status(500).send();
+    }
 });
 
 router.post('/create/', async (req, res) => {
@@ -22,22 +28,36 @@ router.post('/create/', async (req, res) => {
     const newLeague = new League({name: league, lineupSettings: posInfo});
     await newLeague.save();
     let comms = [];
-    for (const team of teams) {
-        let uid = (await User.findOne({username: team.teamOwner}));
-        if (uid) uid = uid.id;
-        const newTeam = new Team({
-            name: team.teamName,
-            owner: uid || "default",
-            ownerName: team.teamOwner || "default",
-            isCommissioner: team.isCommissioner,
-            league: newLeague.id,
-            leagueName: newLeague.name
+    for await (const team of teams) {
+        console.log(team);
+        await admin.auth().getUserByEmail(team.teamOwner).then(async (user) => {
+            const newTeam = new Team({
+                name: team.teamName,
+                owner: user.uid,
+                ownerName: user.email,
+                isCommissioner: team.isCommissioner,
+                league: newLeague.id,
+                leagueName: newLeague.name
+            });
+            console.log(team.isCommissioner);
+            if(team.isCommissioner) comms.push(user.uid);
+            await newTeam.save();
+        }).catch(async (err) => {
+            console.log(err);
+            const newTeam = new Team({
+                name: team.teamName,
+                owner: "default",
+                ownerName: "default",
+                isCommissioner: team.isCommissioner,
+                league: newLeague.id,
+                leagueName: newLeague.name
+            });
+            await newTeam.save();
         });
-        if(uid && team.isCommissioner) comms.push(uid);
-        await newTeam.save();
+        
     }
-    console.log(defaultScoringSettings[scoring]);
     await League.findByIdAndUpdate(newLeague.id, {commissioners: comms, scoringSettings : scoring === "Custom" ? {} : defaultScoringSettings[scoring]}, {useFindAndModify: false});
+    console.log(comms);
     res.status(200).json({"id" : newLeague.id});
 });
 
@@ -67,8 +87,12 @@ router.get('/:leagueId/teams/', async (req, res) => {
 router.post('/updateTeams/', async (req, res) => {
     const {teams} = req.body;
     teams.forEach(async team => {
-        const owner = await User.findOne({username: team.ownerName});
-        await Team.findByIdAndUpdate(team._id, {name: team.name, owner: owner ? owner._id : "default", ownerName: owner ? owner.username : "default", players: team.players}, {useFindAndModify: false});
+        console.log(team);
+        await admin.auth().getUserByEmail(team.ownerName).then(async (user) => {
+            await Team.findByIdAndUpdate(team._id, {name: team.name, owner: user.uid, ownerName: team.ownerName, players: team.players}, {useFindAndModify: false});
+        }).catch(async _ => {
+            await Team.findByIdAndUpdate(team._id, {name: team.name, owner: "default", ownerName: "default", players: team.players}, {useFindAndModify: false});
+        });
     });
     res.status(200).send({"message": "updated teams successfully"});
 });
@@ -100,7 +124,7 @@ router.post('/:leagueId/runScores/', async (req, res) => {
             const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${new Date().getFullYear}&week=${week}&range=week`;
             const table = await scraper.get(url);
             for (const player of table[0]) {
-                const hashedName = player['Player'].replace(/\./g, '');
+                const hashedName = player['Player'].replace(/\./g, '').toLowerCase();
                 playerMap[hashedName.slice(0, hashedName.indexOf('(') - 1)] = pos === 'QB' ? 
                 {...player, "CP%" : Number.parseFloat(player['CMP']) / Number.parseFloat(player['ATT']), "Y/A" : Number.parseFloat(player['YDS']) / Number.parseFloat(player['ATT'])} 
                 : player;
@@ -111,18 +135,19 @@ router.post('/:leagueId/runScores/', async (req, res) => {
         statsAtt = stats;
     }
     for await (const team of teams) {
+        team.weekScores[week] = 0;
         team.players.filter(player => player.lineup[week] !== 'bench').forEach(player => {
             const catPoints = league.scoringSettings.filter(set => set.position.indexOf(player.position) >= 0).map(category => {
                 player.error = false;
                 const cat = category['category'];
                 const hashVal = cat.qualifier === 'between' ? `${cat.qualifier}|${cat.threshold_1}${cat.threshold_2}|${cat.statType}` : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
-                if (!Object.keys(statsAtt.playerMap).includes(player.name)) {
+                if (!Object.keys(statsAtt.playerMap).includes(player.name.toLowerCase())) {
                     player["error"] = true;
                     return {hashVal : 0};
                 }
                 let points = 0;
                 try {
-                    const statNumber = Number.parseFloat(statsAtt.playerMap[player.name][convertedScoringTypes[player.position][cat.statType]]);
+                    const statNumber = Number.parseFloat(statsAtt.playerMap[player.name.toLowerCase()][convertedScoringTypes[player.position][cat.statType]]);
                     if (isNaN(statNumber)) return {hashVal : 0};
                     console.log(statNumber);
                     switch (cat.qualifier) {

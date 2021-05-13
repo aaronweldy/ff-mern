@@ -2,7 +2,6 @@ import '../CSS/App.css';
 import TeamHub from './TeamHub'
 import TeamPage from './TeamPage'
 import MainNav from './Navbar'
-import CreateAccount from './CreateAccount'
 import Login from './Login'
 import CreateLeague from './CreateLeague'
 import LeagueHome from './LeagueHome'
@@ -30,8 +29,7 @@ const App = () => {
         <Route path="/league/:id/addPoints/" component={AddPoints}></Route>
         <Route path="/league/:id/adjustLineups/" component={AdjustLineups}></Route>
         <SecureRoute path="/league/:id/" component={LeagueHome}></SecureRoute>
-        <SecureRoute path="/user/:username" component={User}></SecureRoute>
-        <Route path="/create/" component={CreateAccount}></Route>
+        <SecureRoute path="/user/:userid/" component={User}></SecureRoute>
         <Route path="/login/" component={Login}></Route>
         <SecureRoute path="/" component={TeamHub}></SecureRoute>
       </Switch>

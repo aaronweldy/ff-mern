@@ -1,30 +1,31 @@
 import React, {useEffect, useState} from 'react'
 import {useSelector, useDispatch} from 'react-redux'
-import {selectStatus, selectUser } from '../Redux/userSlice.js'
-import { Card, CardDeck, Navbar, Button, Container, Row, Col } from 'react-bootstrap'
+import {selectStatus } from '../Redux/userSlice.js'
+import { Card, CardDeck, Button, Container, Row, Col } from 'react-bootstrap'
+import {auth} from '../firebase-config'
+import 'firebase/auth'
 import '../CSS/LeaguePages.css'
 
 const TeamHub = () => {
   const dispatch = useDispatch();
   const loggedIn = useSelector(selectStatus);
-  const currUser = useSelector(selectUser);
+  const currUser = auth.currentUser;
   let [teams, setTeams] = useState([]);
   useEffect(() => {
-    async function fetchTeams() {
-      const url = `/api/v1/user/${currUser.username}/leagues/`;
-      await fetch(url).then(resp => {
-          if(!resp.ok) throw Error(resp.statusText);
-          return resp.json();
-        }).then(data => {
-          setTeams(data.teams);
-        }).catch(e => {
-          console.log(e);
-      });
-      
-    }
-    if(loggedIn) {
-      fetchTeams();
-    }
+    const unsub = auth.onAuthStateChanged(async user => {
+      if (user) {
+        const url = `/api/v1/user/${user.uid}/leagues/`;
+        await fetch(url).then(resp => {
+            if(!resp.ok) throw Error(resp.statusText);
+            return resp.json();
+          }).then(data => {
+            setTeams(data.teams);
+          }).catch(e => {
+            console.log(e);
+        });
+      }
+    });
+    return () => unsub();
   }, [dispatch, currUser, loggedIn])
   return (
     <Container fluid>

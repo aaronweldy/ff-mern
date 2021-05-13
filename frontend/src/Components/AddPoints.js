@@ -1,28 +1,28 @@
 import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
 import {Table, Form, Container, Col, Row, Button} from 'react-bootstrap'
-import {useSelector} from 'react-redux'
-import {selectUser} from '../Redux/userSlice.js'
+import {auth} from '../firebase-config'
 import LeagueButton from './LeagueButton'
 import '../CSS/LeaguePages.css'
 
 export default function AddPoints() {
-    const currUser = useSelector(selectUser);
     const {id} = useParams();
     const [teams, setTeams] = useState([]);
     const [isCommissioner, setIsCommissioner] = useState(false);
     const [week, setWeek] = useState(1);
     const [redirect, setRedirect] = useState(false);
     useEffect(() => {
-        const url = `/api/v1/league/${id}/`;
-        async function fetchTeams() {
-            const resp = await fetch(url);
-            const json = await resp.json();
-            setIsCommissioner(json.commissioners.includes(currUser.id));
-            setTeams(json.teams);
-        }
-        fetchTeams();
-    }, [id, currUser]);
+        const unsub = auth.onAuthStateChanged(async user => {
+            if (user) {
+                const url = `/api/v1/league/${id}/`;
+                const resp = await fetch(url);
+                const json = await resp.json();
+                setIsCommissioner(json.commissioners.includes(user.uid));
+                setTeams(json.teams);
+            }
+        });
+        return () => unsub();
+    }, [id]);
     const handleAddedPoints = e => {
         const tempTeams = [...teams];
         tempTeams[e.target.dataset.id]['addedPoints'][week] = Number.parseFloat(e.target.value);
@@ -43,7 +43,9 @@ export default function AddPoints() {
     if ((teams.length > 0 && !isCommissioner) || redirect) return <Redirect to={"/league/" + id + "/"}></Redirect>;
     return (
         <Container id="small-left">
-            <LeagueButton id={id}></LeagueButton>
+            <Row>
+                <LeagueButton id={id}></LeagueButton>
+            </Row>
             <Row className="mt-3 mb-3">
                 <Col className="justify-items-center align-self-center" md={1}>
                     <Form.Label>Week: </Form.Label>

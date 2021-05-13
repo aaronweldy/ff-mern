@@ -1,27 +1,27 @@
 import React, {useState, useEffect} from 'react'
-import {useSelector} from 'react-redux'
-import {selectUser} from '../Redux/userSlice'
 import {Redirect, useParams} from 'react-router-dom'
 import {Table, Container, Col, Form, Button, Row, OverlayTrigger} from 'react-bootstrap'
 import LeagueButton from './LeagueButton'
+import {auth} from '../firebase-config'
 
 
 const EditTeams = () => {
-    const currUser = useSelector(selectUser);
-    const [teams, setTeams] = useState([]);
-    const [isCommissioner, setIsCommissioner] = useState(false);
+    const [teams, setTeams] = useState(null);
     const [redirect, setRedirect] = useState(false);
     const {id} = useParams();
     useEffect(() => {
-        async function fetchLeague() {
-            const url = `/api/v1/league/${id}/`;
-            const data = await fetch(url);
-            const json = await data.json();
-            if(json.commissioners.includes(currUser.id)) setIsCommissioner(true);
-            setTeams(json.teams);
-        }
-        fetchLeague();
-    }, [id, currUser]);
+        const unsub = auth.onAuthStateChanged(async user => {
+            if (user) {
+                const url = `/api/v1/league/${id}/`;
+                const data = await fetch(url);
+                const json = await data.json();
+                const isComm = json.commissioners.includes(user.uid);
+                if (!isComm) setRedirect(true);
+                setTeams(json.teams);
+            }
+        });
+        return () => unsub();
+    }, [id]);
     const handleAddPlayer = e => {
         const tempTeams = [...teams];
         tempTeams[e.target.dataset.id]['players'].push({name: '', position: 'QB', lineup: [...Array(17).fill('bench')], points: [], weekStats: []});
@@ -56,7 +56,7 @@ const EditTeams = () => {
         .then(json => console.log(json));
         setRedirect(true);
     }
-    if ((teams.length > 0 && !isCommissioner) || redirect) return <Redirect to={'/league/' + id + '/'}></Redirect>;
+    if (redirect) return <Redirect to={'/league/' + id + '/'}></Redirect>;
     return (
         <Container fluid>
             <Row className="justify-content-center">

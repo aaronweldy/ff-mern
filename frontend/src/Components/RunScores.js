@@ -2,31 +2,29 @@ import React, {useState, useEffect} from 'react'
 import {useParams} from 'react-router-dom'
 import LeagueButton from './LeagueButton'
 import {Container, Table, Col, Form, Button, OverlayTrigger, Tooltip, Row} from 'react-bootstrap'
-import {useSelector} from 'react-redux'
-import {selectUser} from '../Redux/userSlice.js'
+import {auth} from '../firebase-config'
 import '../CSS/LeaguePages.css'
 
 const background_iters = ["first-background", "second-background", "third-background"]
 
 const RunScores = () => {
-    const currUser = useSelector(selectUser);
     const {id} = useParams();
     const [teams, setTeams] = useState([]);
     const [league, setLeague] = useState(null);
     const [isCommissioner, setIsCommissioner] = useState(false);
     const [week, setWeek] = useState(1);
     useEffect(() => {
-        const url = `/api/v1/league/${id}/`;
-        async function fetchTeams() {
+        const unsub = auth.onAuthStateChanged(async user => {
+            const url = `/api/v1/league/${id}/`;
             const resp = await fetch(url);
             const json = await resp.json();
             console.log(json);
             setTeams(json.teams);
             setLeague(json.scoringSettings);
-            setIsCommissioner(json.commissioners.includes(currUser.id));
-        }
-        fetchTeams();
-    }, [id, currUser]);
+            setIsCommissioner(json.commissioners.includes(user.uid));
+        });
+        return () => unsub();
+    }, [id]);
     const sendData = _ => {
         const url = `/api/v1/league/${id}/runScores/`;
         const body = {week};
@@ -40,7 +38,7 @@ const RunScores = () => {
         });
     }
     const teamSorter = (a, b) => {
-        return a.weekScores[week] + a.addedPoints[week] > b.weekScores[week] + b.addedPoints[week] ? -1 : 1;
+        return (b.weekScores[week] + (b.addedPoints[week] || 0)) - (a.weekScores[week] + (a.addedPoints[week] || 0));
     };
     return (
         <Container className="ml-5">
@@ -88,7 +86,8 @@ const RunScores = () => {
                                 </td>
                                 </OverlayTrigger>
                                 : <td><span>{player.name}</span></td>
-                                return (<tr key={i}>
+                                return (
+                                <tr key={i}>
                                     <td>
                                         <span>{player.lineup[week]}</span>
                                     </td>
@@ -106,7 +105,7 @@ const RunScores = () => {
                                         <td key={i}>
                                             {player.weekStats[week] ? player.weekStats[week][hashVal] || 0 : 0}
                                         </td>);
-                                    }) : <td></td>}
+                                    }) : ''}
                                 </tr>);}) }
                             <tr>
                                 <td colSpan="3">
@@ -141,11 +140,12 @@ const RunScores = () => {
                         </thead>
                         <tbody>
                             {teams.sort(teamSorter).map((team, i) => {
+                                console.log(team);
                                 return (
                                     <tr key={i} id={i <= 2 ? background_iters[i] : ''}>
                                         <td>{i+1}</td>
                                         <td>{team.name}</td>
-                                        <td>{team.weekScores[week] + team.addedPoints[week]}</td>
+                                        <td>{team.weekScores[week] + (team.addedPoints[week] || 0)}</td>
                                     </tr>
                                 );
                             })}

@@ -1,73 +1,36 @@
-import React, { useState } from 'react'
-import {useSelector, useDispatch} from 'react-redux'
-import {Redirect} from 'react-router-dom'
-import {selectStatus, login, setUser} from '../Redux/userSlice.js'
-import {Form, Button, Col, Alert} from 'react-bootstrap'
+import React, { useEffect } from 'react'
+import {useDispatch} from 'react-redux'
+import {login} from '../Redux/userSlice.js'
+import {Row, Container} from 'react-bootstrap'
+import {auth, ui, uiConfig} from '../firebase-config'
+import 'firebase/auth'
 
 const Login = () => {
-    const loggedIn = useSelector(selectStatus);
     const dispatch = useDispatch();
-    const [submitted, setSubmitted] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    async function handleLogin(e) {
-        e.preventDefault();
-        const body = {
-          "email": email,
-          "password": password
-        };
-        const reqdict = {
-          method : 'POST', 
-          headers : {'content-type' : 'application/json'},
-          body : JSON.stringify(body)
-        };
-        await fetch("/api/v1/user/login/", reqdict).then(resp => {
-            if (!resp.ok) throw Error(resp.statusText);
-            return resp.json();
-        }).then(data => {
-            localStorage.setItem('userToken', data.token);
-            localStorage.setItem('refreshToken', data.refreshToken);
-            fetch('/api/v1/user/me/', {
-                credentials : "include",
-                headers : {
-                    'content-type' : 'application/json', 'token' : localStorage.getItem('userToken')}
-                }).then((res) => {
-                    if (!res.ok) throw Error(res.statusText);
-                    return res.json();
-                }).then((data) => {
-                    dispatch(setUser({id: data._id, username: data.username}));
-                    dispatch(login());
-                }).catch((e) => console.log(e));
-        }).catch(_ => {
-            setSubmitted(true);
-        })
-    }
-    if(loggedIn) return <Redirect to="/"></Redirect>;
+    
+    useEffect(() => {
+        ui.start('#firebaseui-auth-container', uiConfig);
+        const authFunc = auth.onAuthStateChanged(user => {
+            if (user) {
+                dispatch(login());
+            } else {
+                console.log(user);
+            }
+        });
+        return () => authFunc();
+    }, [dispatch]);
     return (
-        <Form onSubmit={handleLogin}>
-            <Form.Group>
-                <Form.Label column sm="2">Email address</Form.Label>
-                <Col sm="10">
-                    <Form.Control onChange={(e) => setEmail(e.target.value)} type="email" placeholder="example@email.com"></Form.Control>
-                </Col>
-            </Form.Group>
-            <Form.Group>
-                <Form.Label column sm="2">Password</Form.Label>
-                <Col sm="10">
-                    <Form.Control onChange={e => setPassword(e.target.value)} type="password" placeholder="Password"></Form.Control>
-                </Col>
-            </Form.Group>
-            <Form.Group>
-                <Col sm="2">
-                    <Button type="submit">Login</Button>
-                </Col>
-            </Form.Group>
-            <Form.Group>
-                <Col sm="8">
-                    {submitted  ? <Alert variant="danger">Incorrect username or password. Please try again.</Alert> : ''}
-                </Col>
-            </Form.Group>
-        </Form>
+        <Container>
+            <Row className="justify-content-center mt-3">
+                <h1>Login/Signup</h1>
+            </Row>
+            <Row className="justify-content-center mt-3 mb-3">
+                <div className="subtitle">Use the buttons below to authenticate. If you don't have an account, follow the steps as a sign-in process.</div>
+                <div className="subtitle">If creating a new account, password must be at least six characters.</div>
+            </Row>
+            <div id="firebaseui-auth-container"></div>
+            <div id="loader">Loading...</div>
+        </Container>
     );
 }
 
