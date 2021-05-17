@@ -29,6 +29,9 @@ const teamSchema = Schema({
         type: String,
         required: true
     },
+    leagueLogo: {
+        type: String
+    },
     isCommissioner: {
         type: Boolean,
         default: false

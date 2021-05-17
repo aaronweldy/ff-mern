@@ -1,11 +1,10 @@
 import Team  from '../model/team.js'
 import League from '../model/league.js'
 import WeekStats from '../model/weekStats.js'
-import User from '../model/user.js'
 import scraper from 'table-scraper'
-import admin from 'firebase-admin'
 import {convertedScoringTypes, defaultScoringSettings} from "../constants/league.js"
 import { Router } from 'express'
+import admin from '../config/firebase-config.js'
 
 const router = Router();
 
@@ -15,8 +14,8 @@ router.get('/:id/', async (req, res) => {
     const leagueId = req.params['id'];
     try {
         const teams = await Team.find({league: leagueId});
-        const comms = await League.findById(leagueId);
-        res.status(200).json({teams, commissioners: comms.commissioners, scoringSettings: comms.scoringSettings, lineupSettings: comms.lineupSettings, name: comms.name});
+        const league = await League.findById(leagueId);
+        res.status(200).json({league, teams});
     } catch (e) {
         console.log(e);
         res.status(500).send();
@@ -24,33 +23,32 @@ router.get('/:id/', async (req, res) => {
 });
 
 router.post('/create/', async (req, res) => {
-    const {league, teams, posInfo, scoring} = req.body;
-    const newLeague = new League({name: league, lineupSettings: posInfo});
+    const {league, teams, logo, posInfo, scoring} = req.body;
+    const newLeague = new League({name: league, lineupSettings: posInfo, logo});
     await newLeague.save();
     let comms = [];
     for await (const team of teams) {
-        console.log(team);
         await admin.auth().getUserByEmail(team.teamOwner).then(async (user) => {
             const newTeam = new Team({
                 name: team.teamName,
                 owner: user.uid,
                 ownerName: user.email,
-                isCommissioner: team.isCommissioner,
+                isCommissioner: team.isCommissioner || comms.includes(user.uid),
                 league: newLeague.id,
-                leagueName: newLeague.name
+                leagueName: newLeague.name,
+                leagueLogo: logo
             });
-            console.log(team.isCommissioner);
             if(team.isCommissioner) comms.push(user.uid);
             await newTeam.save();
         }).catch(async (err) => {
-            console.log(err);
             const newTeam = new Team({
                 name: team.teamName,
                 owner: "default",
                 ownerName: "default",
-                isCommissioner: team.isCommissioner,
+                isCommissioner: team.isCommissioner || comms.includes(user.uid),
                 league: newLeague.id,
-                leagueName: newLeague.name
+                leagueName: newLeague.name,
+                leagueLogo: logo
             });
             await newTeam.save();
         });

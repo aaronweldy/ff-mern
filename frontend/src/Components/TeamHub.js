@@ -1,64 +1,68 @@
 import React, {useEffect, useState} from 'react'
-import {useSelector, useDispatch} from 'react-redux'
-import {selectStatus } from '../Redux/userSlice.js'
-import { Card, CardDeck, Button, Container, Row, Col } from 'react-bootstrap'
-import {auth} from '../firebase-config'
+import { Card, CardDeck, Button, Container, Row } from 'react-bootstrap'
+import {auth, storage} from '../firebase-config'
 import 'firebase/auth'
 import '../CSS/LeaguePages.css'
 
 const TeamHub = () => {
-  const dispatch = useDispatch();
-  const loggedIn = useSelector(selectStatus);
-  const currUser = auth.currentUser;
-  let [teams, setTeams] = useState([]);
+  const [teams, setTeams] = useState([]);
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async user => {
+    const unsub = auth.onAuthStateChanged(user => {
       if (user) {
         const url = `/api/v1/user/${user.uid}/leagues/`;
-        await fetch(url).then(resp => {
+        fetch(url).then(resp => {
             if(!resp.ok) throw Error(resp.statusText);
             return resp.json();
-          }).then(data => {
+          }).then(async data => {
             setTeams(data.teams);
+            for (const [index,team] of data.teams.entries()) {
+              if (team.leagueLogo) {
+                storage.ref(`logos/${team.leagueLogo}`).getDownloadURL().then(url => {
+                  setTeams(teams => {
+                    const tempTeams = [...teams];
+                    tempTeams[index].logoUrl = url;
+                    console.log(tempTeams);
+                    return tempTeams;
+                  });
+                });
+              }
+            }
           }).catch(e => {
             console.log(e);
         });
       }
     });
     return () => unsub();
-  }, [dispatch, currUser, loggedIn])
+  }, [])
   return (
     <Container fluid>
-      {!loggedIn ? <Row className='justify-content-center'><h1>Please <a href='/login/'>log in.</a></h1></Row> :
-      <Col>
         <Row className="justify-content-center">
-          <Col sm={10}>
             <CardDeck id="teamCards">
             {teams.map((team, index) => {
               return (
               <Card key={index} className="m-2">
+                <Card.Body className="d-flex flex-column align-content-end">
                   <a href={'/league/' + team.league + '/team/' + team._id + '/'}>
-                  <Card.Img variant="top" src={team.logo} className="card-img-top"></Card.Img>
+                    <Card.Img variant="bottom" className="mt-auto" src={team.logoUrl ? team.logoUrl : team.logo}></Card.Img>
                   </a>
-                <Card.Body>
+                  <div className="mt-auto">
                   <Card.Title>
                     {team.name}
                   </Card.Title>
                   <Card.Text>
                     {team.leagueName}
                   </Card.Text>
-                  <Button href={'/league/' + team.league + '/'}>Go to league</Button>
+                  <Button className="mt-auto" href={'/league/' + team.league + '/'}>Go to league</Button>
+                  </div>
                 </Card.Body>
                 {team.isCommissioner ? <Card.Footer>Commissioner</Card.Footer> : ''}
               </Card>);
               })}
             </CardDeck>
-          </Col>
-        </Row>
-        <Row className="justify-content-center">
-          <Button className="m-3" variant="primary" size="lg" href="/league/create/">Create a league</Button>
-        </Row>
-      </Col>}
+          </Row>
+          <Row className="justify-content-center">
+            <Button className="m-3" variant="primary" size="lg" href="/league/create/">Create a league</Button>
+          </Row>
     </Container>
   );
 }

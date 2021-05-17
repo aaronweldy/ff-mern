@@ -17,8 +17,8 @@ function ScoringSettings() {
                 const url = `/api/v1/league/${id}/`;
                 const data = await fetch(url);
                 const json = await data.json();
-                setSettings(json.scoringSettings);
-                if (!json.commissioners.includes(user.uid)) setRedirect(true);
+                setSettings(json.league.scoringSettings);
+                if (!json.league.commissioners.includes(user.uid)) setRedirect(true);
             }
         });
         return () => unsub();

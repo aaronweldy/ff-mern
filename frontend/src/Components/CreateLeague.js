@@ -1,6 +1,9 @@
-import React, {useState} from 'react'
-import {Container, Col, Table, Form, Dropdown, DropdownButton, Button, Row} from 'react-bootstrap'
+import React, {useState, useCallback} from 'react'
+import {Container, Col, Table, Form, Dropdown, DropdownButton, Button, Row, Image} from 'react-bootstrap'
 import {Redirect} from 'react-router-dom'
+import {useDropzone} from 'react-dropzone'
+import {v4} from 'uuid'
+import {storage} from '../firebase-config'
 
 const positionTypes = ["QB", "RB", "WR", "TE", "K", "WR/RB", "WR/RB/TE", "QB/WR/RB/TE"];
 
@@ -14,6 +17,18 @@ function CreateLeague() {
     const [posInfo, setPosInfo] = useState({});
     const [leagueId, setLeagueId] = useState(0);
     const [scoring, setScoring] = useState("Standard");
+    const [imageUrl, setImageUrl] = useState(`${process.env.REACT_APP_PUBLIC_URL}/football.jfif`);
+
+    const onDrop = useCallback(acceptedFiles => {
+        const reader = new FileReader();
+        reader.onload = (url => {
+            setImageUrl(url.target.result);
+        });
+        reader.readAsDataURL(acceptedFiles[0]);
+      }, [])
+
+    const {getRootProps, getInputProps} = useDropzone({onDrop})
+
     function handleTeamChange(e) {
         const tempTeams = [...teams];
         if(e.target.name === 'isCommissioner') {
@@ -33,20 +48,30 @@ function CreateLeague() {
     }
     async function handleLeagueSubmission(e) {
         e.preventDefault();
-        const reqBody = {
-            "league": leagueName,
-            "teams": teams,
-            posInfo,
-            scoring
-        }
-        const resp = await fetch('/api/v1/league/create/', {method: 'POST', body: JSON.stringify(reqBody), headers: {'content-type' : 'application/json'}});
-        const json = await resp.json();
-        setLeagueId(json.id);
-        setRedirect(true);
+        const id = v4();
+        const leagueRef = storage.ref().child(`logos/${id}`);
+        leagueRef.putString(imageUrl, 'data_url').then(async () => {
+            const reqBody = {
+                "league": leagueName,
+                "teams": teams,
+                logo: id,
+                posInfo,
+                scoring
+            }
+            const resp = await fetch('/api/v1/league/create/', {method: 'POST', body: JSON.stringify(reqBody), headers: {'content-type' : 'application/json'}});
+            const json = await resp.json();
+            setLeagueId(json.id);
+            setRedirect(true);
+        }).catch(e => {
+            console.log(e);
+        });
+        
     }
+
     if (redirect) {
         return <Redirect to={'/league/' + leagueId + '/'}></Redirect>
     }
+
     const subButton = partThree ? <Button variant="primary" onClick={handleLeagueSubmission}>&gt;&gt;</Button> : <Button variant="primary" onClick={_ => partTwo ? setPartThree(true) : setPartTwo(true)}>&gt;&gt;</Button>
     return (
         <Container>
@@ -108,6 +133,16 @@ function CreateLeague() {
                     <Form.Check type="radio" name="scoring-setting" value="PPR" label="PPR" onClick={e => setScoring(e.target.value)} defaultChecked={scoring === "PPR"}></Form.Check>
                     <Form.Check type="radio" name="scoring-setting" value="Custom" label="Custom" onClick={e => setScoring(e.target.value)} defaultChecked={scoring === "Custom"}></Form.Check>
                 </Form.Group>
+                <h4>League Logo</h4>
+                <Row className="mb-3">
+                        <div {...getRootProps({className : 'dropzone'})}>
+                            <input {...getInputProps()}/>
+                            Select or drop image here
+                        </div>
+                </Row>
+                <Row>
+                    <Image className="image-fit" src={imageUrl}></Image>
+                </Row>
             </Form>
             : ''}
             <Form.Row className="mb-3 mt-3">{subButton}</Form.Row>

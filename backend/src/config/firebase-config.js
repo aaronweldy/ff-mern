@@ -1,6 +1,5 @@
-import firebase from 'firebase/app'
-import * as admin from 'firebase-admin'
-import 'firebase/storage'
+import firebase from 'firebase'
+import admin from 'firebase-admin'
 
 const firebaseConfig = {
     apiKey: "AIzaSyCXG6J4qNGuYc4P2RZM_wKAEdECO7_qaog",
@@ -12,6 +11,6 @@ const firebaseConfig = {
     measurementId: "G-CKLBF5P572"
 };
 
-admin.initializeApp();
+admin.initializeApp( {credential: admin.credential.applicationDefault()} );
 
 export default admin;

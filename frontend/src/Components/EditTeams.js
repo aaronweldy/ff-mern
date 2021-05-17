@@ -15,7 +15,7 @@ const EditTeams = () => {
                 const url = `/api/v1/league/${id}/`;
                 const data = await fetch(url);
                 const json = await data.json();
-                const isComm = json.commissioners.includes(user.uid);
+                const isComm = json.league.commissioners.includes(user.uid);
                 if (!isComm) setRedirect(true);
                 setTeams(json.teams);
             }

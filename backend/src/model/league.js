@@ -6,6 +6,10 @@ const leagueSchema = Schema({
         type: String,
         required: true
     },
+    logo: {
+        type: String,
+        required: true
+    },
     commissioners: [],
     lineupSettings: {},
     scoringSettings: []

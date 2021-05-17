@@ -17,9 +17,9 @@ export default function AdjustLineups() {
             const url = `/api/v1/league/${id}/`;
             const resp = await fetch(url);
             const data = await resp.json();
-            setIsCommissioner(data.commissioners.includes(user.uid));
+            setIsCommissioner(data.league.commissioners.includes(user.uid));
             setTeams(data.teams);
-            setLineupSettings(data.lineupSettings);
+            setLineupSettings(data.league.lineupSettings);
         });
         return () => unsub();
     }, [id, week]);
@@ -34,7 +34,7 @@ export default function AdjustLineups() {
                 swapPlayer['lineup'][week] = 'bench';
             }
         }
-        setTeams({...teams});
+        setTeams([...teams]);
     };
     const handleBenchPlayer = (selectedPlayer, tableId) => {
         const tempTeams = [...teams];

@@ -20,8 +20,8 @@ const RunScores = () => {
             const json = await resp.json();
             console.log(json);
             setTeams(json.teams);
-            setLeague(json.scoringSettings);
-            setIsCommissioner(json.commissioners.includes(user.uid));
+            setLeague(json.league.scoringSettings);
+            setIsCommissioner(json.league.commissioners.includes(user.uid));
         });
         return () => unsub();
     }, [id]);
@@ -120,7 +120,7 @@ const RunScores = () => {
                                     <b>Total points:</b>
                                 </td>
                                 <td>
-                                    {(team.weekScores[week] || 0) + (team.addedPoints[week] || 0)}
+                                    {((team.weekScores[week] || 0) + (team.addedPoints[week] || 0)).toFixed(2)}
                                 </td>
                             </tr>
                         </tbody>
@@ -140,12 +140,11 @@ const RunScores = () => {
                         </thead>
                         <tbody>
                             {teams.sort(teamSorter).map((team, i) => {
-                                console.log(team);
                                 return (
                                     <tr key={i} id={i <= 2 ? background_iters[i] : ''}>
                                         <td>{i+1}</td>
                                         <td>{team.name}</td>
-                                        <td>{team.weekScores[week] + (team.addedPoints[week] || 0)}</td>
+                                        <td>{((team.weekScores[week] || 0) + (team.addedPoints[week] || 0)).toFixed(2)}</td>
                                     </tr>
                                 );
                             })}

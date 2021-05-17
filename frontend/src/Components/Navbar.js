@@ -59,8 +59,13 @@ function LogOutButtons() {
     <Navbar.Collapse className="justify-content-end">
         <Navbar.Text className="mr-3">
             Welcome
-            {user ? <a href={`/user/${user.uid}/`}> {username}!</a> : '!'}
+            {user ?
+            <a href={`/user/${user.uid}/`}> {username}!</a>
+             : '!'}
         </Navbar.Text>
+        {user && user.photoURL ? 
+            <img src={user.photoURL} className="d-inline-block align-top mr-3" width="35" height="35" alt="User logo"></img>
+        : ''}
         <Button variant="primary" onClick={handleClick} type="submit">
             Logout
         </Button>

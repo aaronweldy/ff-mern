@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
-import {Table, Form, Container, Col, Button, Modal, Row, Tooltip, OverlayTrigger} from 'react-bootstrap'
-import {auth} from '../firebase-config'
+import {Table, Form, Container, Col, Button, Modal, Row, Tooltip, OverlayTrigger, Image} from 'react-bootstrap'
+import {auth, storage} from '../firebase-config'
 import 'firebase/auth'
 import '../CSS/LeaguePages.css'
 
@@ -11,9 +11,10 @@ function LeagueHome(props) {
     const [commissioners, setCommissioners] = useState([]);
     const [runScores, setRunScores] = useState(false);
     const [showDelete, setDelete] = useState(false);
-    const [leagueName, setLeagueName] = useState("");
-    const [deleteName, setName] = useState("");
     const [redirect, setRedirect] = useState(false);
+    const [leagueName, setLeagueName] = useState(null);
+    const [deleteName, setName] = useState(null);
+    const [imgUrl, setImgUrl] = useState(null);
     const user = auth.currentUser;
     useEffect(() => {
         const unsub = auth.onAuthStateChanged(async user => {
@@ -21,15 +22,18 @@ function LeagueHome(props) {
                 const url = `/api/v1/league/${id}/`;
                 const resp = await fetch(url);
                 const json = await resp.json();
+                console.log(json);
                 const sortedTeams = json.teams.sort((a, b) => {
-                    const reducer = (acc, i) => acc + i ? i : 0;
-                    return a.weekScores.reduce(reducer, 0) + a.addedPoints.reduce(reducer, 0) > b.weekScores.reduce(reducer, 0) + b.addedPoints.reduce(reducer, 0) ? -1 : 1;
+                    const reducer = (acc, i) => i ? acc + i : 0;
+                    return (b.weekScores.reduce(reducer, 0) + b.addedPoints.reduce(reducer, 0)) - (a.weekScores.reduce(reducer, 0) + a.addedPoints.reduce(reducer, 0));
                 })
                 setTeams(sortedTeams);
-                console.log(json.teams);
-                if (user) console.log(user.uid);
-                setCommissioners(json.commissioners);
-                setLeagueName(json.name);
+                setCommissioners(json.league.commissioners);
+                setLeagueName(json.league.name);
+                storage.ref(`logos/${json.league.logo}`).getDownloadURL().then(url => {
+                    console.log(url);
+                    setImgUrl(url);
+                });
             }
         });
         return () => unsub();
@@ -81,7 +85,12 @@ function LeagueHome(props) {
             </Modal.Footer>
         </Modal>
         <Col className="mb-3 mt-3">
-            <h1>{teams.length > 0 ? teams[0].leagueName : ''}</h1>
+            <Row>
+                {imgUrl ? <Image className="image-fit-height" src={imgUrl} rounded></Image> : ''}
+                <Col className="mt-5">
+                    <h1>{leagueName ? teams[0].leagueName : ''}</h1>
+                </Col>
+            </Row>
             <hr/>
             {user && commissioners.includes(user.uid) ?
             <div>
@@ -118,7 +127,7 @@ function LeagueHome(props) {
                 </thead>
                 <tbody>
                     {teams.map((team, i) => {
-                        console.log((team.weekScores[14] + (team.addedPoints[14] || 0)).toPrecision(5));
+                        console.log((team.weekScores[14] + (team.addedPoints[14] || 0)).toFixed(2));
                         const linked = team.ownerName !== 'default' ? <a href={process.env.REACT_APP_PUBLIC_URL + "/user/" + team.owner}>{team.ownerName}</a> : team.ownerName;
                         return (<tr key={i}>
                             <td>
@@ -131,10 +140,10 @@ function LeagueHome(props) {
                                 </OverlayTrigger> : <span>{linked}</span>}
                             </td>
                             {[...Array(17).fill().map((_, i) => {
-                                return <td key={i}>{team.weekScores[i + 1] ? (team.weekScores[i+1] + (team.addedPoints[i+1] || 0)).toPrecision(5) : 0}</td>
+                                return <td key={i}>{team.weekScores[i + 1] ? (team.weekScores[i+1] + (team.addedPoints[i+1] || 0)).toFixed(2) : 0}</td>
                             })]}
                             <td>
-                                {(team.weekScores.reduce((acc, i) => acc + i, 0) + (team.addedPoints.reduce((acc, i) => acc + i, 0))).toPrecision(6)}
+                                {(team.weekScores.reduce((acc, i) => acc + i, 0) + (team.addedPoints.reduce((acc, i) => acc + i, 0))).toFixed(2)}
                             </td>
                         </tr>);
                     })}

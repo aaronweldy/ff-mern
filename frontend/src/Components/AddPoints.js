@@ -17,7 +17,7 @@ export default function AddPoints() {
                 const url = `/api/v1/league/${id}/`;
                 const resp = await fetch(url);
                 const json = await resp.json();
-                setIsCommissioner(json.commissioners.includes(user.uid));
+                setIsCommissioner(json.league.commissioners.includes(user.uid));
                 setTeams(json.teams);
             }
         });
