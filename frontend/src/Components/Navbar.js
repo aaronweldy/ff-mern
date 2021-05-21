@@ -11,7 +11,7 @@ const MainNav = () => {
     return (
         <Navbar bg="dark" expand="lg" variant="dark">
             <Navbar.Brand href="/">
-            <img src={process.env.REACT_APP_PUBLIC_URL + '/orca.jfif'} className="d-inline-block align-top mr-2" width="35" height="35" alt="League logo"></img>
+            <img src={process.env.REACT_APP_PUBLIC_URL + '/orca.jfif'} className="d-inline-block align-top mr-2" width="auto" height="35" alt="League logo"></img>
             Orca Fantasy
             </Navbar.Brand>
             {buttons}
@@ -23,7 +23,6 @@ function LoginButtons() {
     return (
         <Navbar.Collapse className="justify-content-end">
             <Button variant="primary" href="/login/">Login or Create Account</Button>
-
         </Navbar.Collapse>
     );
 }
@@ -46,7 +45,6 @@ function LogOutButtons() {
     }, [user]);
     
     function handleClick(e) {
-        e.preventDefault();
         auth.signOut().then(() => {
             dispatch(logout());
             setRedirect(true);
@@ -64,7 +62,7 @@ function LogOutButtons() {
              : '!'}
         </Navbar.Text>
         {user && user.photoURL ? 
-            <img src={user.photoURL} className="d-inline-block align-top mr-3" width="35" height="35" alt="User logo"></img>
+            <img src={user.photoURL} className="d-inline-block align-top mr-3" width="auto" height="35" alt="User logo"></img>
         : ''}
         <Button variant="primary" onClick={handleClick} type="submit">
             Logout

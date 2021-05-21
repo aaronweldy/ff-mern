@@ -1,8 +1,10 @@
-import React, {useEffect, useState, useReducer, useCallback} from 'react'
+import React, {useEffect, useState, useReducer} from 'react'
 import {useParams} from 'react-router-dom'
-import { Card, CardDeck, Container, Row, Col, Button, Form, Alert, Modal, ModalBody, Image } from 'react-bootstrap'
+import { Card, CardDeck, Container, Row, Col, Button, Image } from 'react-bootstrap'
+import PasswordModal from './PasswordModal'
+import ImageModal from './ImageModal'
 import firebase, {auth, storage} from '../firebase-config'
-import {useDropzone} from 'react-dropzone'
+
 import '../CSS/LeaguePages.css'
 
 const passwordReducer = (state, action) => {
@@ -30,6 +32,7 @@ const User = () => {
     const [state, dispatch] = useReducer(passwordReducer, initialState);
     const [teams, setTeams] = useState([]);
     const [showImageModal, setShowModal] = useState(false);
+    const [imageUrl, setImageUrl] = useState(null);
     const currUser = auth.currentUser;
     useEffect(() => {
         const unsub = auth.onAuthStateChanged(user => {
@@ -40,14 +43,15 @@ const User = () => {
                     return resp.json();
                 }).then(data => {
                     setTeams(data.teams);
+                    if (data.url && !imageUrl) setImageUrl(data.url);
                     for (const [index,team] of data.teams.entries()) {
                         if (team.leagueLogo) {
                             storage.ref(`logos/${team.leagueLogo}`).getDownloadURL().then(url => {
                                 setTeams(teams => {
-                                const tempTeams = [...teams];
-                                tempTeams[index].logoUrl = url;
-                                console.log(tempTeams);
-                                return tempTeams;
+                                    const tempTeams = [...teams];
+                                    tempTeams[index].logoUrl = url;
+                                    console.log(tempTeams);
+                                    return tempTeams;
                                 });
                             });
                         }
@@ -58,7 +62,7 @@ const User = () => {
             }
         });
         return () => unsub();
-    }, [userid]);
+    }, [userid, imageUrl]);
 
     const handlePasswordChange = (e, str) => {
         const unmatched = (str === "First" ? e.target.value !== state.secondNewPassword : e.target.value !== state.firstNewPassword) || e.target.value === "";
@@ -110,23 +114,47 @@ const User = () => {
         const currUser = auth.currentUser;
         storage.ref().child(currUser.email + "/logo").putString(url, "data_url").then(snapshot => {
             snapshot.ref.getDownloadURL().then(url => {
-                console.log(url);
-                currUser.updateProfile({photoURL: url}).then(() => setShowModal(false))
-                .catch(e => console.log(e));
+                currUser.updateProfile({photoURL: url}).then(() => {
+                    setShowModal(false);
+                    const sendUrl = `/api/v1/user/${userid}/updatePhoto/`;
+                    const body = {url};
+                    const reqdict = {
+                        method : 'POST', 
+                        headers : {'content-type' : 'application/json'},
+                        body : JSON.stringify(body)
+                    };
+                    fetch(sendUrl, reqdict)
+                    .then(() => {
+                        setImageUrl(url);
+                    });
+                });
             });
         });
     }
     console.log(currUser);
     return (
         <Container fluid>
-        <Col>
-            {currUser ? 
+            {currUser ?
+                <>
                 <Row className="justify-content-center mb-3 mt-3">
-                    <Image src={currUser.photoURL} className="image-fit-height mr-3" roundedCir></Image>
-                    <h1 className="mt-3">
-                        {currUser.displayName}
-                    </h1>
+                    <Col sm="auto">
+                        <Image src={imageUrl || process.env.REACT_APP_PUBLIC_URL + '/football.jfif'} className="image-fit-height mr-3" roundedCir></Image>
+                    </Col>
+                    <Col sm="auto">
+                        <Row>
+                            <h1 className="mt-3">
+                                {currUser.displayName}
+                            </h1>
+                        </Row>
+                        <Row>
+                            <div className="subtitle">
+                                {currUser.email}
+                            </div>
+                        </Row>
+                    </Col>
                 </Row>
+                
+                </>
             : ''}
             {currUser && (userid === currUser.uid) ?
             <>
@@ -154,7 +182,7 @@ const User = () => {
                     return (
                     <Card key={index} className="m-2">
                         <Card.Body className="d-flex flex-column align-content-end">
-                            <a href={'/league/' + team.league + '/team/' + team._id + '/'}>
+                            <a href={'/league/' + team.league + '/team/' + team.id + '/'}>
                                 <Card.Img variant="bottom" className="mt-auto" src={team.logoUrl ? team.logoUrl : team.logo}></Card.Img>
                             </a>
                             <div className="mt-auto">
@@ -172,115 +200,10 @@ const User = () => {
                     })}
                 </CardDeck>
             </Row>
-        </Col>
         </Container>
     );
 }
 
-const ImageModal = (props) => {
-    const [imageUrl, setImageUrl] = useState(null);
-    const onDrop = useCallback(acceptedFiles => {
-        const reader = new FileReader();
-        reader.onload = (url => {
-            setImageUrl(url.target.result);
-        });
-        reader.readAsDataURL(acceptedFiles[0]);
-    }, []);
 
-    const {getRootProps, getInputProps} = useDropzone({onDrop});
-    return (
-        <Modal show={props.showImage} onHide={props.handleHide}>
-            <Modal.Header>
-                <Modal.Title>
-                    Set User Image
-                </Modal.Title>
-            </Modal.Header>
-            <ModalBody>
-            <Row className="mb-3">
-                <div {...getRootProps({className : 'dropzone'})}>
-                    <input {...getInputProps()}/>
-                    Select or drop image here
-                </div>
-            </Row>
-            <Row className="justify-content-center">
-                <Image className="image-fit" src={imageUrl}></Image>
-            </Row>
-            </ModalBody>
-            <Modal.Footer className="d-flex justify-content-start">
-                <Button variant="success" onClick={() => props.handleImageSubmission(imageUrl)}>Submit User Image</Button>
-            </Modal.Footer>
-        </Modal>
-    );
-}
-
-const PasswordModal = (props) => {
-
-    return (
-        <Modal show={props.changePassword} onHide={props.handleHide}>
-            <Modal.Header>
-                <Modal.Title>
-                    Change Password
-                    <div className="subtitle">
-                        If you used Google to sign in, this option will do nothing.
-                    </div>
-                    <div className="subtitle">
-                        Password must be at least six characters.
-                    </div>
-                </Modal.Title>
-            </Modal.Header>
-            <ModalBody>
-            <Form.Group as={Row}>
-                <Form.Label column>Old Password:</Form.Label>
-                <Col>
-                    <Form.Control type="password" onChange={e => props.setOldPassword(e.target.value)}></Form.Control>
-                </Col>
-                
-            </Form.Group>
-            <Form.Group as={Row}>
-                <Form.Label column>New Password:</Form.Label>
-                <Col>
-                    <Form.Control type="password" onChange={e => props.handlePasswordChange(e, "First")}></Form.Control>
-                </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
-                <Form.Label column>Retype New Password:</Form.Label>
-                <Col>
-                    <Form.Control type="password" onChange={e => props.handlePasswordChange(e, "Second")}></Form.Control>
-                </Col>
-            </Form.Group>
-            {props.unmatched ? 
-                <Row>
-                    <Col>
-                        <Alert variant="danger">
-                            New passwords must match exactly.
-                        </Alert>
-                    </Col>
-                </Row>
-            : ''}
-            {props.incorrectPassword ? 
-                <Row>
-                    <Col>
-                        <Alert variant="danger">
-                            Incorrect previous password entered.
-                        </Alert>
-                    </Col>
-                </Row>
-            : ''}
-            {props.success ? 
-                <Row>
-                    <Col>
-                        <Alert variant="success">
-                            Successfully updated password!
-                        </Alert>
-                    </Col>
-                </Row>
-            : ''}
-            </ModalBody>
-            <Modal.Footer>
-                <Button disabled={props.unmatched} variant="success" onClick={() => props.handlePasswordSubmission}>Submit New Password</Button>
-            </Modal.Footer>
-        </Modal>
-    );
-}
 
 export default User;

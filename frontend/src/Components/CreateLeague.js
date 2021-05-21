@@ -13,11 +13,12 @@ function CreateLeague() {
     const [partTwo, setPartTwo] = useState(false);
     const [partThree, setPartThree] = useState(false);
     const [redirect, setRedirect] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [leagueName, setLeagueName] = useState('');
     const [posInfo, setPosInfo] = useState({});
     const [leagueId, setLeagueId] = useState(0);
     const [scoring, setScoring] = useState("Standard");
-    const [imageUrl, setImageUrl] = useState(`${process.env.REACT_APP_PUBLIC_URL}/football.jfif`);
+    const [imageUrl, setImageUrl] = useState(`${process.env.REACT_APP_DEFAULT_LOGO}`);
 
     const onDrop = useCallback(acceptedFiles => {
         const reader = new FileReader();
@@ -25,7 +26,7 @@ function CreateLeague() {
             setImageUrl(url.target.result);
         });
         reader.readAsDataURL(acceptedFiles[0]);
-      }, [])
+    }, [])
 
     const {getRootProps, getInputProps} = useDropzone({onDrop})
 
@@ -37,24 +38,45 @@ function CreateLeague() {
         else tempTeams[e.target.dataset.id][e.target.name] = e.target.value;
         setTeams(tempTeams);
     }
+
     function handleSizeChange(evtKey, _) {
         setNumTeams(parseInt(evtKey));
         setTeams(Array(parseInt(evtKey)).fill().map((_, i) => ({teamName: 'Team ' + i, teamOwner: '', isCommissioner: false})));
     }
+
     function handleInfoChange(e) {
         const tempInfo = {...posInfo};
         tempInfo[e.target.name] = e.target.value;
         setPosInfo(tempInfo);
     }
+
     async function handleLeagueSubmission(e) {
-        e.preventDefault();
+        setLoading(true);
         const id = v4();
         const leagueRef = storage.ref().child(`logos/${id}`);
-        leagueRef.putString(imageUrl, 'data_url').then(async () => {
+        if (imageUrl !== process.env.REACT_APP_DEFAULT_LOGO) {
+            leagueRef.putString(imageUrl, 'data_url').then(async () => {
+                const reqBody = {
+                    "league": leagueName,
+                    "teams": teams,
+                    logo: id,
+                    posInfo,
+                    scoring
+                }
+                const resp = await fetch('/api/v1/league/create/', {method: 'POST', body: JSON.stringify(reqBody), headers: {'content-type' : 'application/json'}});
+                const json = await resp.json();
+                setLeagueId(json.id);
+                setRedirect(true);
+                setLoading(false);
+            }).catch(e => {
+                console.log(e);
+            });
+        }
+        else {
             const reqBody = {
                 "league": leagueName,
                 "teams": teams,
-                logo: id,
+                logo: process.env.REACT_APP_DEFAULT_LOGO,
                 posInfo,
                 scoring
             }
@@ -62,10 +84,8 @@ function CreateLeague() {
             const json = await resp.json();
             setLeagueId(json.id);
             setRedirect(true);
-        }).catch(e => {
-            console.log(e);
-        });
-        
+            setLoading(false);
+        }
     }
 
     if (redirect) {
@@ -146,6 +166,7 @@ function CreateLeague() {
             </Form>
             : ''}
             <Form.Row className="mb-3 mt-3">{subButton}</Form.Row>
+            {loading ? <div className="spinning-loader"></div> : ''}
         </Container>
     )
 }

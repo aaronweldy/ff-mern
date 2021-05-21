@@ -1,4 +1,3 @@
-import firebase from 'firebase'
 import admin from 'firebase-admin'
 
 const firebaseConfig = {
@@ -14,3 +13,4 @@ const firebaseConfig = {
 admin.initializeApp( {credential: admin.credential.applicationDefault()} );
 
 export default admin;
+export const db = admin.firestore();

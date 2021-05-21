@@ -42,7 +42,7 @@ const TeamHub = () => {
               return (
               <Card key={index} className="m-2">
                 <Card.Body className="d-flex flex-column align-content-end">
-                  <a href={'/league/' + team.league + '/team/' + team._id + '/'}>
+                  <a href={'/league/' + team.league + '/team/' + team.id + '/'}>
                     <Card.Img variant="bottom" className="mt-auto" src={team.logoUrl ? team.logoUrl : team.logo}></Card.Img>
                   </a>
                   <div className="mt-auto">

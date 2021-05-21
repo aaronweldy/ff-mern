@@ -24,7 +24,7 @@ const EditTeams = () => {
     }, [id]);
     const handleAddPlayer = e => {
         const tempTeams = [...teams];
-        tempTeams[e.target.dataset.id]['players'].push({name: '', position: 'QB', lineup: [...Array(17).fill('bench')], points: [], weekStats: []});
+        tempTeams[e.target.dataset.id]['players'].push({name: '', position: 'QB', lineup: [...Array(18).fill('bench')], points: [...Array(18).fill(0)], weekStats: [...Array(18).fill(0)]});
         setTeams(tempTeams);
     }
 

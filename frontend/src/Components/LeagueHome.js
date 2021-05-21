@@ -22,7 +22,6 @@ function LeagueHome(props) {
                 const url = `/api/v1/league/${id}/`;
                 const resp = await fetch(url);
                 const json = await resp.json();
-                console.log(json);
                 const sortedTeams = json.teams.sort((a, b) => {
                     const reducer = (acc, i) => i ? acc + i : 0;
                     return (b.weekScores.reduce(reducer, 0) + b.addedPoints.reduce(reducer, 0)) - (a.weekScores.reduce(reducer, 0) + a.addedPoints.reduce(reducer, 0));
@@ -30,10 +29,14 @@ function LeagueHome(props) {
                 setTeams(sortedTeams);
                 setCommissioners(json.league.commissioners);
                 setLeagueName(json.league.name);
-                storage.ref(`logos/${json.league.logo}`).getDownloadURL().then(url => {
-                    console.log(url);
-                    setImgUrl(url);
-                });
+                if (json.league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
+                    storage.ref(`logos/${json.league.logo}`).getDownloadURL().then(url => {
+                        setImgUrl(url);
+                    });
+                }
+                else {
+                    setImgUrl(json.league.logo);
+                }
             }
         });
         return () => unsub();
@@ -43,7 +46,6 @@ function LeagueHome(props) {
     const deleteLeague = _ => {
         const url = `/api/v1/league/${id}/delete/`;
         const body = {user: user ? user.uid : 0};
-        console.log(body);
         const reqDict = {
             headers: {"content-type" : "application/json"},
             method: 'POST',
@@ -60,9 +62,8 @@ function LeagueHome(props) {
     }
 
     if (redirect) return <Redirect to="/"></Redirect>;
-
     return (
-    <Container id="small-left">
+    <Container>
         <Modal show={showDelete} onHide={() => setDelete(false)}>
             <Modal.Header closeButton>
                 <Modal.Title>Delete League</Modal.Title>
@@ -84,39 +85,28 @@ function LeagueHome(props) {
                 </Button>
             </Modal.Footer>
         </Modal>
-        <Col className="mb-3 mt-3">
-            <Row>
+        <Row className="mb-3 mt-3 justify-content-center align-items-center">
                 {imgUrl ? <Image className="image-fit-height" src={imgUrl} rounded></Image> : ''}
-                <Col className="mt-5">
+                <Col sm="auto">
                     <h1>{leagueName ? teams[0].leagueName : ''}</h1>
                 </Col>
-            </Row>
-            <hr/>
+        </Row>
+        <Row className="mb-3 mt-3 justify-content-center">
             {user && commissioners.includes(user.uid) ?
-            <div>
                 <div>
-                    <a href={"/league/" + id + "/editTeams/"}>Edit Teams</a>
+                    <a href={"/league/" + id + "/editTeams/"}>Edit Teams</a> |
+                    <a href={"/league/" + id + "/editSettings/"}> Edit Scoring</a> |
+                    <a href={"/league/" + id + "/addPoints/"}> Adjust Weekly Scores</a> |
+                    <a href={"/league/" + id + "/adjustLineups/"}> Adjust Starting Lineups</a> |
+                    <Button className="ml-1 mb-1" id="inline-button" variant="link" onClick={() => setDelete(true)}> Delete League</Button>
                 </div>
-                <div>
-                    <a href={"/league/" + id + "/editSettings/"}>Edit Scoring</a>
-                </div>
-                <div>
-                    <a href={"/league/" + id + "/addPoints/"}>Adjust Weekly Scores</a>
-                </div>
-                <div>
-                    <a href={"/league/" + id + "/adjustLineups/"}>Adjust Starting Lineups</a>
-                </div>
-                <div>
-                    <Button id="inline-button" variant="link" onClick={() => setDelete(true)}>Delete League</Button>
-                </div>
-                <hr/>
-            </div>
             : ''}
-        </Col>
-        <Col sm="auto">
-            <Table striped bordered hover>
+        </Row>
+        <Row className="mb-3 mt-3 justify-content-center">
+            <Table striped hover className="hide-cells">
                 <thead>
                     <tr>
+                        <th></th>
                         <th>Team Name</th>
                         <th>Team Owner</th>
                         {[...Array(17).fill().map((_, i) => {
@@ -127,11 +117,14 @@ function LeagueHome(props) {
                 </thead>
                 <tbody>
                     {teams.map((team, i) => {
-                        console.log((team.weekScores[14] + (team.addedPoints[14] || 0)).toFixed(2));
                         const linked = team.ownerName !== 'default' ? <a href={process.env.REACT_APP_PUBLIC_URL + "/user/" + team.owner}>{team.ownerName}</a> : team.ownerName;
-                        return (<tr key={i}>
+                        return (
+                        <tr key={i}>
                             <td>
-                                <a href={"/league/" + id + "/team/" + team._id + "/"}>{team.name}</a>
+                                <Image className="thumbnail-image" src={team.logo || process.env.REACT_APP_DEFAULT_LOGO}></Image>
+                            </td>
+                            <td>
+                                <a href={"/league/" + id + "/team/" + team.id + "/"}>{team.name}</a>
                             </td>
                             <td>
                                 {commissioners.includes(team.owner) ? 
@@ -149,9 +142,11 @@ function LeagueHome(props) {
                     })}
                 </tbody>
             </Table>
-        </Col>
-        {user && commissioners.includes(user.uid) ? <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>Run Scores</Button>
-        : <Button className="mt-3 ml-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>View Weekly Scoring Breakdown</Button>}
+        </Row>
+        <Row className="justify-content-center">
+        {user && commissioners.includes(user.uid) ? <Button className="mt-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>Run Scores</Button>
+        : <Button className="mt-3 mb-3" variant="primary" onClick={() => setRunScores(true)}>View Weekly Scoring Breakdown</Button>}
+        </Row>
     </Container>);
 }
 

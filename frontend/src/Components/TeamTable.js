@@ -2,12 +2,11 @@ import {Table, Dropdown, DropdownButton} from 'react-bootstrap'
 
 export default function TeamTable(props) {
     const {players, oppPlayers, name, week, isOwner} = props;
-    console.log(oppPlayers);
     return (
     <Table striped bordered hover>
         <thead>
             <tr>
-                {isOwner ? <th>Move</th> : ''}
+                {isOwner ? <th>Move</th> : null}
                 <th>Position</th>
                 <th>Player Name</th>
             </tr>
@@ -26,7 +25,7 @@ export default function TeamTable(props) {
                             </Dropdown.Item>
                             );
                         })}
-                        {name === 'starters' && player.name !== '' ? <Dropdown.Item onClick={_ => props.handleBenchPlayer(player, i)}>{"bench"}</Dropdown.Item> : ''}
+                        {name === 'starters' && player.name !== '' ? <Dropdown.Item onClick={_ => props.handleBenchPlayer(player, i)}>{"bench"}</Dropdown.Item> : null}
                     </DropdownButton>
                 </td> 
                 : null}

@@ -1,8 +1,10 @@
 import React, {useState, useEffect} from 'react'
 import {Redirect, useParams} from 'react-router-dom'
-import {Table, Alert, Container, Col, Row, DropdownButton, Dropdown, Button, Form} from 'react-bootstrap'
+import {Alert, Container, Col, Row, Button, Form} from 'react-bootstrap'
 import {auth} from '../firebase-config'
 import LeagueButton from './LeagueButton'
+import TeamTable from './TeamTable'
+import {lineupSorter} from '../constants.js'
 import '../CSS/LeaguePages.css'
 
 export default function AdjustLineups() {
@@ -36,9 +38,8 @@ export default function AdjustLineups() {
         }
         setTeams([...teams]);
     };
-    const handleBenchPlayer = (selectedPlayer, tableId) => {
+    const handleBenchPlayer = selectedPlayer=> {
         const tempTeams = [...teams];
-        console.log(tempTeams);
         selectedPlayer['lineup'][week] = 'bench';
         setTeams(tempTeams);
     }
@@ -57,7 +58,6 @@ export default function AdjustLineups() {
         fetch(url, reqdict)
         .then(data => data.json())
         .then(json => {
-            console.log(json); 
             setSuccess(true);
             setTimeout(() => setSuccess(false), 8000);
         });
@@ -75,10 +75,9 @@ export default function AdjustLineups() {
                 </Form.Control>
             </Col>
             {teams ? teams.map((team, i) => {
-                const starters = (Object.keys(lineupSettings).map(pos => {
+                const starters = (Object.keys(lineupSettings).sort(lineupSorter).map(pos => {
                     return [...Array(parseInt(lineupSettings[pos])).fill().map(_ => { return {"position" : pos, "name" : '', "lineup" : [...Array(17).fill(pos)]} })];
                 }).flat());
-                console.log(lineupSettings);
                 team.players.filter(player => player.lineup[week] !== 'bench').forEach(starter => {
                     starters[starters.findIndex(player => player.lineup[week] === starter.lineup[week] && player.name === '')] = starter;
                 });
@@ -89,9 +88,9 @@ export default function AdjustLineups() {
                         <h2>{team.name}</h2>
                     </div>
                     <h4>Starters</h4>
-                    <IterableTeamTable players={starters} week={week} tableId={i} oppPlayers={bench} name="starters" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange}></IterableTeamTable>
+                    <TeamTable players={starters} week={week} tableId={i} oppPlayers={bench} name="starters" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange} isOwner={true}></TeamTable>
                     <h4>Bench</h4>
-                    <IterableTeamTable players={bench} week={week} tableId={i} oppPlayers={starters} name="bench" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange}></IterableTeamTable>
+                    <TeamTable players={bench} week={week} tableId={i} oppPlayers={starters} name="bench" handleBenchPlayer={handleBenchPlayer} handlePlayerChange={handlePlayerChange} isOwner={true}></TeamTable>
                 </Col>
                 );
             }) : ''}
@@ -100,44 +99,5 @@ export default function AdjustLineups() {
             </Col>
             {success ? <Row><Col sm={3}><Alert className="mb-3" variant="success">Submitted lineups!</Alert></Col></Row> : ''}
         </Container>
-    );
-}
-
-function IterableTeamTable(props) {
-    const {players, oppPlayers, name, tableId, week} = props;
-    return (
-    <Table striped bordered hover>
-        <thead>
-            <tr>
-                <th style={{width: "5%"}}>Move</th>
-                <th style={{width: "10%"}}>Position</th>
-                <th style={{width: "40%"}}>Player Name</th>
-            </tr>
-        </thead>
-        <tbody>
-            {players.map((player, i) =>
-            <tr key={i}>
-                <td>
-                    <DropdownButton name="position" title="">
-                        {oppPlayers.filter(oppPlayer => oppPlayer.lineup[week].indexOf(player.position) >= 0 || player.lineup[week].indexOf(oppPlayer.position) >= 0).map((starter, j) => {
-                            const swapPlayer = oppPlayers.findIndex(player => player.name === starter.name && player.position === starter.position);
-                            return (
-                            <Dropdown.Item key={j} onClick={ _ => props.handlePlayerChange(player, name, oppPlayers[swapPlayer], tableId)}>
-                                {starter.lineup[week]}: {starter.name}
-                            </Dropdown.Item>
-                            );
-                        })}
-                        {name === 'starters' && player.name !== '' ? <Dropdown.Item onClick={_ => props.handleBenchPlayer(player, tableId)}>{"bench"}</Dropdown.Item> : ''}
-                    </DropdownButton>
-                </td>
-                <td>
-                    <span>{name === 'starters' ? player.lineup[week] : player.position}</span>
-                </td>
-                <td>
-                    <span>{player.name}</span>
-                </td>
-            </tr>)}
-        </tbody>
-    </Table>
     );
 }
