@@ -1,125 +1,133 @@
 .no-background {
-    background-color: transparent !important;
+  background-color: transparent !important;
 }
 
 #teamCards .card {
-    min-width: 18rem;
-    max-width: 18rem;
+  min-width: 18rem;
+  max-width: 18rem;
 }
 
 .bordered-row {
-    border: 1pt solid;
+  border: 1pt solid;
 }
 
 #small-left {
-    margin-left: 1.5rem;
+  margin-left: 1.5rem;
 }
 
 .left-corner {
-    margin-left: 5px;
-    margin-top: 5px;
+  margin-left: 5px;
+  margin-top: 5px;
 }
 
 .error-background {
-    background-color: red;
+  background-color: red;
 }
 
 #first-background {
-    background-color: yellowgreen;
+  background-color: yellowgreen;
 }
 
 #second-background {
-    background-color: silver;
+  background-color: silver;
 }
 
 #third-background {
-    background-color: orange;
+  background-color: orange;
 }
 
 .subtitle {
-    font-size: medium;
-    color: gray;
+  font-size: medium;
+  color: gray;
 }
 
 #inline-button {
-    padding: 0;
-    border-radius: 0;
-    color: red;
-    border: none;
+  padding: 0;
+  border-radius: 0;
+  color: red;
+  border: none;
 }
 
 .small-image {
-    width: 4rem;
-    height: 4rem;
+  width: 4rem;
+  height: 4rem;
 }
 
 .black-link {
-    color: black;
+  color: black;
 }
 
 .dropzone {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    border-width: 2px;
-    border-radius: 2px;
-    border-color: #eeeeee;
-    border-style: dashed;
-    background-color: #fafafa;
-    color: #bdbdbd;
-    outline: none;
-    transition: border .24s ease-in-out;
-  }
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  border-width: 2px;
+  border-radius: 2px;
+  border-color: #eeeeee;
+  border-style: dashed;
+  background-color: #fafafa;
+  color: #bdbdbd;
+  outline: none;
+  transition: border 0.24s ease-in-out;
+}
 
 .image-fit {
-    max-width: 20%;
-    height: auto;
+  max-width: 20%;
+  height: auto;
 }
 
 .image-fit-height {
-    max-width: 120px;
-    height: auto;
+  max-width: 120px;
+  height: auto;
 }
 
 .thumbnail-image {
-    max-width: 50px;
-    height: auto;
+  max-width: 50px;
+  height: auto;
 }
 
 .hide-cells {
-    border-collapse: separate;
-    empty-cells: hide;
+  border-collapse: separate;
+  empty-cells: hide;
 }
 
 .table-width {
-    width: auto!important;
+  width: auto !important;
+}
+
+.centered-popup {
+  position: fixed;
+  left: 50%;
+  top: 0%;
+  transform: translateX(-50%);
+  z-index: 9999;
 }
 
 .spinning-loader {
-    height: 5rem;
-    border: 5px solid lightblue;
-    border-left-color: darkblue;
-    border-radius: 50%;
-    background: transparent;
-    animation-name: rotate-s-loader;
-    animation-iteration-count: infinite;
-    animation-duration: 1s;
-    animation-timing-function: linear;
-    position: fixed;
-    top: 40%;
-    left: 50%;
-    transform:translate(-50%, -50%);
-    width: 5rem;
-    z-index: 9999;
-  }
-  
+  height: 5rem;
+  border: 5px solid lightblue;
+  border-left-color: darkblue;
+  border-radius: 50%;
+  background: transparent;
+  animation-name: rotate-s-loader;
+  animation-iteration-count: infinite;
+  animation-duration: 1s;
+  animation-timing-function: linear;
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 5rem;
+  z-index: 9999;
+}
+
 @keyframes rotate-s-loader {
-    from {
-        transform: rotate(0);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
