@@ -12,28 +12,26 @@ import {
   OverlayTrigger,
   Image,
 } from "react-bootstrap";
+import { useLeague } from "../hooks/useLeague";
 import { auth, storage } from "../firebase-config";
 import "firebase/auth";
 import "../CSS/LeaguePages.css";
 
-function LeagueHome(props) {
+function LeagueHome() {
   const { id } = useParams();
+  const { league, teams: initTeams } = useLeague(id);
   const [teams, setTeams] = useState([]);
-  const [commissioners, setCommissioners] = useState([]);
   const [runScores, setRunScores] = useState(false);
   const [showDelete, setDelete] = useState(false);
   const [redirect, setRedirect] = useState(false);
-  const [leagueName, setLeagueName] = useState(null);
   const [deleteName, setName] = useState(null);
   const [imgUrl, setImgUrl] = useState(null);
   const user = auth.currentUser;
+  console.log(league);
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const url = `/api/v1/league/${id}/`;
-        const resp = await fetch(url);
-        const json = await resp.json();
-        const sortedTeams = json.teams.sort((a, b) => {
+      if (user && league) {
+        const sortedTeams = initTeams.sort((a, b) => {
           const reducer = (acc, i) => (i ? acc + i : acc + 0);
           return (
             b.weekScores.reduce(reducer, 0) +
@@ -42,24 +40,21 @@ function LeagueHome(props) {
           );
         });
         setTeams(sortedTeams);
-        setCommissioners(json.league.commissioners);
-        setLeagueName(json.league.name);
-        if (json.league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
+        if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
           storage
-            .ref(`logos/${json.league.logo}`)
+            .ref(`logos/${league.logo}`)
             .getDownloadURL()
             .then((url) => {
               setImgUrl(url);
             });
         } else {
-          setImgUrl(json.league.logo);
+          setImgUrl(league.logo);
         }
       }
     });
     return () => unsub();
-  }, [id, user]);
-  if (runScores)
-    return <Redirect to={"/league/" + id + "/runScores/"}></Redirect>;
+  }, [id, user, league, initTeams]);
+  if (runScores) return <Redirect to={`/league/${id}/runScores/`} />;
 
   const deleteLeague = () => {
     const url = `/api/v1/league/${id}/delete/`;
@@ -82,7 +77,7 @@ function LeagueHome(props) {
       });
   };
 
-  if (redirect) return <Redirect to="/"></Redirect>;
+  if (redirect) return <Redirect to="/" />;
   return (
     <Container>
       <Modal show={showDelete} onHide={() => setDelete(false)}>
@@ -96,7 +91,7 @@ function LeagueHome(props) {
               <Form.Control
                 type="text"
                 onChange={(e) => setName(e.target.value)}
-              ></Form.Control>
+              />
             </Col>
           </Form.Group>
         </Modal.Body>
@@ -105,7 +100,7 @@ function LeagueHome(props) {
             Close
           </Button>
           <Button
-            disabled={deleteName !== leagueName}
+            disabled={deleteName !== (league && league.leagueName)}
             variant="danger"
             onClick={deleteLeague}
           >
@@ -115,26 +110,27 @@ function LeagueHome(props) {
       </Modal>
       <Row className="mb-3 mt-3 justify-content-center align-items-center">
         {imgUrl ? (
-          <Image className="image-fit-height" src={imgUrl} rounded></Image>
+          <Image className="image-fit-height" src={imgUrl} rounded />
         ) : (
           ""
         )}
         <Col sm="auto">
-          <h1>{leagueName ? teams[0].leagueName : ""}</h1>
+          <h1>{league && league.name}</h1>
         </Col>
       </Row>
       <Row className="mb-3 mt-3 justify-content-center">
-        {user && commissioners.includes(user.uid) ? (
+        {user && league && league.commissioners.includes(user.uid) ? (
           <div>
-            <a href={"/league/" + id + "/editTeams/"}>Edit Teams</a> |
-            <a href={"/league/" + id + "/editSettings/"}> Edit Scoring</a> |
-            <a href={"/league/" + id + "/addPoints/"}> Adjust Weekly Scores</a>{" "}
-            |
-            <a href={"/league/" + id + "/adjustLineups/"}>
+            <a href={`/league/${id}/editTeams/`}>Edit Teams</a> |{" "}
+            <a href={`/league/${id}/editScoringSettings/`}> Edit Scoring</a> |{" "}
+            <a href={`/league/${id}/addPoints/`}> Adjust Weekly Scores</a> |
+            <a href={`/league/${id}/adjustLineups/`}>
               {" "}
               Adjust Starting Lineups
             </a>{" "}
-            |
+            | <a href={`/league/${id}/updateSettings/`}>
+              Adjust Settings
+            </a> |{" "}
             <Button
               className="ml-1 mb-1"
               id="inline-button"
@@ -153,15 +149,13 @@ function LeagueHome(props) {
         <Table striped hover className="hide-cells">
           <thead>
             <tr>
-              <th></th>
+              <th />
               <th>Team Name</th>
               <th>Team Owner</th>
               {[
                 ...Array(17)
                   .fill()
-                  .map((_, i) => {
-                    return <th key={i}>{i + 1}</th>;
-                  }),
+                  .map((_, i) => <th key={i}>{i + 1}</th>),
               ]}
               <th>Total Points</th>
             </tr>
@@ -171,9 +165,7 @@ function LeagueHome(props) {
               const linked =
                 team.ownerName !== "default" ? (
                   <a
-                    href={
-                      process.env.REACT_APP_PUBLIC_URL + "/user/" + team.owner
-                    }
+                    href={`${process.env.REACT_APP_PUBLIC_URL}/user/${team.owner}`}
                   >
                     {team.ownerName}
                   </a>
@@ -186,15 +178,13 @@ function LeagueHome(props) {
                     <Image
                       className="thumbnail-image"
                       src={team.logo || process.env.REACT_APP_DEFAULT_LOGO}
-                    ></Image>
+                    />
                   </td>
                   <td>
-                    <a href={"/league/" + id + "/team/" + team.id + "/"}>
-                      {team.name}
-                    </a>
+                    <a href={`/league/${id}/team/${team.id}/`}>{team.name}</a>
                   </td>
                   <td>
-                    {commissioners.includes(team.owner) ? (
+                    {league && league.commissioners.includes(team.owner) ? (
                       <OverlayTrigger
                         position="top"
                         overlay={<Tooltip>Commissioner</Tooltip>}
@@ -210,18 +200,16 @@ function LeagueHome(props) {
                   {[
                     ...Array(17)
                       .fill()
-                      .map((_, i) => {
-                        return (
-                          <td key={i}>
-                            {team.weekScores[i + 1]
-                              ? (
-                                  team.weekScores[i + 1] +
-                                  (team.addedPoints[i + 1] || 0)
-                                ).toFixed(2)
-                              : 0}
-                          </td>
-                        );
-                      }),
+                      .map((_, i) => (
+                        <td key={i}>
+                          {team.weekScores[i + 1]
+                            ? (
+                                team.weekScores[i + 1] +
+                                (team.addedPoints[i + 1] || 0)
+                              ).toFixed(2)
+                            : 0}
+                        </td>
+                      )),
                   ]}
                   <td>
                     {(
@@ -236,7 +224,7 @@ function LeagueHome(props) {
         </Table>
       </Row>
       <Row className="justify-content-center">
-        {user && commissioners.includes(user.uid) ? (
+        {user && league && league.commissioners.includes(user.uid) ? (
           <Button
             className="mt-3 mb-3"
             variant="primary"

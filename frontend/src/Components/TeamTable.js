@@ -1,3 +1,4 @@
+import React from "react";
 import { Table, Dropdown, DropdownButton, SplitButton } from "react-bootstrap";
 
 export default function TeamTable(props) {
@@ -42,7 +43,7 @@ export default function TeamTable(props) {
                             )
                           }
                         >
-                          {starter.lineup[week]}: {starter.name}
+                          {starter.lineup[week]}:{starter.name}
                         </Dropdown.Item>
                       );
                     })}
@@ -50,7 +51,7 @@ export default function TeamTable(props) {
                     <Dropdown.Item
                       onClick={() => props.handleBenchPlayer(player, i)}
                     >
-                      {"bench"}
+                      bench
                     </Dropdown.Item>
                   ) : null}
                 </DropdownButton>

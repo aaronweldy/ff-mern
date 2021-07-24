@@ -6,55 +6,54 @@ import LeagueButton from "./LeagueButton";
 import TeamTable from "./TeamTable";
 import EditWeek from "./EditWeek";
 import { lineupSorter } from "../constants.js";
+import { useLeague } from "../hooks/useLeague";
 import "../CSS/LeaguePages.css";
 
 export default function AdjustLineups() {
   const { id } = useParams();
+  const { league, teams: initTeams } = useLeague(id);
   const [teams, setTeams] = useState([]);
-  const [isCommissioner, setIsCommissioner] = useState(false);
-  const [lineupSettings, setLineupSettings] = useState({});
   const [success, setSuccess] = useState(false);
   const [week, setWeek] = useState(1);
+  const currUser = auth.currentUser;
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (user) => {
-      const url = `/api/v1/league/${id}/`;
-      const resp = await fetch(url);
-      const data = await resp.json();
-      setIsCommissioner(data.league.commissioners.includes(user.uid));
-      setTeams(data.teams);
-      setLineupSettings(data.league.lineupSettings);
+    const unsub = auth.onAuthStateChanged(() => {
+      if (league) {
+        setWeek(league.lastWeekScored || 1);
+        setTeams(initTeams);
+      }
     });
     return () => unsub();
-  }, [id, week]);
+  }, [league, initTeams]);
   const handlePlayerChange = (selectedPlayer, name, swapPlayer) => {
     if (name === "starters") {
-      swapPlayer["lineup"][week] = selectedPlayer["lineup"][week];
-      selectedPlayer["lineup"][week] = "bench";
+      swapPlayer.lineup[week] = selectedPlayer.lineup[week];
+      selectedPlayer.lineup[week] = "bench";
     } else if (name === "backup") {
       if (swapPlayer.name === "none") {
-        selectedPlayer["backup"][week] = null;
+        selectedPlayer.backup[week] = null;
       } else {
-        selectedPlayer["backup"][week] = swapPlayer.name;
+        selectedPlayer.backup[week] = swapPlayer.name;
       }
     } else {
-      selectedPlayer["lineup"][week] = swapPlayer["lineup"][week];
+      selectedPlayer.lineup[week] = swapPlayer.lineup[week];
       if (swapPlayer.name !== "") {
-        swapPlayer["lineup"][week] = "bench";
+        swapPlayer.lineup[week] = "bench";
       }
     }
     setTeams([...teams]);
   };
   const handleBenchPlayer = (selectedPlayer) => {
     const tempTeams = [...teams];
-    selectedPlayer["lineup"][week] = "bench";
+    selectedPlayer.lineup[week] = "bench";
     setTeams(tempTeams);
   };
-  const submitLineups = (_) => {
+  const submitLineups = () => {
     const tempTeams = [...teams];
     for (const team of tempTeams) {
       team.players = team.players.filter((player) => player.name !== "");
     }
-    const url = `/api/v1/league/updateTeams/`;
+    const url = "/api/v1/league/updateTeams/";
     const body = { teams: tempTeams };
     const reqdict = {
       method: "POST",
@@ -63,37 +62,33 @@ export default function AdjustLineups() {
     };
     fetch(url, reqdict)
       .then((data) => data.json())
-      .then((json) => {
+      .then(() => {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 8000);
       });
   };
-  if (teams && teams.length && !isCommissioner)
-    return <Redirect to={"/league/" + id + "/"}></Redirect>;
+  if (teams && teams.length && !league.commissioners.includes(currUser.uid))
+    return <Redirect to={`/league/${id}/`} />;
   return (
     <Container id="small-left">
-      <LeagueButton id={id}></LeagueButton>
+      <LeagueButton id={id} />
       <EditWeek
         week={week}
         onChange={(e) => setWeek(parseInt(e.target.value))}
       />
       {teams
         ? teams.map((team, i) => {
-            const starters = Object.keys(lineupSettings)
+            const starters = Object.keys(league && league.lineupSettings)
               .sort(lineupSorter)
-              .map((pos) => {
-                return [
-                  ...Array(parseInt(lineupSettings[pos]))
-                    .fill()
-                    .map((_) => {
-                      return {
-                        position: pos,
-                        name: "",
-                        lineup: [...Array(17).fill(pos)],
-                      };
-                    }),
-                ];
-              })
+              .map((pos) => [
+                ...Array(parseInt(league && league.lineupSettings[pos]))
+                  .fill()
+                  .map(() => ({
+                    position: pos,
+                    name: "",
+                    lineup: [...Array(17).fill(pos)],
+                  })),
+              ])
               .flat();
             team.players
               .filter((player) => player.lineup[week] !== "bench")
@@ -125,8 +120,8 @@ export default function AdjustLineups() {
                     name="starters"
                     handleBenchPlayer={handleBenchPlayer}
                     handlePlayerChange={handlePlayerChange}
-                    isOwner={true}
-                  ></TeamTable>
+                    isOwner
+                  />
                   <div>
                     <h4>Bench</h4>
                   </div>
@@ -137,8 +132,8 @@ export default function AdjustLineups() {
                     name="bench"
                     handleBenchPlayer={handleBenchPlayer}
                     handlePlayerChange={handlePlayerChange}
-                    isOwner={true}
-                  ></TeamTable>
+                    isOwner
+                  />
                 </Col>
               </Row>
             );

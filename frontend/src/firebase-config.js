@@ -15,14 +15,14 @@ const firebaseConfig = {
 
 const uiConfig = {
   callbacks: {
-    signInSuccessWithAuthResult: function (authResult, redirectUrl) {
+    signInSuccessWithAuthResult(authResult) {
       console.log(authResult);
       // User successfully signed in.
       // Return type determines whether we continue the redirect automatically
       // or whether we leave that to developer to handle.
       return true;
     },
-    uiShown: function () {
+    uiShown() {
       // The widget is rendered.
       // Hide the loader.
       document.getElementById("loader").style.display = "none";

@@ -1,30 +1,13 @@
 import React, { useState, useCallback } from "react";
-import {
-  Container,
-  Col,
-  Table,
-  Form,
-  Dropdown,
-  DropdownButton,
-  Button,
-  Row,
-  Image,
-} from "react-bootstrap";
+import { Container, Form, Button, Row, Image } from "react-bootstrap";
 import { Redirect } from "react-router-dom";
 import { useDropzone } from "react-dropzone";
 import { v4 } from "uuid";
+import EditLineupSettingsForm from "./EditLineupSettingsForm";
 import { storage } from "../firebase-config";
-
-const positionTypes = [
-  "QB",
-  "RB",
-  "WR",
-  "TE",
-  "K",
-  "WR/RB",
-  "WR/RB/TE",
-  "QB/WR/RB/TE",
-];
+import LeagueCreationTable from "./LeagueCreationTable";
+import LeagueCreationHeader from "./LeagueCreationHeader";
+import ScoringSettingCheckGroup from "./ScoringSettingCheckGroup";
 
 function CreateLeague() {
   const [numTeams, setNumTeams] = useState(0);
@@ -36,6 +19,7 @@ function CreateLeague() {
   const [leagueName, setLeagueName] = useState("");
   const [posInfo, setPosInfo] = useState({});
   const [leagueId, setLeagueId] = useState(0);
+  const [numWeeks, setNumWeeks] = useState(0);
   const [scoring, setScoring] = useState("Standard");
   const [imageUrl, setImageUrl] = useState(
     `${process.env.REACT_APP_DEFAULT_LOGO}`
@@ -60,17 +44,27 @@ function CreateLeague() {
     setTeams(tempTeams);
   }
 
-  function handleSizeChange(evtKey, _) {
-    setNumTeams(parseInt(evtKey));
-    setTeams(
-      Array(parseInt(evtKey))
-        .fill()
-        .map((_, i) => ({
-          teamName: "Team " + i,
-          teamOwner: "",
-          isCommissioner: false,
-        }))
-    );
+  function handleSizeChange(evtKey, name) {
+    switch (name) {
+      case "teams": {
+        setNumTeams(parseInt(evtKey));
+        setTeams(
+          Array(parseInt(evtKey))
+            .fill()
+            .map((_, i) => ({
+              name: `Team ${i}`,
+              teamOwner: "",
+              isCommissioner: false,
+            }))
+        );
+        break;
+      }
+      case "weeks":
+        setNumWeeks(parseInt(evtKey));
+        break;
+      default:
+        setNumWeeks(parseInt(evtKey));
+    }
   }
 
   function handleInfoChange(e) {
@@ -79,7 +73,7 @@ function CreateLeague() {
     setPosInfo(tempInfo);
   }
 
-  async function handleLeagueSubmission(e) {
+  async function handleLeagueSubmission() {
     setLoading(true);
     const id = v4();
     const leagueRef = storage.ref().child(`logos/${id}`);
@@ -89,10 +83,11 @@ function CreateLeague() {
         .then(async () => {
           const reqBody = {
             league: leagueName,
-            teams: teams,
+            teams,
             logo: id,
             posInfo,
             scoring,
+            numWeeks,
           };
           const resp = await fetch("/api/v1/league/create/", {
             method: "POST",
@@ -110,10 +105,11 @@ function CreateLeague() {
     } else {
       const reqBody = {
         league: leagueName,
-        teams: teams,
+        teams,
         logo: process.env.REACT_APP_DEFAULT_LOGO,
         posInfo,
         scoring,
+        numWeeks,
       };
       const resp = await fetch("/api/v1/league/create/", {
         method: "POST",
@@ -128,7 +124,7 @@ function CreateLeague() {
   }
 
   if (redirect) {
-    return <Redirect to={"/league/" + leagueId + "/"}></Redirect>;
+    return <Redirect to={`/league/${leagueId}/`} />;
   }
 
   const subButton = partThree ? (
@@ -138,130 +134,37 @@ function CreateLeague() {
   ) : (
     <Button
       variant="primary"
-      onClick={(_) => (partTwo ? setPartThree(true) : setPartTwo(true))}
+      onClick={() => (partTwo ? setPartThree(true) : setPartTwo(true))}
     >
       &gt;&gt;
     </Button>
   );
   return (
     <Container>
-      <Form.Row className="align-items-center mt-5">
-        <Form.Label>League Name:</Form.Label>
-        <Col sm={6}>
-          <Form.Control
-            placeholder="My Fantasy League"
-            onChange={(e) => setLeagueName(e.target.value)}
-          ></Form.Control>
-        </Col>
-      </Form.Row>
-      <Form.Row className="align-items-center">
-        <Form.Label>Select number of teams:</Form.Label>
-        <DropdownButton
-          variant="primary"
-          className="m-3"
-          title={numTeams}
-          onSelect={handleSizeChange}
-        >
-          {[...Array(15)].map((_, i) => (
-            <Dropdown.Item key={i} eventKey={i}>
-              {i}
-            </Dropdown.Item>
-          ))}
-        </DropdownButton>
-      </Form.Row>
+      <LeagueCreationHeader
+        handleSizeChange={handleSizeChange}
+        setLeagueName={setLeagueName}
+        numTeams={numTeams}
+        numWeeks={numWeeks}
+        handleTeamSizeChanges={true}
+      />
       {partTwo ? (
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>Team Name</th>
-              <th>Team Owner Email</th>
-              <th>Commissioner</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teams.map((team, i) => (
-              <tr key={i}>
-                <td>
-                  <input
-                    name="teamName"
-                    data-id={i}
-                    type="text"
-                    value={team.teamName}
-                    onChange={handleTeamChange}
-                  ></input>
-                </td>
-                <td>
-                  <input
-                    name="teamOwner"
-                    data-id={i}
-                    type="text"
-                    value={team.teamOwner}
-                    onChange={handleTeamChange}
-                  ></input>
-                </td>
-                <td>
-                  <Form.Check
-                    data-id={i}
-                    name="isCommissioner"
-                    onChange={handleTeamChange}
-                  ></Form.Check>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <LeagueCreationTable teams={teams} handleChange={handleTeamChange} />
       ) : (
         ""
       )}
       {partThree ? (
         <Form>
-          <h4>Lineup Settings</h4>
-          {positionTypes.map((type, i) => {
-            return (
-              <Form.Group key={i} as={Row} md={6}>
-                <Col>
-                  <Form.Label md={2}>{type}:</Form.Label>
-                </Col>
-                <Col md={1}>
-                  <Form.Control
-                    data-id={i}
-                    name={type}
-                    onChange={handleInfoChange}
-                    size="md"
-                    type="text"
-                  ></Form.Control>
-                </Col>
-              </Form.Group>
-            );
-          })}
-          <hr></hr>
+          <EditLineupSettingsForm
+            handleChange={handleInfoChange}
+            positionSettings={posInfo}
+          />
+          <hr />
           <h4>Scoring Settings</h4>
-          <Form.Group>
-            <Form.Check
-              type="radio"
-              name="scoring-setting"
-              value="Standard"
-              label="Standard"
-              onClick={(e) => setScoring(e.target.value)}
-              defaultChecked={scoring === "Standard"}
-            ></Form.Check>
-            <Form.Check
-              type="radio"
-              name="scoring-setting"
-              value="PPR"
-              label="PPR"
-              onClick={(e) => setScoring(e.target.value)}
-              defaultChecked={scoring === "PPR"}
-            ></Form.Check>
-            <Form.Check
-              type="radio"
-              name="scoring-setting"
-              value="Custom"
-              label="Custom"
-              onClick={(e) => setScoring(e.target.value)}
-              defaultChecked={scoring === "Custom"}
-            ></Form.Check>
-          </Form.Group>
+          <ScoringSettingCheckGroup
+            handleClick={setScoring}
+            scoring={scoring}
+          />
           <h4>League Logo</h4>
           <Row className="mb-3">
             <div {...getRootProps({ className: "dropzone" })}>
@@ -270,14 +173,14 @@ function CreateLeague() {
             </div>
           </Row>
           <Row>
-            <Image className="image-fit" src={imageUrl}></Image>
+            <Image className="image-fit" src={imageUrl} />
           </Row>
         </Form>
       ) : (
         ""
       )}
       <Form.Row className="mb-3 mt-3">{subButton}</Form.Row>
-      {loading ? <div className="spinning-loader"></div> : ""}
+      {loading ? <div className="spinning-loader" /> : ""}
     </Container>
   );
 }

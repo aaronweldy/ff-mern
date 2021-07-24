@@ -1,5 +1,4 @@
-import { configureStore, getDefaultMiddleware } from "@reduxjs/toolkit";
-import userSlice from "./userSlice.js";
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import {
   persistReducer,
   FLUSH,
@@ -8,11 +7,12 @@ import {
   PERSIST,
   PURGE,
   REGISTER,
-} from "redux-persist";
-import storage from "redux-persist/lib/storage";
+} from 'redux-persist';
+import storage from 'redux-persist/lib/storage';
+import userSlice from './userSlice.js';
 
 const persistConfig = {
-  key: "root",
+  key: 'root',
   storage,
 };
 

@@ -7,21 +7,17 @@ import { auth } from "../firebase-config";
 
 const MainNav = () => {
   const loggedIn = useSelector(selectStatus);
-  const buttons = loggedIn ? (
-    <LogOutButtons></LogOutButtons>
-  ) : (
-    <LoginButtons></LoginButtons>
-  );
+  const buttons = loggedIn ? <LogOutButtons /> : <LoginButtons />;
   return (
     <Navbar bg="dark" expand="lg" variant="dark">
       <Navbar.Brand href="/">
         <img
-          src={process.env.REACT_APP_PUBLIC_URL + "/orca.jfif"}
+          src={`${process.env.REACT_APP_PUBLIC_URL}/orca.jfif`}
           className="d-inline-block align-top mr-2"
           width="auto"
           height="35"
           alt="League logo"
-        ></img>
+        />
         Orca Fantasy
       </Navbar.Brand>
       {buttons}
@@ -56,7 +52,7 @@ function LogOutButtons() {
     return () => authFunc();
   }, [user]);
 
-  function handleClick(e) {
+  function handleClick() {
     auth
       .signOut()
       .then(() => {
@@ -66,7 +62,7 @@ function LogOutButtons() {
       .catch((e) => console.log(e));
   }
 
-  if (redirect) return <Redirect to="/login/"></Redirect>;
+  if (redirect) return <Redirect to="/login/" />;
   return (
     <Navbar.Collapse className="justify-content-end">
       <Navbar.Text className="mr-3">
@@ -80,7 +76,7 @@ function LogOutButtons() {
           width="auto"
           height="35"
           alt="User logo"
-        ></img>
+        />
       ) : (
         ""
       )}

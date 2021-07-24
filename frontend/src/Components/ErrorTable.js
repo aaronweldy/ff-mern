@@ -1,3 +1,4 @@
+import React from "react";
 import { Table, Button } from "react-bootstrap";
 
 const ErrorTable = (props) => {
@@ -13,17 +14,15 @@ const ErrorTable = (props) => {
         </tr>
       </thead>
       <tbody>
-        {errors.map((error, i) => {
-          return (
-            <tr key={i}>
-              <td>{error.player.name}</td>
-              <td>{error.desc}</td>
-              <td>
-                <Button onClick={() => handleFix(error, i)}>Fix Error</Button>
-              </td>
-            </tr>
-          );
-        })}
+        {errors.map((error, i) => (
+          <tr key={i}>
+            <td>{error.player.name}</td>
+            <td>{error.desc}</td>
+            <td>
+              <Button onClick={() => handleFix(error, i)}>Fix Error</Button>
+            </td>
+          </tr>
+        ))}
       </tbody>
     </Table>
   );

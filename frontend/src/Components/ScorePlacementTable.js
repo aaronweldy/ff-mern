@@ -1,4 +1,5 @@
 import { Table } from "react-bootstrap";
+import React from "react";
 
 const background_iters = [
   "first-background",
@@ -9,25 +10,21 @@ const background_iters = [
 const ScorePlacementTable = (props) => {
   const { teams, week } = props;
 
-  const teamSorter = (a, b) => {
-    return (
-      b.weekScores[week] +
-      (b.addedPoints[week] || 0) -
-      (a.weekScores[week] + (a.addedPoints[week] || 0))
-    );
-  };
+  const teamSorter = (a, b) =>
+    b.weekScores[week] +
+    (b.addedPoints[week] || 0) -
+    (a.weekScores[week] + (a.addedPoints[week] || 0));
   return (
-  <Table striped bordered hover className="table-width">
-    <thead>
-      <tr>
-        <th>Place</th>
-        <th>Team Name</th>
-        <th>Points</th>
-      </tr>
-    </thead>
-    <tbody>
-      {teams.sort(teamSorter).map((team, i) => {
-        return (
+    <Table striped bordered hover className="table-width">
+      <thead>
+        <tr>
+          <th>Place</th>
+          <th>Team Name</th>
+          <th>Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        {teams.sort(teamSorter).map((team, i) => (
           <tr key={i} id={i <= 2 ? background_iters[i] : ""}>
             <td>{i + 1}</td>
             <td>{team.name}</td>
@@ -37,10 +34,9 @@ const ScorePlacementTable = (props) => {
               ).toFixed(2)}
             </td>
           </tr>
-        );
-      })}
-    </tbody>
-  </Table>
+        ))}
+      </tbody>
+    </Table>
   );
 };
 

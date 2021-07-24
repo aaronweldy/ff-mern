@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Container, Col, Button, Alert, Row, Image } from "react-bootstrap";
-import { auth } from "../firebase-config";
+import { auth, storage } from "../firebase-config";
 import TeamTable from "./TeamTable";
 import LeagueButton from "./LeagueButton";
 import ImageModal from "./ImageModal";
 import EditWeek from "./EditWeek";
-import { storage } from "../firebase-config";
+
 import { lineupSorter } from "../constants.js";
+import { useLeague } from "../hooks/useLeague";
 import "../CSS/LeaguePages.css";
 
-function TeamPage() {
+const TeamPage = () => {
   const { id, leagueId } = useParams();
+  const { league } = useLeague(leagueId);
   const [team, setTeam] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [lineupSettings, setLineupSettings] = useState(null);
   const [showImageModal, setShowModal] = useState(false);
   const [week, setWeek] = useState(1);
   const [userIsOwner, setIsOwner] = useState(false);
@@ -26,43 +27,48 @@ function TeamPage() {
         const data = await resp.json();
         console.log(data.team);
         setTeam(data.team);
-        setLineupSettings(data.lineupSettings);
         setIsOwner(data.team.owner === user.uid);
       }
     });
     return () => unsub();
-  }, [week, leagueId, id]);
+  }, [week, league, leagueId, id]);
+
+  useEffect(() => {
+    if (league) {
+      setWeek(league.lastScoredWeek + 1 || 1);
+    }
+  }, [league]);
   const handlePlayerChange = (selectedPlayer, name, swapPlayer) => {
     if (name === "starters") {
-      swapPlayer["lineup"][week] = selectedPlayer["lineup"][week];
-      selectedPlayer["lineup"][week] = "bench";
+      swapPlayer.lineup[week] = selectedPlayer.lineup[week];
+      selectedPlayer.lineup[week] = "bench";
     } else if (name === "backup") {
       if (swapPlayer.name === "none") {
-        selectedPlayer["backup"][week] = null;
+        selectedPlayer.backup[week] = null;
       } else {
-        selectedPlayer["backup"][week] = swapPlayer.name;
+        selectedPlayer.backup[week] = swapPlayer.name;
       }
     } else {
-      selectedPlayer["lineup"][week] = swapPlayer["lineup"][week];
+      selectedPlayer.lineup[week] = swapPlayer.lineup[week];
       if (swapPlayer.name !== "") {
-        swapPlayer["lineup"][week] = "bench";
+        swapPlayer.lineup[week] = "bench";
       }
     }
     setTeam({ ...team });
   };
   const handleBenchPlayer = (selectedPlayer) => {
-    selectedPlayer["lineup"][week] = "bench";
+    selectedPlayer.lineup[week] = "bench";
     setTeam({ ...team });
   };
   const handleImageSubmission = (imageUrl) => {
     storage
       .ref()
-      .child(team.id + "/logo")
+      .child(`${team.id}/logo`)
       .putString(imageUrl, "data_url")
       .then((snapshot) => {
         snapshot.ref.getDownloadURL().then((url) => {
           setShowModal(false);
-          const sendUrl = `/api/v1/league/updateTeamLogo/`;
+          const sendUrl = "/api/v1/league/updateTeamLogo/";
           const body = { id, url };
           const reqdict = {
             method: "POST",
@@ -70,9 +76,7 @@ function TeamPage() {
             body: JSON.stringify(body),
           };
           fetch(sendUrl, reqdict)
-            .then((resp) => {
-              return resp.json();
-            })
+            .then((resp) => resp.json())
             .then((data) => {
               setTeam(data.team);
             })
@@ -80,8 +84,8 @@ function TeamPage() {
         });
       });
   };
-  const sendUpdatedTeams = (_) => {
-    const url = `/api/v1/league/updateTeams/`;
+  const sendUpdatedTeams = () => {
+    const url = "/api/v1/league/updateTeams/";
     const body = { teams: [team], week };
     const reqdict = {
       method: "POST",
@@ -97,22 +101,18 @@ function TeamPage() {
   };
   let starters = [];
   let bench = [];
-  if (team && lineupSettings) {
-    starters = Object.keys(lineupSettings)
+  if (team && league && league.lineupSettings) {
+    starters = Object.keys(league.lineupSettings)
       .sort(lineupSorter)
-      .map((pos) => {
-        return [
-          ...Array(parseInt(lineupSettings[pos]))
-            .fill()
-            .map(() => {
-              return {
-                position: pos,
-                name: "",
-                lineup: [...Array(17).fill(pos)],
-              };
-            }),
-        ];
-      })
+      .map((pos) => [
+        ...Array(parseInt(league.lineupSettings[pos]))
+          .fill()
+          .map(() => ({
+            position: pos,
+            name: "",
+            lineup: [...Array(17).fill(pos)],
+          })),
+      ])
       .flat();
     team.players
       .filter((player) => player.lineup[week] !== "bench")
@@ -132,9 +132,9 @@ function TeamPage() {
         showImage={showImageModal}
         handleHide={() => setShowModal(!showImageModal)}
         handleImageSubmission={handleImageSubmission}
-      ></ImageModal>
+      />
       <Row>
-        <LeagueButton id={leagueId}></LeagueButton>
+        <LeagueButton id={leagueId} />
       </Row>
       {team ? (
         <>
@@ -143,7 +143,7 @@ function TeamPage() {
               <Image
                 className="image-fit-height"
                 src={team.logo || process.env.REACT_APP_DEFAULT_LOGO}
-              ></Image>
+              />
             </Col>
             <Col sm="auto">
               <h1 className="mt-2">
@@ -161,6 +161,7 @@ function TeamPage() {
           </Row>
           <EditWeek
             week={week}
+            maxWeeks={league && league.numWeeks}
             onChange={(e) => setWeek(parseInt(e.target.value))}
           />
           <Row>
@@ -175,7 +176,7 @@ function TeamPage() {
               name="starters"
               handleBenchPlayer={handleBenchPlayer}
               handlePlayerChange={handlePlayerChange}
-            ></TeamTable>
+            />
           </Row>
           <Row>
             <h3>Bench</h3>
@@ -189,7 +190,7 @@ function TeamPage() {
               name="bench"
               handleBenchPlayer={handleBenchPlayer}
               handlePlayerChange={handlePlayerChange}
-            ></TeamTable>
+            />
           </Row>
           <Row>
             <Button
@@ -202,7 +203,7 @@ function TeamPage() {
           </Row>
           {success ? (
             <Row>
-              <Col sm={3}>
+              <Col sm="auto">
                 <Alert variant="success">Submitted lineup!</Alert>
               </Col>
             </Row>
@@ -215,6 +216,6 @@ function TeamPage() {
       )}
     </Container>
   );
-}
+};
 
 export default TeamPage;

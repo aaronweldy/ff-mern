@@ -68,7 +68,7 @@ function ScoringSettings() {
     tempSettings[e.target.dataset.setting][e.target.name] = e.target.value;
     setSettings(tempSettings);
   };
-  const handleAddSetting = (_) => {
+  const handleAddSetting = () => {
     const tempSettings = [...settings];
     tempSettings.push({
       position: "QB",
@@ -80,7 +80,7 @@ function ScoringSettings() {
   };
   const handleCategoryChange = (e) => {
     const tempSettings = [...settings];
-    tempSettings[e.target.dataset.setting]["category"][e.target.name] =
+    tempSettings[e.target.dataset.setting].category[e.target.name] =
       e.target.value;
     setSettings(tempSettings);
   };
@@ -91,7 +91,7 @@ function ScoringSettings() {
   };
   const handleRemoveMinimum = (e) => {
     const tempSettings = [...settings];
-    tempSettings[e.target.dataset.setting]["minimums"].splice(
+    tempSettings[e.target.dataset.setting].minimums.splice(
       e.target.dataset.min,
       1
     );
@@ -99,7 +99,7 @@ function ScoringSettings() {
   };
   const handleAddMinimum = (e) => {
     const tempSettings = [...settings];
-    tempSettings[e.target.dataset.setting]["minimums"].push({
+    tempSettings[e.target.dataset.setting].minimums.push({
       statType: "ATT",
       threshold: 0,
     });
@@ -107,14 +107,14 @@ function ScoringSettings() {
   };
   const handleMinimumChange = (e) => {
     const tempSettings = [...settings];
-    tempSettings[e.target.dataset.setting]["minimums"][e.target.dataset.min][
+    tempSettings[e.target.dataset.setting].minimums[e.target.dataset.min][
       e.target.name
     ] = e.target.value;
     setSettings(tempSettings);
   };
-  const sendData = (_) => {
+  const sendData = () => {
     const body = { id, settings };
-    const url = `/api/v1/league/${id}/updateSettings/`;
+    const url = `/api/v1/league/${id}/updateScoringSettings/`;
     const reqDict = {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -127,207 +127,197 @@ function ScoringSettings() {
         setRedirect(true);
       });
   };
-  if (redirect) return <Redirect to={"/league/" + id + "/"}></Redirect>;
+  if (redirect) return <Redirect to={`/league/${id}/`} />;
   return (
     <Container fluid>
       <Row>
-        <LeagueButton id={id}></LeagueButton>
+        <LeagueButton id={id} />
       </Row>
       <Row>
         <h2 className="ml-3 mb-5">Scoring Settings</h2>
       </Row>
       {settings
-        ? settings.map((setting, i) => {
-            return (
-              <OverlayTrigger
-                key={i}
-                placement="top-start"
-                delay="1000"
-                overlay={
-                  <Button
+        ? settings.map((setting, i) => (
+            <OverlayTrigger
+              key={i}
+              placement="top-start"
+              delay="1000"
+              overlay={
+                <Button
+                  data-setting={i}
+                  onClick={handleRemoveSetting}
+                  variant="danger"
+                  size="sm"
+                  className="ml-2 mb-2"
+                >
+                  Remove setting
+                </Button>
+              }
+            >
+              <Row key={i} className="mt-3 mb-5">
+                <Col md={2}>
+                  <Form.Control
+                    name="position"
                     data-setting={i}
-                    onClick={handleRemoveSetting}
-                    variant="danger"
-                    size="sm"
-                    className="ml-2 mb-2"
+                    as="select"
+                    defaultValue={setting.position}
+                    onChange={handleSettingChange}
                   >
-                    Remove setting
-                  </Button>
-                }
-              >
-                <Row key={i} className="mt-3 mb-5">
-                  <Col md={2}>
-                    <Form.Control
-                      name="position"
-                      data-setting={i}
-                      as="select"
-                      defaultValue={setting.position}
-                      onChange={handleSettingChange}
-                    >
-                      {positionTypes.map((type, j) => {
-                        return (
-                          <option value={type} key={j}>
-                            {type}
-                          </option>
-                        );
-                      })}
-                    </Form.Control>
-                  </Col>
-                  <Col md={1}>
-                    <Form.Control
-                      name="points"
-                      data-setting={i}
-                      value={setting.points}
-                      onChange={handleSettingChange}
-                      type="text"
-                    ></Form.Control>{" "}
-                    {setting.points === "1" ? "point" : "points"}
-                  </Col>
-                  <Col md={2}>
+                    {positionTypes.map((type, j) => (
+                      <option value={type} key={j}>
+                        {type}
+                      </option>
+                    ))}
+                  </Form.Control>
+                </Col>
+                <Col md={1}>
+                  <Form.Control
+                    name="points"
+                    data-setting={i}
+                    value={setting.points}
+                    onChange={handleSettingChange}
+                    type="text"
+                  />{" "}
+                  {setting.points === "1" ? "point" : "points"}
+                </Col>
+                <Col md={2}>
+                  <Row>
+                    <Col>
+                      <Form.Control
+                        name="qualifier"
+                        data-setting={i}
+                        as="select"
+                        value={setting.category.qualifier || "per"}
+                        onChange={handleCategoryChange}
+                      >
+                        <option value="per">per</option>
+                        <option value="greater than">greater than</option>
+                        <option value="between">between</option>
+                      </Form.Control>
+                    </Col>
+                  </Row>
+                  {settings[i].category.qualifier === "between" ? (
                     <Row>
                       <Col>
                         <Form.Control
-                          name="qualifier"
+                          name="threshold_1"
                           data-setting={i}
-                          as="select"
-                          value={setting.category.qualifier || "per"}
+                          value={setting.category.threshold_1 || ""}
                           onChange={handleCategoryChange}
-                        >
-                          <option value="per">per</option>
-                          <option value="greater than">greater than</option>
-                          <option value="between">between</option>
-                        </Form.Control>
+                          type="text"
+                        />
+                      </Col>
+                      and
+                      <Col>
+                        <Form.Control
+                          name="threshold_2"
+                          data-setting={i}
+                          value={setting.category.threshold_2 || ""}
+                          onChange={handleCategoryChange}
+                          type="text"
+                        />
                       </Col>
                     </Row>
-                    {settings[i].category.qualifier === "between" ? (
+                  ) : (
+                    <Row>
+                      <Col>
+                        <Form.Control
+                          name="threshold"
+                          data-setting={i}
+                          value={setting.category.threshold || ""}
+                          onChange={handleCategoryChange}
+                          type="text"
+                        />
+                      </Col>
+                    </Row>
+                  )}
+                  <Row>
+                    <Col>
+                      <Form.Control
+                        name="statType"
+                        data-setting={i}
+                        as="select"
+                        defaultValue={setting.category.statType}
+                        onChange={handleCategoryChange}
+                      >
+                        {scoringTypes.map((type, i) => (
+                          <option key={i} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </Form.Control>
+                    </Col>
+                  </Row>
+                </Col>
+                {setting.minimums.map((min, j) => (
+                  <OverlayTrigger
+                    key={i}
+                    placement="bottom"
+                    delay="1000"
+                    overlay={
+                      <Button
+                        data-setting={i}
+                        size="sm"
+                        data-min={j}
+                        variant="danger"
+                        onClick={handleRemoveMinimum}
+                      >
+                        Remove Minimum
+                      </Button>
+                    }
+                  >
+                    <Col key={j} md={2}>
                       <Row>
                         <Col>
-                          <Form.Control
-                            name="threshold_1"
-                            data-setting={i}
-                            value={setting.category.threshold_1 || ""}
-                            onChange={handleCategoryChange}
-                            type="text"
-                          ></Form.Control>
-                        </Col>
-                        {"and"}
-                        <Col>
-                          <Form.Control
-                            name="threshold_2"
-                            data-setting={i}
-                            value={setting.category.threshold_2 || ""}
-                            onChange={handleCategoryChange}
-                            type="text"
-                          ></Form.Control>
+                          <span>Minimum:</span>
                         </Col>
                       </Row>
-                    ) : (
                       <Row>
                         <Col>
                           <Form.Control
                             name="threshold"
                             data-setting={i}
-                            value={setting.category.threshold || ""}
-                            onChange={handleCategoryChange}
+                            data-min={j}
+                            value={min.threshold || ""}
+                            onChange={handleMinimumChange}
                             type="text"
-                          ></Form.Control>
+                          />
                         </Col>
                       </Row>
-                    )}
-                    <Row>
-                      <Col>
-                        <Form.Control
-                          name="statType"
-                          data-setting={i}
-                          as="select"
-                          defaultValue={setting.category.statType}
-                          onChange={handleCategoryChange}
-                        >
-                          {scoringTypes.map((type, i) => {
-                            return (
+                      <Row>
+                        <Col>
+                          <Form.Control
+                            name="statType"
+                            data-setting={i}
+                            data-min={j}
+                            as="select"
+                            defaultValue={min.statType}
+                            onChange={handleMinimumChange}
+                          >
+                            {scoringTypes.map((type, i) => (
                               <option key={i} value={type}>
                                 {type}
                               </option>
-                            );
-                          })}
-                        </Form.Control>
-                      </Col>
-                    </Row>
-                  </Col>
-                  {setting.minimums.map((min, j) => {
-                    return (
-                      <OverlayTrigger
-                        key={i}
-                        placement="bottom"
-                        delay="1000"
-                        overlay={
-                          <Button
-                            data-setting={i}
-                            size="sm"
-                            data-min={j}
-                            variant="danger"
-                            onClick={handleRemoveMinimum}
-                          >
-                            Remove Minimum
-                          </Button>
-                        }
-                      >
-                        <Col key={j} md={2}>
-                          <Row>
-                            <Col>
-                              <span>Minimum:</span>
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col>
-                              <Form.Control
-                                name="threshold"
-                                data-setting={i}
-                                data-min={j}
-                                value={min.threshold || ""}
-                                onChange={handleMinimumChange}
-                                type="text"
-                              ></Form.Control>
-                            </Col>
-                          </Row>
-                          <Row>
-                            <Col>
-                              <Form.Control
-                                name="statType"
-                                data-setting={i}
-                                data-min={j}
-                                as="select"
-                                defaultValue={min.statType}
-                                onChange={handleMinimumChange}
-                              >
-                                {scoringTypes.map((type, i) => {
-                                  return (
-                                    <option key={i} value={type}>
-                                      {type}
-                                    </option>
-                                  );
-                                })}
-                              </Form.Control>
-                            </Col>
-                          </Row>
+                            ))}
+                          </Form.Control>
                         </Col>
-                      </OverlayTrigger>
-                    );
-                  })}
-                  <Col sm={2}>
-                    <Button
-                      data-setting={i}
-                      onClick={handleAddMinimum}
-                      className="mt-4"
-                      variant="primary"
-                    >
-                      Add new minimum
-                    </Button>
-                  </Col>
-                </Row>
-              </OverlayTrigger>
-            );
-          })
+                      </Row>
+                    </Col>
+                  </OverlayTrigger>
+                ))}
+                <Col sm={2}>
+                  <Button
+                    data-setting={i}
+                    onClick={handleAddMinimum}
+                    className="mt-4"
+                    variant="primary"
+                  >
+                    Add new minimum
+                  </Button>
+                </Col>
+              </Row>
+            </OverlayTrigger>
+          ))
         : ""}
       <Row className="justify-content-center">
         <Col className="ml-4">

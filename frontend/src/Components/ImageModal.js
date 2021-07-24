@@ -1,6 +1,8 @@
-import { Row, Button, Modal, ModalBody, Image } from "react-bootstrap";
-import { useDropzone } from "react-dropzone";
-import React, { useState, useCallback } from "react";
+import {
+  Row, Button, Modal, ModalBody, Image,
+} from 'react-bootstrap';
+import { useDropzone } from 'react-dropzone';
+import React, { useState, useCallback } from 'react';
 
 const ImageModal = (props) => {
   const [imageUrl, setImageUrl] = useState(null);
@@ -20,13 +22,13 @@ const ImageModal = (props) => {
       </Modal.Header>
       <ModalBody>
         <Row className="mb-3">
-          <div {...getRootProps({ className: "dropzone" })}>
+          <div {...getRootProps({ className: 'dropzone' })}>
             <input {...getInputProps()} />
             Select or drop image here
           </div>
         </Row>
         <Row className="justify-content-center">
-          <Image className="image-fit" src={imageUrl}></Image>
+          <Image className="image-fit" src={imageUrl} />
         </Row>
       </ModalBody>
       <Modal.Footer className="d-flex justify-content-start">

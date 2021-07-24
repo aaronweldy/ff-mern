@@ -2,37 +2,34 @@ import React, { useState, useEffect } from "react";
 import { Redirect, useParams } from "react-router-dom";
 import { Table, Form, Container, Col, Row, Button } from "react-bootstrap";
 import { auth } from "../firebase-config";
+import { useLeague } from "../hooks/useLeague";
 import LeagueButton from "./LeagueButton";
 import "../CSS/LeaguePages.css";
 
 export default function AddPoints() {
   const { id } = useParams();
+  const { league, teams: initTeams } = useLeague(id);
   const [teams, setTeams] = useState([]);
-  const [isCommissioner, setIsCommissioner] = useState(false);
-  const [week, setWeek] = useState(1);
+  const [week, setWeek] = useState(league.lastScoredWeek);
   const [redirect, setRedirect] = useState(false);
+
+  const user = auth.currentUser;
+  console.log(initTeams);
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const url = `/api/v1/league/${id}/`;
-        const resp = await fetch(url);
-        const json = await resp.json();
-        setIsCommissioner(json.league.commissioners.includes(user.uid));
-        setTeams(json.teams);
-      }
-    });
-    return () => unsub();
-  }, [id]);
+    if (initTeams.length) {
+      setTeams(initTeams);
+    }
+  }, [initTeams]);
   const handleAddedPoints = (e) => {
     const tempTeams = [...teams];
-    tempTeams[e.target.dataset.id]["addedPoints"][week] = Number.parseFloat(
+    tempTeams[e.target.dataset.id].addedPoints[week] = Number.parseFloat(
       e.target.value
     );
     setTeams(tempTeams);
   };
-  const updateTeams = (_) => {
+  const updateTeams = () => {
     const body = { teams };
-    const url = `/api/v1/league/adjustTeamSettings/`;
+    const url = "/api/v1/league/adjustTeamSettings/";
     const reqDict = {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -41,13 +38,16 @@ export default function AddPoints() {
     fetch(url, reqDict);
     setRedirect(true);
   };
-  console.log(teams);
-  if ((teams.length > 0 && !isCommissioner) || redirect)
-    return <Redirect to={"/league/" + id + "/"}></Redirect>;
+
+  if (
+    (teams.length > 0 && !league.commissioners.includes(user.uid)) ||
+    redirect
+  )
+    return <Redirect to={`/league/${id}/`} />;
   return (
     <Container id="small-left">
       <Row>
-        <LeagueButton id={id}></LeagueButton>
+        <LeagueButton id={id} />
       </Row>
       <Row className="mt-3 mb-3">
         <Col className="justify-items-center align-self-center" md={1}>
@@ -59,13 +59,11 @@ export default function AddPoints() {
             defaultValue={week}
             onChange={(e) => setWeek(e.target.value)}
           >
-            {[...Array(17)].map((_, i) => {
-              return (
-                <option value={i + 1} key={i}>
-                  {i + 1}
-                </option>
-              );
-            })}
+            {[...Array((league && league.numWeeks) || 18)].map((_, i) => (
+              <option value={i + 1} key={i}>
+                {i + 1}
+              </option>
+            ))}
           </Form.Control>
         </Col>
       </Row>
@@ -92,7 +90,7 @@ export default function AddPoints() {
                         data-id={i}
                         onChange={handleAddedPoints}
                         type="text"
-                      ></Form.Control>
+                      />
                     </td>
                   </tr>
                 );

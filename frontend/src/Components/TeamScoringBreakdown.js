@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Row,
   Col,
@@ -6,18 +6,18 @@ import {
   OverlayTrigger,
   Image,
   Tooltip,
-} from "react-bootstrap";
+} from 'react-bootstrap';
 
 const TeamScoringBreakdown = (props) => {
   const { league, team, week } = props;
   return (
-    <React.Fragment>
+    <>
       <Row className="mb-3 align-items-center">
         <Col sm="auto">
           <Image
             className="image-fit-height"
             src={team.logo || process.env.REACT_APP_DEFAULT_LOGO}
-          ></Image>
+          />
         </Col>
         <Col sm="auto" className="align-items-center">
           <h3>{team.name}</h3>
@@ -34,34 +34,36 @@ const TeamScoringBreakdown = (props) => {
               <th>Points</th>
               {league
                 ? league.map((stat, i) => {
-                    const cat = stat.category;
-                    return (
-                      <th key={i}>
-                        {cat.qualifier}{" "}
-                        {cat.qualifier === "between"
-                          ? cat.threshold_1 + "/" + cat.threshold_2
-                          : cat.threshold}{" "}
-                        {cat.statType}
-                      </th>
-                    );
-                  })
+                  const cat = stat.category;
+                  return (
+                    <th key={i}>
+                      {cat.qualifier}
+                      {' '}
+                      {cat.qualifier === 'between'
+                        ? `${cat.threshold_1}/${cat.threshold_2}`
+                        : cat.threshold}
+                      {' '}
+                      {cat.statType}
+                    </th>
+                  );
+                })
                 : null}
             </tr>
           </thead>
           <tbody>
             {team.players
-              .filter((player) => player.lineup[week] !== "bench")
+              .filter((player) => player.lineup[week] !== 'bench')
               .map((player, i) => {
                 const nameCard = player.error ? (
                   <OverlayTrigger
                     key={i}
                     placement="top"
-                    overlay={
+                    overlay={(
                       <Tooltip id="tooltip-top">
                         Player not found in database. Make sure the name is
                         spelled correctly.
                       </Tooltip>
-                    }
+                    )}
                   >
                     <td className="error-background">
                       <span>{player.name}</span>
@@ -86,19 +88,18 @@ const TeamScoringBreakdown = (props) => {
                     </td>
                     {league
                       ? league.map((stat, i) => {
-                          const cat = stat.category;
-                          const hashVal =
-                            cat.qualifier === "between"
-                              ? `${cat.qualifier}|${cat.threshold_1}${cat.threshold_2}|${cat.statType}`
-                              : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
-                          return (
-                            <td key={i}>
-                              {player.weekStats[week]
-                                ? player.weekStats[week][hashVal] || 0
-                                : 0}
-                            </td>
-                          );
-                        })
+                        const cat = stat.category;
+                        const hashVal = cat.qualifier === 'between'
+                          ? `${cat.qualifier}|${cat.threshold_1}${cat.threshold_2}|${cat.statType}`
+                          : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
+                        return (
+                          <td key={i}>
+                            {player.weekStats[week]
+                              ? player.weekStats[week][hashVal] || 0
+                              : 0}
+                          </td>
+                        );
+                      })
                       : null}
                   </tr>
                 );
@@ -122,7 +123,7 @@ const TeamScoringBreakdown = (props) => {
           </tbody>
         </Table>
       </Row>
-    </React.Fragment>
+    </>
   );
 };
 

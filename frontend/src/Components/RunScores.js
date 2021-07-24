@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Redirect } from "react-router-dom";
+import { Container, Button, Row, Toast } from "react-bootstrap";
 import LeagueButton from "./LeagueButton";
 import ScorePlacementTable from "./ScorePlacementTable";
 import TeamScoringBreakdown from "./TeamScoringBreakdown";
 import ErrorTable from "./ErrorTable";
 import EditWeek from "./EditWeek";
-import { Container, Button, Row, Toast } from "react-bootstrap";
 import { auth } from "../firebase-config";
 import "../CSS/LeaguePages.css";
 
@@ -29,11 +29,13 @@ const RunScores = () => {
       console.log(json);
       setTeams(json.teams);
       setLeague(json.league.scoringSettings);
+      console.log(json.league.lastScoredWeek + 1 || 1);
+      setWeek(json.league.lastScoredWeek + 1 || 1);
       setIsCommissioner(json.league.commissioners.includes(user.uid));
     });
     return () => unsub();
   }, [id]);
-  const sendData = (_) => {
+  const sendData = () => {
     setLoading(true);
     const url = `/api/v1/league/${id}/runScores/`;
     const body = { week };
@@ -59,7 +61,7 @@ const RunScores = () => {
         });
         setRedirect(true);
         break;
-      case "b":
+      case "b": {
         const teamInd = teams.findIndex((check) => check.id === error.team.id);
         const playerInd = error.team.players.findIndex(
           (check) => check.name === error.player.name
@@ -90,6 +92,7 @@ const RunScores = () => {
         );
         setShow(true);
         break;
+      }
       default:
         setRedirect(true);
     }
@@ -101,23 +104,22 @@ const RunScores = () => {
   return (
     <Container className="ml-5">
       <Row>
-        <LeagueButton id={id}></LeagueButton>
+        <LeagueButton id={id} />
       </Row>
       <EditWeek
         week={week}
+        maxWeeks={league && league.maxWeeks}
         onChange={(e) => setWeek(parseInt(e.target.value))}
       />
       {teams.length > 0
-        ? teams.map((team, i) => {
-            return (
-              <TeamScoringBreakdown
-                key={i}
-                league={league}
-                team={team}
-                week={week}
-              />
-            );
-          })
+        ? teams.map((team, i) => (
+            <TeamScoringBreakdown
+              key={i}
+              league={league}
+              team={team}
+              week={week}
+            />
+          ))
         : ""}
       <Row>
         <ScorePlacementTable teams={teams} week={week} />
@@ -136,7 +138,7 @@ const RunScores = () => {
       ) : (
         ""
       )}
-      {loading ? <div className="spinning-loader"></div> : ""}
+      {loading ? <div className="spinning-loader" /> : ""}
       <Toast
         show={show}
         onClose={() => setShow(false)}

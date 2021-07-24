@@ -106,14 +106,14 @@ const User = () => {
         ? e.target.value !== state.secondNewPassword
         : e.target.value !== state.firstNewPassword) || e.target.value === "";
     const action = {
-      type: "set" + str + "NewPassword",
+      type: `set${str}NewPassword`,
       password: e.target.value,
       unmatched,
     };
     dispatch(action);
   };
 
-  const handlePasswordSubmission = (_) => {
+  const handlePasswordSubmission = () => {
     const providedCredential = firebase.auth.EmailAuthProvider.credential(
       currUser.email,
       state.oldPassword
@@ -129,7 +129,7 @@ const User = () => {
       .then(() => {
         currUser
           .updatePassword(state.firstNewPassword)
-          .then((_) => {
+          .then(() => {
             const action = {
               type: "setFlags",
               success: true,
@@ -160,7 +160,7 @@ const User = () => {
     const currUser = auth.currentUser;
     storage
       .ref()
-      .child(currUser.email + "/logo")
+      .child(`${currUser.email}/logo`)
       .putString(url, "data_url")
       .then((snapshot) => {
         snapshot.ref.getDownloadURL().then((url) => {
@@ -190,11 +190,11 @@ const User = () => {
               <Image
                 src={
                   imageUrl ||
-                  process.env.REACT_APP_PUBLIC_URL + "/football.jfif"
+                  `${process.env.REACT_APP_PUBLIC_URL}/football.jfif`
                 }
                 className="image-fit-height mr-3"
                 roundedCir
-              ></Image>
+              />
             </Col>
             <Col sm="auto">
               <Row>
@@ -238,49 +238,44 @@ const User = () => {
             }
             handlePasswordSubmission={handlePasswordSubmission}
             handleHide={() => dispatch({ type: "changePassword" })}
-          ></PasswordModal>
+          />
 
           <ImageModal
             showImage={showImageModal}
             handleHide={() => setShowModal(!showImageModal)}
             handleImageSubmission={handleImageSubmission}
-          ></ImageModal>
+          />
         </>
       ) : (
         ""
       )}
       <Row className="justify-content-center">
         <CardDeck id="teamCards">
-          {teams.map((team, index) => {
-            return (
-              <Card key={index} className="m-2">
-                <Card.Body className="d-flex flex-column align-content-end">
-                  <a href={"/league/" + team.league + "/team/" + team.id + "/"}>
-                    <Card.Img
-                      variant="bottom"
-                      className="mt-auto"
-                      src={team.logoUrl ? team.logoUrl : team.logo}
-                    ></Card.Img>
-                  </a>
-                  <div className="mt-auto">
-                    <Card.Title>{team.name}</Card.Title>
-                    <Card.Text>{team.leagueName}</Card.Text>
-                    <Button
-                      className="mt-auto"
-                      href={"/league/" + team.league + "/"}
-                    >
-                      Go to league
-                    </Button>
-                  </div>
-                </Card.Body>
-                {team.isCommissioner ? (
-                  <Card.Footer>Commissioner</Card.Footer>
-                ) : (
-                  ""
-                )}
-              </Card>
-            );
-          })}
+          {teams.map((team, index) => (
+            <Card key={index} className="m-2">
+              <Card.Body className="d-flex flex-column align-content-end">
+                <a href={`/league/${team.league}/team/${team.id}/`}>
+                  <Card.Img
+                    variant="bottom"
+                    className="mt-auto"
+                    src={team.logoUrl ? team.logoUrl : team.logo}
+                  />
+                </a>
+                <div className="mt-auto">
+                  <Card.Title>{team.name}</Card.Title>
+                  <Card.Text>{team.leagueName}</Card.Text>
+                  <Button className="mt-auto" href={`/league/${team.league}/`}>
+                    Go to league
+                  </Button>
+                </div>
+              </Card.Body>
+              {team.isCommissioner ? (
+                <Card.Footer>Commissioner</Card.Footer>
+              ) : (
+                ""
+              )}
+            </Card>
+          ))}
         </CardDeck>
       </Row>
     </Container>
