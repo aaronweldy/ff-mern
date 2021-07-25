@@ -1,4 +1,4 @@
-import admin from "firebase-admin";
+const admin = require("firebase-admin");
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXG6J4qNGuYc4P2RZM_wKAEdECO7_qaog",
@@ -12,5 +12,5 @@ const firebaseConfig = {
 
 admin.initializeApp({ credential: admin.credential.applicationDefault() });
 
-export default admin;
-export const db = admin.firestore();
+module.exports = admin;
+module.exports.db = admin.firestore();

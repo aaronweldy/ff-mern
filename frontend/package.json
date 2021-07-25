@@ -2,7 +2,7 @@
   "name": "ff-mern",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:3001/",
+  "proxy": "https://us-central1-ff-mern.cloudfunctions.net/app",
   "dependencies": {
     "@reduxjs/toolkit": "^1.5.0",
     "@testing-library/jest-dom": "^5.11.6",

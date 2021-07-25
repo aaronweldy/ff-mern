@@ -1,12 +1,13 @@
-import scraper from "table-scraper";
-import {
-  convertedScoringTypes,
-  defaultScoringSettings,
-  lineupOrder,
-} from "../constants/league.js";
-import { Router } from "express";
-import { v4 } from "uuid";
-import admin, { db } from "../config/firebase-config.js";
+const scraper = require('table-scraper');
+const convertedScoringTypes =
+  require("../constants/league.ts").convertedScoringTypes;
+const defaultScoringSettings =
+  require("../constants/league.ts").defaultScoringSettings;
+const lineupOrder = require("../constants/league.ts").lineupOrder;
+const Router = require("express").Router;
+const v4 = require("uuid").v4;
+const admin = require('firebase-admin');
+const db = require("../config/firebase-config.ts").db;
 
 const router = Router();
 
@@ -38,7 +39,7 @@ router.get("/:id/", async (req, res) => {
   }
 });
 
-router.post("/create/", async (req, res) => {
+router.post("/create/", async function (req, res) {
   const { league, teams, logo, posInfo, scoring, numWeeks } = req.body;
   const leagueId = v4();
   db.collection("leagues")
@@ -250,7 +251,6 @@ router.post("/:leagueId/update/", async (req, res) => {
               weekScores: [...Array(18).fill(0)],
               addedPoints: [],
             });
-          if (team.isCommissioner) comms.push(user.uid);
         })
         .catch(async () => {
           db.collection("teams")
@@ -410,7 +410,7 @@ router.post("/:leagueId/runScores/", async (req, res) => {
             .toPrecision(4)
         );
         console.log(player.backup);
-        if (player.points[week] === 0 && player?.backup[week]) {
+        if (player.points[week] === 0 && player.backup[week]) {
           errors.push({
             type: "b",
             desc: "Player scored 0 points & may be eligible for a backup",
@@ -437,4 +437,4 @@ router.post("/:leagueId/runScores/", async (req, res) => {
   res.status(200).json({ teams, errors });
 });
 
-export default router;
+module.exports = router;
