@@ -39,7 +39,7 @@ router.get("/:id/", async (req, res) => {
 });
 
 router.post("/create/", async (req, res) => {
-  const { league, teams, logo, posInfo, scoring } = req.body;
+  const { league, teams, logo, posInfo, scoring, numWeeks } = req.body;
   const leagueId = v4();
   db.collection("leagues")
     .doc(leagueId)
@@ -47,6 +47,7 @@ router.post("/create/", async (req, res) => {
       name: league,
       lineupSettings: posInfo,
       logo,
+      numWeeks,
     })
     .then(async () => {
       let comms = [];
@@ -59,7 +60,7 @@ router.post("/create/", async (req, res) => {
             db.collection("teams")
               .doc(teamId)
               .set({
-                name: team.teamName,
+                name: team.name,
                 owner: user.uid,
                 ownerName: user.email,
                 id: teamId,
@@ -78,7 +79,7 @@ router.post("/create/", async (req, res) => {
             db.collection("teams")
               .doc(teamId)
               .set({
-                name: team.teamName,
+                name: team.name,
                 owner: "default",
                 ownerName: "default",
                 id: teamId,
@@ -134,10 +135,9 @@ router.post("/:id/delete/", async (req, res) => {
 
 router.get("/:leagueId/team/:id/", async (req, res) => {
   const team = await db.collection("teams").doc(req.params.id).get();
-  const league = await db.collection("leagues").doc(req.params.leagueId).get();
-  res
-    .status(200)
-    .json({ team: team.data(), lineupSettings: league.data().lineupSettings });
+  res.status(200).json({
+    team: team.data(),
+  });
 });
 
 router.get("/:leagueId/teams/", async (req, res) => {
@@ -204,7 +204,7 @@ router.post("/adjustTeamSettings/", (req, res) => {
   res.status(200).send({ message: "updated teams successfully" });
 });
 
-router.post("/:leagueId/updateSettings/", async (req, res) => {
+router.post("/:leagueId/updateScoringSettings/", async (req, res) => {
   const { settings } = req.body;
   const { leagueId } = req.params;
   db.collection("leagues")
@@ -213,6 +213,69 @@ router.post("/:leagueId/updateSettings/", async (req, res) => {
     .then(() => {
       res.status(200).send({ message: "updated settings successfully" });
     });
+});
+
+router.post("/:leagueId/update/", async (req, res) => {
+  const { leagueId } = req.params;
+  const { league, teams, deletedTeams } = req.body;
+  await db
+    .collection("leagues")
+    .doc(leagueId)
+    .update({ ...league });
+  for (const team of teams) {
+    try {
+      db.collection("teams")
+        .doc(team.id)
+        .update({ ...team });
+    } catch (e) {
+      const teamId = v4();
+      await admin
+        .auth()
+        .getUserByEmail(team.teamOwner)
+        .then(async (user) => {
+          db.collection("teams")
+            .doc(teamId)
+            .set({
+              name: team.name,
+              owner: user.uid,
+              ownerName: user.email,
+              id: teamId,
+              isCommissioner:
+                team.isCommissioner || league.commissioners.includes(user.uid),
+              league: leagueId,
+              leagueName: league.name,
+              leagueLogo: league.logo,
+              logo: "/football.jfif",
+              players: [],
+              weekScores: [...Array(18).fill(0)],
+              addedPoints: [],
+            });
+          if (team.isCommissioner) comms.push(user.uid);
+        })
+        .catch(async () => {
+          db.collection("teams")
+            .doc(teamId)
+            .set({
+              name: team.name,
+              owner: "default",
+              ownerName: "default",
+              id: teamId,
+              isCommissioner: false,
+              league: leagueId,
+              leagueName: league.name,
+              leagueLogo: league.logo,
+              logo: "/football.jfif",
+              players: [],
+              weekScores: [...Array(18).fill(0)],
+              addedPoints: [],
+            });
+        });
+    }
+  }
+  for (const team of deletedTeams) {
+    await db.collection("teams").doc(team.id).delete();
+  }
+  res.status(200).send("Updated all league settings");
 });
 
 router.post("/:leagueId/runScores/", async (req, res) => {
@@ -370,6 +433,7 @@ router.post("/:leagueId/runScores/", async (req, res) => {
       .doc(team.id)
       .update({ ...team });
   }
+  await db.collection("leagues").doc(leagueId).update({ lastScoredWeek: week });
   res.status(200).json({ teams, errors });
 });
 
