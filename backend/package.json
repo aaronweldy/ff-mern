@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "lint": "eslint ./",
     "test": "jest -i --verbose --coverage --runInBand",
@@ -24,7 +24,6 @@
     "express-validator": "^6.8.0",
     "firebase": "^8.6.0",
     "firebase-admin": "^9.8.0",
-    "firebase-functions": "^3.14.1",
     "http-errors": "^1.8.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.11.8",

@@ -1,6 +1,7 @@
-const Router = require("express");
-const db = require('firebase-admin').db;
-const env = require('dotenv');
+import { Router } from "express";
+import Team from "../model/team.js";
+import env from "dotenv";
+import { db } from "../config/firebase-config.js";
 const router = Router();
 
 env.config();
@@ -15,7 +16,7 @@ router.get("/:id/leagues/", async (req, res) => {
       snapshot.forEach((data) => {
         teams.push(data.data());
       });
-      const resp = { teams, url: "" };
+      const resp = { teams };
       const urlDoc = await db.collection("users").doc(id).get();
       if (urlDoc.exists) resp.url = urlDoc.data().url;
       res.json(resp).send();
@@ -31,4 +32,4 @@ router.post("/:id/updatePhoto", (req, res) => {
     .then(() => res.status(200).send());
 });
 
-module.exports = router;
+export default router;

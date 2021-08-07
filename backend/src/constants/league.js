@@ -1,4 +1,4 @@
-exports.convertedScoringTypes = {
+export const convertedScoringTypes = {
   QB: {
     ATT: "ATT",
     "PASS YD": "YDS",
@@ -56,7 +56,7 @@ exports.convertedScoringTypes = {
   },
 };
 
-exports.defaultScoringSettings = {
+export const defaultScoringSettings = {
   Standard: [
     {
       position: "QB/WR/RB/TE",
@@ -213,7 +213,7 @@ exports.defaultScoringSettings = {
   ],
 };
 
-exports.lineupOrder = {
+export const lineupOrder = {
   QB: 1,
   RB: 2,
   WR: 3,
