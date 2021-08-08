@@ -29,7 +29,7 @@ export default function AddPoints() {
   };
   const updateTeams = () => {
     const body = { teams };
-    const url = "/api/v1/league/adjustTeamSettings/";
+    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/adjustTeamSettings/`;
     const reqDict = {
       method: "POST",
       headers: { "content-type": "application/json" },

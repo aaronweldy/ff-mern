@@ -23,7 +23,7 @@ const RunScores = () => {
   const [popupText, setText] = useState("");
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
-      const url = `/api/v1/league/${id}/`;
+      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/`;
       const resp = await fetch(url);
       const json = await resp.json();
       console.log(json);
@@ -37,7 +37,7 @@ const RunScores = () => {
   }, [id]);
   const sendData = () => {
     setLoading(true);
-    const url = `/api/v1/league/${id}/runScores/`;
+    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/runScores/`;
     const body = { week };
     const reqDict = {
       method: "POST",
@@ -80,7 +80,7 @@ const RunScores = () => {
           headers: { "content-type": "application/json" },
           body: JSON.stringify(body),
         };
-        const resp = await fetch("/api/v1/league/updateTeams", reqDict);
+        const resp = await fetch(`${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams`, reqDict);
         const data = await resp.json();
         setTeams(data.teams);
         setErrors((oldErrors) => {

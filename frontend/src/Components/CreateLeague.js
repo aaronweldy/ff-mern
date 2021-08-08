@@ -89,7 +89,7 @@ function CreateLeague() {
             scoring,
             numWeeks,
           };
-          const resp = await fetch("/api/v1/league/create/", {
+          const resp = await fetch(`${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/create/`, {
             method: "POST",
             body: JSON.stringify(reqBody),
             headers: { "content-type": "application/json" },
@@ -111,7 +111,7 @@ function CreateLeague() {
         scoring,
         numWeeks,
       };
-      const resp = await fetch("/api/v1/league/create/", {
+      const resp = await fetch(`${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/create/`, {
         method: "POST",
         body: JSON.stringify(reqBody),
         headers: { "content-type": "application/json" },

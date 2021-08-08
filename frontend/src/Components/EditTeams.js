@@ -19,7 +19,7 @@ const EditTeams = () => {
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        const url = `/api/v1/league/${id}/`;
+        const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/`;
         const data = await fetch(url);
         const json = await data.json();
         const isComm = json.league.commissioners.includes(user.uid);
@@ -61,7 +61,7 @@ const EditTeams = () => {
   };
 
   const sendUpdatedTeams = () => {
-    const url = "/api/v1/league/updateTeams/";
+    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams/`;
     const body = { teams };
     const reqdict = {
       method: "POST",

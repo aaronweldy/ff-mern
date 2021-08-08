@@ -11,8 +11,8 @@ const TeamHub = () => {
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((user) => {
       if (user) {
-        const url = `/api/v1/user/${user.uid}/leagues/`;
-        fetch(process.env.REACT_APP_PUBLIC_URL + url)
+        const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/user/${user.uid}/leagues/`;
+        fetch(url)
           .then((resp) => {
             if (!resp.ok) throw Error(resp.statusText);
             return resp.json();

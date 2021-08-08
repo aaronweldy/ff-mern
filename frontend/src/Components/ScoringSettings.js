@@ -54,7 +54,7 @@ function ScoringSettings() {
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        const url = `/api/v1/league/${id}/`;
+        const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/`;
         const data = await fetch(url);
         const json = await data.json();
         setSettings(json.league.scoringSettings);
@@ -114,7 +114,7 @@ function ScoringSettings() {
   };
   const sendData = () => {
     const body = { id, settings };
-    const url = `/api/v1/league/${id}/updateScoringSettings/`;
+    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/updateScoringSettings/`;
     const reqDict = {
       method: "POST",
       headers: { "content-type": "application/json" },

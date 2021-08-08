@@ -67,7 +67,7 @@ const User = () => {
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((user) => {
       if (user) {
-        const url = `/api/v1/user/${userid}/leagues/`;
+        const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/user/${userid}/leagues/`;
         fetch(url)
           .then((resp) => {
             if (!resp.ok) throw Error(resp.statusText);
@@ -166,7 +166,7 @@ const User = () => {
         snapshot.ref.getDownloadURL().then((url) => {
           currUser.updateProfile({ photoURL: url }).then(() => {
             setShowModal(false);
-            const sendUrl = `/api/v1/user/${userid}/updatePhoto/`;
+            const sendUrl = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/user/${userid}/updatePhoto/`;
             const body = { url };
             const reqdict = {
               method: "POST",

@@ -7,7 +7,7 @@ export const useLeague = (id) => {
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        const url = `/api/v1/league/${id}/`;
+        const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/`;
         const resp = await fetch(url);
         const json = await resp.json();
         setLeague(json.league);

@@ -109,7 +109,7 @@ function EditLeagueSettings() {
             teams,
             deletedTeams,
           };
-          await fetch(`/api/v1/league/${id}/update/`, {
+          await fetch(`${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/update/`, {
             method: "POST",
             body: JSON.stringify(reqBody),
             headers: { "content-type": "application/json" },
@@ -132,7 +132,7 @@ function EditLeagueSettings() {
         teams,
         deletedTeams,
       };
-      await fetch(`/api/v1/league/${id}/update/`, {
+      await fetch(`${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/update/`, {
         method: "POST",
         body: JSON.stringify(reqBody),
         headers: { "content-type": "application/json" },

@@ -12,7 +12,7 @@ const MainNav = () => {
     <Navbar bg="dark" expand="lg" variant="dark">
       <Navbar.Brand href="/">
         <img
-          src={`${process.env.REACT_APP_PUBLIC_URL}/orca.jfif`}
+          src={`${process.env.REACT_APP_DEFAULT_LOGO}`}
           className="d-inline-block align-top mr-2"
           width="auto"
           height="35"

@@ -20,7 +20,7 @@ const TeamPage = () => {
   const [week, setWeek] = useState(1);
   const [userIsOwner, setIsOwner] = useState(false);
   useEffect(() => {
-    const url = `/api/v1/league/${leagueId}/team/${id}/`;
+    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${leagueId}/team/${id}/`;
     const unsub = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const resp = await fetch(url);
@@ -68,7 +68,7 @@ const TeamPage = () => {
       .then((snapshot) => {
         snapshot.ref.getDownloadURL().then((url) => {
           setShowModal(false);
-          const sendUrl = "/api/v1/league/updateTeamLogo/";
+          const sendUrl = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeamLogo/`;
           const body = { id, url };
           const reqdict = {
             method: "POST",
@@ -85,7 +85,7 @@ const TeamPage = () => {
       });
   };
   const sendUpdatedTeams = () => {
-    const url = "/api/v1/league/updateTeams/";
+    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams/`;
     const body = { teams: [team], week };
     const reqdict = {
       method: "POST",

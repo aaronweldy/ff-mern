@@ -57,7 +57,7 @@ function LeagueHome() {
   if (runScores) return <Redirect to={`/league/${id}/runScores/`} />;
 
   const deleteLeague = () => {
-    const url = `/api/v1/league/${id}/delete/`;
+    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/delete/`;
     const body = { user: user ? user.uid : 0 };
     const reqDict = {
       headers: { "content-type": "application/json" },
