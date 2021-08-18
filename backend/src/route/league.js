@@ -55,7 +55,7 @@ router.post("/create/", async (req, res) => {
         const teamId = v4();
         await admin
           .auth()
-          .getUserByEmail(team.teamOwner)
+          .getUserByEmail(team.ownerName)
           .then(async (user) => {
             db.collection("teams")
               .doc(teamId)
@@ -76,6 +76,7 @@ router.post("/create/", async (req, res) => {
             if (team.isCommissioner) comms.push(user.uid);
           })
           .catch(async (err) => {
+            console.log(err);
             db.collection("teams")
               .doc(teamId)
               .set({

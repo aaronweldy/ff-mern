@@ -53,7 +53,7 @@ export default function AdjustLineups() {
     for (const team of tempTeams) {
       team.players = team.players.filter((player) => player.name !== "");
     }
-    const url = "/api/v1/league/updateTeams/";
+    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams/`;
     const body = { teams: tempTeams };
     const reqdict = {
       method: "POST",

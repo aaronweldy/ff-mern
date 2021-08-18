@@ -131,10 +131,14 @@ function ScoringSettings() {
   return (
     <Container fluid>
       <Row>
+      <Col>
         <LeagueButton id={id} />
+        </Col>
       </Row>
       <Row>
-        <h2 className="ml-3 mb-5">Scoring Settings</h2>
+      <Col>
+        <h2 className="mb-5">Scoring Settings</h2>
+        </Col>
       </Row>
       {settings
         ? settings.map((setting, i) => (
@@ -320,14 +324,14 @@ function ScoringSettings() {
           ))
         : ""}
       <Row className="justify-content-center">
-        <Col className="ml-4">
+        <Col>
           <Button variant="primary" className="mt-4" onClick={handleAddSetting}>
             Add new setting
           </Button>
         </Col>
       </Row>
       <Row className="justify-content-center mt-4 mb-5">
-        <Col className="ml-4">
+        <Col>
           <Button variant="success" onClick={sendData}>
             Submit
           </Button>
