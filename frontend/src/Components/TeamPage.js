@@ -60,20 +60,23 @@ const TeamPage = () => {
     setTeam({ ...team });
   };
   const handleInfoSubmission = (imageUrl, teamName) => {
-    storage
+    const sendUrl = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeamInfo/`;
+    const body = { id, url: imageUrl, name: teamName };
+    let reqdict = {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    };
+    if (imageUrl !== team.logo && imageUrl !== process.env.REACT_APP_DEFAULT_LOGO) {
+      storage
       .ref()
       .child(`${team.id}/logo`)
       .putString(imageUrl, "data_url")
       .then((snapshot) => {
         snapshot.ref.getDownloadURL().then((url) => {
           setShowModal(false);
-          const sendUrl = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeamInfo/`;
-          const body = { id, url, name: teamName };
-          const reqdict = {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(body),
-          };
+          body.url = url;
+          reqdict = {...reqdict, body: JSON.stringify(body)};
           fetch(sendUrl, reqdict)
             .then((resp) => resp.json())
             .then((data) => {
@@ -82,7 +85,17 @@ const TeamPage = () => {
             .catch((e) => console.log(e));
         });
       });
-  };
+    }
+    else {
+      setShowModal(false);
+      fetch(sendUrl, reqdict)
+        .then((resp) => resp.json())
+        .then((data) => {
+          setTeam(data.team);
+        })
+        .catch((e) => console.log(e));
+      }
+    }
   const sendUpdatedTeams = () => {
     const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams/`;
     const body = { teams: [team], week };
@@ -130,6 +143,7 @@ const TeamPage = () => {
       <ImageModal
         showImage={showImageModal}
         name={team && team.name}
+        id={team && team.id}
         handleHide={() => setShowModal(!showImageModal)}
         handleInfoSubmission={handleInfoSubmission}
       />

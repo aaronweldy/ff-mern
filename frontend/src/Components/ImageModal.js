@@ -3,12 +3,14 @@ import {
 } from 'react-bootstrap';
 import { useDropzone } from 'react-dropzone';
 import React, { useState, useCallback, useEffect } from 'react';
+import { storage } from '../firebase-config';
 
 const ImageModal = (props) => {
   const [imageUrl, setImageUrl] = useState(null);
   const [name, setName] = useState(props.name);
   useEffect(() => {
     setName(props.name);
+    storage.ref().child(`${props.id}/logo`).getDownloadURL().then(url => setImageUrl(url));
   }, [props]);
   const onDrop = useCallback((acceptedFiles) => {
     const reader = new FileReader();
