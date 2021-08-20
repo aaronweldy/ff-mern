@@ -3,7 +3,6 @@ import { Table, Dropdown, DropdownButton, SplitButton } from "react-bootstrap";
 
 export default function TeamTable(props) {
   const { players, oppPlayers, name, week, isOwner } = props;
-  console.log(players);
   return (
     <Table striped bordered hover>
       <thead>

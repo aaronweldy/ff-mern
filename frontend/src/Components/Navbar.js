@@ -40,7 +40,6 @@ function LogOutButtons() {
   const [username, setUsername] = useState("");
   const [redirect, setRedirect] = useState(false);
   const user = auth.currentUser;
-  console.log(auth.currentUser);
   useEffect(() => {
     const authFunc = auth.onAuthStateChanged((user) => {
       if (user) {

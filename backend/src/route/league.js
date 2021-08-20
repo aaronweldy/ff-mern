@@ -14,6 +14,28 @@ const positions = ["qb", "rb", "wr", "te", "k"];
 
 const lineupSorter = (a, b) => lineupOrder[b] - lineupOrder[a];
 
+router.get("/allPlayers/", async (req, res) => {
+  const allPlayers = await db.collection('globalPlayers').doc('players').get();
+  if (allPlayers.size === 0) {
+    let players = [];
+    for (const pos of positions) {
+      const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=draft`;
+      const tableData = await scraper.get(url);
+      for (const player of tableData[0]) {
+        const segments = player.Player.split(' ');
+        if (segments !== '') {
+          players.push(segments.slice(0, segments.length-1).join(' '));
+        }
+      }
+    }
+    db.collection('globalPlayers').doc('players').set({players});
+    res.status(200).send(players);
+  }
+  else {
+    res.status(200).send({players: allPlayers.data()});
+  }
+});
+
 router.get("/:id/", async (req, res) => {
   const leagueId = req.params["id"];
   try {
@@ -181,11 +203,11 @@ router.post("/updateTeams/", (req, res) => {
   res.status(200).send({ teams });
 });
 
-router.post("/updateTeamLogo/", (req, res) => {
-  const { id, url } = req.body;
+router.post("/updateTeamInfo/", (req, res) => {
+  const { id, url, name } = req.body;
   try {
     const doc = db.collection("teams").doc(id);
-    doc.update({ logo: url }).then(async () => {
+    doc.update({ logo: url, name }).then(async () => {
       const teamData = (await doc.get()).data();
       res.status(200).send({ team: teamData });
     });

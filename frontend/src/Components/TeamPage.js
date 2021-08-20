@@ -25,7 +25,6 @@ const TeamPage = () => {
       if (user) {
         const resp = await fetch(url);
         const data = await resp.json();
-        console.log(data.team);
         setTeam(data.team);
         setIsOwner(data.team.owner === user.uid);
       }
@@ -60,7 +59,7 @@ const TeamPage = () => {
     selectedPlayer.lineup[week] = "bench";
     setTeam({ ...team });
   };
-  const handleImageSubmission = (imageUrl) => {
+  const handleInfoSubmission = (imageUrl, teamName) => {
     storage
       .ref()
       .child(`${team.id}/logo`)
@@ -68,8 +67,8 @@ const TeamPage = () => {
       .then((snapshot) => {
         snapshot.ref.getDownloadURL().then((url) => {
           setShowModal(false);
-          const sendUrl = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeamLogo/`;
-          const body = { id, url };
+          const sendUrl = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeamInfo/`;
+          const body = { id, url, name: teamName };
           const reqdict = {
             method: "POST",
             headers: { "content-type": "application/json" },
@@ -110,7 +109,7 @@ const TeamPage = () => {
           .map(() => ({
             position: pos,
             name: "",
-            lineup: [...Array(17).fill(pos)],
+            lineup: [...Array(league.numWeeks).fill(pos)],
           })),
       ])
       .flat();
@@ -130,8 +129,9 @@ const TeamPage = () => {
     <Container>
       <ImageModal
         showImage={showImageModal}
+        name={team && team.name}
         handleHide={() => setShowModal(!showImageModal)}
-        handleImageSubmission={handleImageSubmission}
+        handleInfoSubmission={handleInfoSubmission}
       />
       <Row>
         <LeagueButton id={leagueId} />

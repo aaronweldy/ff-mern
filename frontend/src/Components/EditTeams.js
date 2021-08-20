@@ -9,13 +9,17 @@ import {
   Row,
   OverlayTrigger,
 } from "react-bootstrap";
+import { Typeahead } from 'react-bootstrap-typeahead';
 import LeagueButton from "./LeagueButton";
+import { usePlayers } from '../hooks/usePlayers';
 import { auth } from "../firebase-config";
+import 'react-bootstrap-typeahead/css/Typeahead.css';
 
 const EditTeams = () => {
   const [teams, setTeams] = useState(null);
   const [redirect, setRedirect] = useState(false);
   const { id } = useParams();
+  const { players } = usePlayers();
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -60,6 +64,12 @@ const EditTeams = () => {
     setTeams(tempTeams);
   };
 
+  const handleNameChange = (team, player, newName) => {
+    const tempTeams = [...teams];
+    tempTeams[team].players[player].name = newName;
+    setTeams(tempTeams);
+  }
+
   const sendUpdatedTeams = () => {
     const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams/`;
     const body = { teams };
@@ -68,10 +78,7 @@ const EditTeams = () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     };
-    fetch(url, reqdict)
-      .then((data) => data.json())
-      .then((json) => console.log(json));
-    setRedirect(true);
+    fetch(url, reqdict).then(() => setRedirect(true));
   };
   if (redirect) return <Redirect to={`/league/${id}/`} />;
   return (
@@ -156,13 +163,13 @@ const EditTeams = () => {
                             </Form.Control>
                           </td>
                           <td>
-                            <input
-                              name="name"
-                              data-team={i}
-                              data-id={j}
+                            <Typeahead
                               type="text"
-                              value={player.name}
-                              onChange={handlePlayerChange}
+                              id="player-typeahead"
+                              selected={player.name ? [player.name] : []}
+                              options={players}
+                              placeholder="Select Player"
+                              onChange={(selected) => handleNameChange(i, j, selected[0])}
                             />
                           </td>
                         </tr>
