@@ -79,6 +79,13 @@ const TeamHub = () => {
       <Row className="justify-content-center">
         <Button
           className="m-3"
+          href="/league/join/"
+          size="lg"
+        >
+          Join a league
+        </Button>
+        <Button
+          className="m-3"
           variant="primary"
           size="lg"
           href="/league/create/"

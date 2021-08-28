@@ -100,7 +100,7 @@ function LeagueHome() {
             Close
           </Button>
           <Button
-            disabled={deleteName !== (league && league.leagueName)}
+            disabled={deleteName !== (league && league.name)}
             variant="danger"
             onClick={deleteLeague}
           >

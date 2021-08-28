@@ -16,12 +16,14 @@ import User from './User';
 import SecureRoute from './SecureRoute';
 import EditLeagueSettings from './EditLeagueSettings';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import JoinLeague from './JoinLeague';
 
 const App = () => (
   <Router>
     <MainNav />
     <Switch>
       <Route path="/league/create/" component={CreateLeague} />
+      <Route path="/league/join/" component={JoinLeague}/>
       <SecureRoute
         path="/league/:leagueId/team/:id/"
         component={TeamPage}
