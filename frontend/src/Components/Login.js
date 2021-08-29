@@ -26,7 +26,7 @@ const Login = () => {
       </Row>
       <Row className="justify-content-center mt-3 mb-3">
         <div className="subtitle">
-          Use the buttons below to authenticate. If you don&apost have an
+          Use the buttons below to authenticate. If you don&apos;t have an
           account, follow the steps as a sign-in process.
         </div>
         <div className="subtitle">

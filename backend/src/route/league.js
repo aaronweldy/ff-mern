@@ -15,7 +15,7 @@ const positions = ['qb', 'rb', 'wr', 'te', 'k'];
 router.get('/find/:query/', async (req, res) => {
 	const query = req.params['query'];
 	const startString = query.slice(0,3);
-	const cursor = await db.collection('leagues').where('name', '>=', startString).get();
+	const cursor = await db.collection('leagues').where('name', '>=', startString).where('name', '<=', startString + '\uf8ff').get();
 	const foundLeagues = {};
 	cursor.forEach(doc => foundLeagues[doc.id] = doc.data());
 	res.status(200).send(foundLeagues);
