@@ -165,7 +165,7 @@ function LeagueHome() {
               const linked =
                 team.ownerName !== "default" ? (
                   <a
-                    href={`${process.env.REACT_APP_PUBLIC_URL}/user/${team.owner}`}
+                    href={`/user/${team.owner}/`}
                   >
                     {team.ownerName}
                   </a>

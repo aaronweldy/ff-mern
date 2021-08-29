@@ -128,6 +128,7 @@ function EditLeagueSettings() {
           numWeeks,
           name: leagueName,
           logo: league.logo || process.env.REACT_APP_DEFAULT_LOGO,
+          commissioners: teams.filter(team => team.owner !== 'default' && team.isCommissioner).map(team => team.owner),
         },
         teams,
         deletedTeams,
