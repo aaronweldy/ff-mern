@@ -23,7 +23,7 @@ router.get('/find/:query/', async (req, res) => {
 
 router.get('/allPlayers/', async (req, res) => {
 	const allPlayers = await db.collection('globalPlayers').doc('players').get();
-	if (allPlayers.size === 0) {
+	if (!allPlayers.exists) {
 		let players = [];
 		for (const pos of positions) {
 			const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=draft`;

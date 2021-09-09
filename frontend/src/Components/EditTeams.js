@@ -19,7 +19,7 @@ const EditTeams = () => {
   const [teams, setTeams] = useState(null);
   const [redirect, setRedirect] = useState(false);
   const { id } = useParams();
-  const { players } = usePlayers();
+  const players = usePlayers();
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -167,7 +167,7 @@ const EditTeams = () => {
                               type="text"
                               id="player-typeahead"
                               selected={player.name ? [player.name] : []}
-                              options={players}
+                              options={players || []}
                               placeholder="Select Player"
                               onChange={(selected) => handleNameChange(i, j, selected[0])}
                             />

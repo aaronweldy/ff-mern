@@ -9,7 +9,7 @@ export const usePlayers = () => {
         const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/allPlayers/`;
         const resp = await fetch(url);
         const json = await resp.json();
-        setPlayers(json.players);
+        setPlayers(json.players.players);
       }
     });
     return () => unsub();
