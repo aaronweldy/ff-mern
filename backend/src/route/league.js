@@ -26,7 +26,7 @@ router.get('/allPlayers/', async (req, res) => {
 	if (!allPlayers.exists) {
 		let players = [];
 		for (const pos of positions) {
-			const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=draft`;
+			const url = `https://www.fantasypros.com/nfl/projections/${pos}.php`;
 			const tableData = await scraper.get(url);
 			for (const player of tableData[0]) {
 				const segments = player.Player.split(' ');
