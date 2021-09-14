@@ -85,9 +85,12 @@ function ScoringSettings() {
       e.target.value;
     setSettings(tempSettings);
   };
-  const handleRemoveSetting = (e) => {
+  const handleRemoveSetting = (index) => {
     const tempSettings = [...settings];
-    tempSettings.splice(e.target.dataset.setting, 1);
+    console.log(index);
+    tempSettings.splice(index, 1);
+    console.log(settings);
+    console.log(tempSettings);
     setSettings(tempSettings);
   };
   const handleRemoveMinimum = (e) => {
@@ -149,8 +152,7 @@ function ScoringSettings() {
               delay="1000"
               overlay={
                 <Button
-                  data-setting={i}
-                  onClick={handleRemoveSetting}
+                  onClick={() => handleRemoveSetting(i)}
                   variant="danger"
                   size="sm"
                   className="ml-2 mb-2"
@@ -159,7 +161,7 @@ function ScoringSettings() {
                 </Button>
               }
             >
-              <Row key={i} className="mt-3 mb-5">
+              <Row className="mt-3 mb-5">
                 <Col md={2}>
                   <Form.Control
                     name="position"

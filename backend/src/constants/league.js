@@ -7,7 +7,7 @@ export const convertedScoringTypes = {
 		'PASS TD': 'TD',
 		'RUSH TD': 'TD_2',
 		'YD PER ATT': 'Y/A',
-		'CP%': 'CP%',
+		'CP%': 'PCT',
 		INT: 'INT',
 		FUM: 'FL',
 	},

@@ -429,7 +429,7 @@ router.post('/:leagueId/runScores/', async (req, res) => {
 								break;
 							case 'greater than':
 								console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
-								if (statNumber > Number.parseFloat(cat.threshold))
+								if (statNumber >= Number.parseFloat(cat.threshold))
 									points = Number.parseFloat(category.points);
 								break;
 							case 'between':
