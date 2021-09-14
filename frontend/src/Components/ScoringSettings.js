@@ -39,6 +39,7 @@ const scoringTypes = [
   "CP%",
   "INT",
   "FUM",
+  'XPT',
   "FG 1-19",
   "FG 20-29",
   "FG 30-39",

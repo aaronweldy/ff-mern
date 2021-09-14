@@ -389,8 +389,9 @@ router.post('/:leagueId/runScores/', async (req, res) => {
 		team.players
 			.filter((player) => player.lineup[week] !== 'bench')
 			.forEach((player) => {
+				const playerName = player.name.replace(/\./g, '').toLowerCase();
 				if (
-					!Object.keys(statsAtt.playerMap).includes(player.name.toLowerCase())
+					!Object.keys(statsAtt.playerMap).includes(playerName)
 				) {
 					errors.push({
 						type: 'e',
@@ -414,7 +415,7 @@ router.post('/:leagueId/runScores/', async (req, res) => {
 						let points = 0;
 						try {
 							const statNumber = Number.parseFloat(
-								statsAtt.playerMap[player.name.toLowerCase()][
+								statsAtt.playerMap[playerName][
 									convertedScoringTypes[player.position][cat.statType]
 								]
 							);
@@ -441,7 +442,7 @@ router.post('/:leagueId/runScores/', async (req, res) => {
 							}
 							const successMins = category.minimums.filter((min) => {
 								const statNumber = Number.parseFloat(
-									statsAtt.playerMap[player.name][
+									statsAtt.playerMap[playerName][
 										convertedScoringTypes[player.position][min.statType]
 									]
 								);

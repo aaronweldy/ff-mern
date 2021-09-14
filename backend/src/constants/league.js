@@ -53,6 +53,7 @@ export const convertedScoringTypes = {
 		'FG 30-39': '30-39',
 		'FG 40-49': '40-49',
 		'FG 50+': '50+',
+		'XPT': 'XPT',
 	},
 };
 
