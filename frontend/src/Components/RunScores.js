@@ -29,7 +29,6 @@ const RunScores = () => {
       console.log(json);
       setTeams(json.teams);
       setLeague(json.league.scoringSettings);
-      console.log(json.league.lastScoredWeek + 1 || 1);
       setWeek(json.league.lastScoredWeek + 1 || 1);
       setIsCommissioner(json.league.commissioners.includes(user.uid));
     });

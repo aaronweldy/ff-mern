@@ -94,7 +94,7 @@ const TeamScoringBreakdown = (props) => {
                           : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
                         return (
                           <td key={i}>
-                            {player.weekStats[week]
+                            {stat.position.indexOf(player.position) >= 0 && player.weekStats[week]
                               ? player.weekStats[week][hashVal] || 0
                               : 0}
                           </td>
