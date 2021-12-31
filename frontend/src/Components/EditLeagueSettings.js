@@ -48,7 +48,7 @@ function EditLeagueSettings() {
       }
     });
     return () => unsub();
-  }, [league, initTeams]);
+  }, [league, initTeams, teams]);
 
   const onDrop = useCallback((acceptedFiles) => {
     const reader = new FileReader();

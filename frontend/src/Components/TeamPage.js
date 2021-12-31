@@ -122,7 +122,7 @@ const TeamPage = () => {
           .map(() => ({
             position: pos,
             name: "",
-            lineup: [...Array(league.numWeeks).fill(pos)],
+            lineup: [...Array(league.numWeeks+1).fill(pos)],
           })),
       ])
       .flat();
