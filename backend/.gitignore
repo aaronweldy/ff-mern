@@ -1,2 +1,5 @@
 /.env
 ff-mern-firebase*
+out/
+tsconfig.tsbuildinfo
+node_modules
