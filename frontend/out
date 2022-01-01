@@ -1,0 +1,130 @@
+
+> ff-mern@0.1.0 start
+> tsc && react-scripts start
+
+true
+Starting the development server...
+
+Failed to compile.
+
+src/shared/types.ts
+  Line 3:13:    'ScoringCategory' is not defined  no-undef
+  Line 29:13:   'Position' is not defined         no-undef
+  Line 39:13:   'Qualifier' is not defined        no-undef
+  Line 40:13:   'ScoringMinimum' is not defined   no-undef
+  Line 41:3:    'statType' is not defined         no-undef
+  Line 41:13:   'ScoringCategory' is not defined  no-undef
+  Line 42:3:    'threshold' is not defined        no-undef
+  Line 45:13:   'FullCategory' is not defined     no-undef
+  Line 46:3:    'qualifier' is not defined        no-undef
+  Line 46:14:   'Qualifier' is not defined        no-undef
+  Line 47:3:    'statType' is not defined         no-undef
+  Line 47:13:   'ScoringCategory' is not defined  no-undef
+  Line 48:3:    'threshold' is not defined        no-undef
+  Line 49:3:    'thresholdMin' is not defined     no-undef
+  Line 50:3:    'thresholdMax' is not defined     no-undef
+  Line 53:13:   'ScoringSetting' is not defined   no-undef
+  Line 54:3:    'category' is not defined         no-undef
+  Line 54:13:   'FullCategory' is not defined     no-undef
+  Line 55:3:    'minimums' is not defined         no-undef
+  Line 55:13:   'ScoringMinimum' is not defined   no-undef
+  Line 56:3:    'points' is not defined           no-undef
+  Line 57:3:    'position' is not defined         no-undef
+  Line 57:13:   'Position' is not defined         no-undef
+  Line 118:28:  'Record' is not defined           no-undef
+  Line 122:13:  'ErrorType' is not defined        no-undef
+
+Search for the keywords to learn more about each error.
+assets by path static/js/*.js 4.97 MiB
+  asset static/js/bundle.js 4.97 MiB [emitted] (name: main) 1 related asset
+  asset static/js/node_modules_web-vitals_dist_web-vitals_es5_min_js.chunk.js 5.35 KiB [emitted] 1 related asset
+asset index.html 1.87 KiB [emitted]
+asset asset-manifest.json 490 bytes [emitted]
+cached modules 4.29 MiB [cached] 609 modules
+runtime modules 31.6 KiB 17 modules
+./src/shared/types.ts 2.6 KiB [built] [code generated]
+
+WARNING in ./node_modules/@firebase/auth/dist/auth.esm.js
+Module Warning (from ./node_modules/source-map-loader/dist/cjs.js):
+Failed to parse source map from '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:es6/promise/promise] ' file: Error: ENOENT: no such file or directory, open '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:es6/promise/promise] '
+ @ ./node_modules/firebase/auth/dist/index.esm.js 1:0-24
+ @ ./src/Components/TeamHub.tsx 9:0-23
+ @ ./src/Components/App.tsx 7:0-32 118:19-26
+ @ ./src/index.tsx 11:0-35 19:35-38
+
+WARNING in ./node_modules/@firebase/auth/dist/auth.esm.js
+Module Warning (from ./node_modules/source-map-loader/dist/cjs.js):
+Failed to parse source map from '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:es6/util/arrayiterator] ' file: Error: ENOENT: no such file or directory, open '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:es6/util/arrayiterator] '
+ @ ./node_modules/firebase/auth/dist/index.esm.js 1:0-24
+ @ ./src/Components/TeamHub.tsx 9:0-23
+ @ ./src/Components/App.tsx 7:0-32 118:19-26
+ @ ./src/index.tsx 11:0-35 19:35-38
+
+WARNING in ./node_modules/@firebase/auth/dist/auth.esm.js
+Module Warning (from ./node_modules/source-map-loader/dist/cjs.js):
+Failed to parse source map from '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:es6/util/makeiterator] ' file: Error: ENOENT: no such file or directory, open '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:es6/util/makeiterator] '
+ @ ./node_modules/firebase/auth/dist/index.esm.js 1:0-24
+ @ ./src/Components/TeamHub.tsx 9:0-23
+ @ ./src/Components/App.tsx 7:0-32 118:19-26
+ @ ./src/index.tsx 11:0-35 19:35-38
+
+WARNING in ./node_modules/@firebase/auth/dist/auth.esm.js
+Module Warning (from ./node_modules/source-map-loader/dist/cjs.js):
+Failed to parse source map from '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:util/defineproperty] ' file: Error: ENOENT: no such file or directory, open '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:util/defineproperty] '
+ @ ./node_modules/firebase/auth/dist/index.esm.js 1:0-24
+ @ ./src/Components/TeamHub.tsx 9:0-23
+ @ ./src/Components/App.tsx 7:0-32 118:19-26
+ @ ./src/index.tsx 11:0-35 19:35-38
+
+WARNING in ./node_modules/@firebase/auth/dist/auth.esm.js
+Module Warning (from ./node_modules/source-map-loader/dist/cjs.js):
+Failed to parse source map from '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:util/global] ' file: Error: ENOENT: no such file or directory, open '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:util/global] '
+ @ ./node_modules/firebase/auth/dist/index.esm.js 1:0-24
+ @ ./src/Components/TeamHub.tsx 9:0-23
+ @ ./src/Components/App.tsx 7:0-32 118:19-26
+ @ ./src/index.tsx 11:0-35 19:35-38
+
+WARNING in ./node_modules/@firebase/auth/dist/auth.esm.js
+Module Warning (from ./node_modules/source-map-loader/dist/cjs.js):
+Failed to parse source map from '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:util/polyfill] ' file: Error: ENOENT: no such file or directory, open '/home/aweldy/ff-mern/frontend/node_modules/@firebase/auth/dist/ [synthetic:util/polyfill] '
+ @ ./node_modules/firebase/auth/dist/index.esm.js 1:0-24
+ @ ./src/Components/TeamHub.tsx 9:0-23
+ @ ./src/Components/App.tsx 7:0-32 118:19-26
+ @ ./src/index.tsx 11:0-35 19:35-38
+
+6 warnings have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+ERROR in src/shared/types.ts
+  Line 3:13:    'ScoringCategory' is not defined  no-undef
+  Line 29:13:   'Position' is not defined         no-undef
+  Line 39:13:   'Qualifier' is not defined        no-undef
+  Line 40:13:   'ScoringMinimum' is not defined   no-undef
+  Line 41:3:    'statType' is not defined         no-undef
+  Line 41:13:   'ScoringCategory' is not defined  no-undef
+  Line 42:3:    'threshold' is not defined        no-undef
+  Line 45:13:   'FullCategory' is not defined     no-undef
+  Line 46:3:    'qualifier' is not defined        no-undef
+  Line 46:14:   'Qualifier' is not defined        no-undef
+  Line 47:3:    'statType' is not defined         no-undef
+  Line 47:13:   'ScoringCategory' is not defined  no-undef
+  Line 48:3:    'threshold' is not defined        no-undef
+  Line 49:3:    'thresholdMin' is not defined     no-undef
+  Line 50:3:    'thresholdMax' is not defined     no-undef
+  Line 53:13:   'ScoringSetting' is not defined   no-undef
+  Line 54:3:    'category' is not defined         no-undef
+  Line 54:13:   'FullCategory' is not defined     no-undef
+  Line 55:3:    'minimums' is not defined         no-undef
+  Line 55:13:   'ScoringMinimum' is not defined   no-undef
+  Line 56:3:    'points' is not defined           no-undef
+  Line 57:3:    'position' is not defined         no-undef
+  Line 57:13:   'Position' is not defined         no-undef
+  Line 118:28:  'Record' is not defined           no-undef
+  Line 122:13:  'ErrorType' is not defined        no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack 5.65.0 compiled with 1 error and 6 warnings in 3197 ms
+Files successfully emitted, waiting for typecheck results...
+Issues checking in progress...
+No issues found.

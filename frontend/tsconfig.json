@@ -1,0 +1,16 @@
+{
+  "extends": "@tsconfig/create-react-app/tsconfig.json",
+  "compilerOptions": {
+    "strictPropertyInitialization": false
+  },
+  "exclude": [
+    "node_modules",
+    "tsbuild",
+    "scripts",
+    "acceptance-tests",
+    "webpack",
+    "jest",
+    "src/setupTests.ts",
+    "./node_modules\/@firebase\/auth"
+  ],
+}
