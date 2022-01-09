@@ -98,26 +98,14 @@ router.post("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function
             for (var teams_1 = __asyncValues(teams), teams_1_1; teams_1_1 = yield teams_1.next(), !teams_1_1.done;) {
                 const team = teams_1_1.value;
                 const teamId = v4();
+                console.log(team);
                 yield admin
                     .auth()
                     .getUserByEmail(team.ownerName)
                     .then((user) => __awaiter(void 0, void 0, void 0, function* () {
                     db.collection("teams")
                         .doc(teamId)
-                        .set({
-                        name: team.name,
-                        owner: user.uid,
-                        ownerName: user.email,
-                        id: teamId,
-                        isCommissioner: team.isCommissioner || comms.includes(user.uid),
-                        league: leagueId,
-                        leagueName: league,
-                        leagueLogo: logo,
-                        logo: "/football.jfif",
-                        players: [],
-                        weekScores: [...Array(18).fill(0)],
-                        addedPoints: [],
-                    });
+                        .set(Object.assign(Object.assign({}, team), { owner: user.uid, id: teamId, isCommissioner: team.isCommissioner || comms.includes(user.uid), league: leagueId, leagueLogo: logo }));
                     if (team.isCommissioner)
                         comms.push(user.uid);
                 }))
@@ -125,20 +113,7 @@ router.post("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function
                     console.log(err);
                     db.collection("teams")
                         .doc(teamId)
-                        .set({
-                        name: team.name,
-                        owner: "default",
-                        ownerName: "default",
-                        id: teamId,
-                        isCommissioner: false,
-                        league: leagueId,
-                        leagueName: league,
-                        leagueLogo: logo,
-                        logo: "/football.jfif",
-                        players: [],
-                        weekScores: [...Array(18).fill(0)],
-                        addedPoints: [],
-                    });
+                        .set(Object.assign(Object.assign({}, team), { name: team.name, owner: "default", ownerName: "default", id: teamId, isCommissioner: false, league: leagueId, leagueLogo: logo }));
                 }));
             }
         }
@@ -165,7 +140,6 @@ router.post("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function
 router.post("/:id/join/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { owner } = req.body;
-    console.log(`${id}, ${owner}`);
     const firstValidTeam = yield db
         .collection("teams")
         .where("league", "==", id)
@@ -299,7 +273,7 @@ router.post("/:leagueId/updateScoringSettings/", (req, res) => __awaiter(void 0,
 }));
 router.post("/:leagueId/update/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { leagueId } = req.params;
-    const { league, teams, deletedTeams } = req.body;
+    const { league, teams, deletedTeams, } = req.body;
     yield db
         .collection("leagues")
         .doc(leagueId)
@@ -308,13 +282,13 @@ router.post("/:leagueId/update/", (req, res) => __awaiter(void 0, void 0, void 0
         try {
             db.collection("teams")
                 .doc(team.id)
-                .update(Object.assign({}, team));
+                .update(Object.assign(Object.assign({}, team), { leagueName: league.name, leagueLogo: league.logo }));
         }
         catch (e) {
             const teamId = v4();
             yield admin
                 .auth()
-                .getUserByEmail(team.teamOwner)
+                .getUserByEmail(team.ownerName)
                 .then((user) => __awaiter(void 0, void 0, void 0, function* () {
                 db.collection("teams")
                     .doc(teamId)

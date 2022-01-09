@@ -3,16 +3,16 @@ import * as React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import TeamHub from "./TeamHub";
 import TeamPage from "./TeamPage";
-import MainNav from "./Navbar";
+import NavHeader from "./NavHeader";
 import Login from "./Login";
 import LeagueHome from "./LeagueHome";
-import EditTeams from "./EditTeams";
+import EditRosters from "./EditRosters";
 import RunScores from "./RunScores";
 import ScoringSettings from "./ScoringSettings";
 import AddPoints from "./AddPoints";
 import AdjustLineups from "./AdjustLineups";
 import User from "./User";
-import SecureRoute from "./SecureRoute";
+import SecureRoute from "./utils/SecureRoute";
 import EditLeagueSettings from "./EditLeagueSettings";
 import "bootstrap/dist/css/bootstrap.min.css";
 import JoinLeague from "./JoinLeague";
@@ -21,12 +21,12 @@ import CreateLeague from "./CreateLeague";
 const App = () => {
   return (
     <Router>
-      <MainNav />
+      <NavHeader />
       <Switch>
         <Route path="/league/create/" component={CreateLeague} />
         <Route path="/league/join/" component={JoinLeague} />
         <SecureRoute path="/league/:leagueId/team/:id/" component={TeamPage} />
-        <Route path="/league/:id/editTeams/" component={EditTeams} />
+        <Route path="/league/:id/editTeams/" component={EditRosters} />
         <Route
           path="/league/:id/editScoringSettings/"
           component={ScoringSettings}

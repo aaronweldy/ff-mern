@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { League } from "../ff-types/League";
+import { Team } from "../ff-types/Team";
 import { auth } from "../firebase-config";
-import { League, Team } from "../ff-types/types";
 
 type ApiResponse = {
   league: League;

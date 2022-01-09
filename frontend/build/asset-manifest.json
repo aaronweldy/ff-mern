@@ -1,27 +1,15 @@
 {
   "files": {
     "main.css": "/static/css/main.432d41a8.css",
-<<<<<<< HEAD
-    "main.js": "/static/js/main.cd55fcfd.js",
+    "main.js": "/static/js/main.e82b8c58.js",
     "static/js/377.62f16b95.chunk.js": "/static/js/377.62f16b95.chunk.js",
     "index.html": "/index.html",
     "main.432d41a8.css.map": "/static/css/main.432d41a8.css.map",
-    "main.cd55fcfd.js.map": "/static/js/main.cd55fcfd.js.map",
-=======
-    "main.js": "/static/js/main.d7ada490.js",
-    "static/js/377.62f16b95.chunk.js": "/static/js/377.62f16b95.chunk.js",
-    "index.html": "/index.html",
-    "main.432d41a8.css.map": "/static/css/main.432d41a8.css.map",
-    "main.d7ada490.js.map": "/static/js/main.d7ada490.js.map",
->>>>>>> typescript-refactor
+    "main.e82b8c58.js.map": "/static/js/main.e82b8c58.js.map",
     "377.62f16b95.chunk.js.map": "/static/js/377.62f16b95.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.432d41a8.css",
-<<<<<<< HEAD
-    "static/js/main.cd55fcfd.js"
-=======
-    "static/js/main.d7ada490.js"
->>>>>>> typescript-refactor
+    "static/js/main.e82b8c58.js"
   ]
 }

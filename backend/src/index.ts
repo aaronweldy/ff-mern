@@ -15,7 +15,6 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json({ limit: "50mb" }), cors());
 
 app.get("/", (req, res) => {
-  console.log("receiving message");
   res.json({ message: "API working" });
 });
 

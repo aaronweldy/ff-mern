@@ -1,4 +1,4 @@
-import { Position } from "../ff-types/types";
+import { Position } from "../ff-types/Position";
 
 export const lineupOrder = {
   QB: 1,
@@ -11,17 +11,6 @@ export const lineupOrder = {
   "QB/WR/RB/TE": 8,
   bench: 9,
 };
-
-export const positionTypes: Position[] = [
-  "QB",
-  "RB",
-  "WR",
-  "TE",
-  "K",
-  "WR/RB",
-  "WR/RB/TE",
-  "QB/WR/RB/TE",
-];
 
 export const lineupSorter = (a: Position, b: Position) =>
   lineupOrder[a] - lineupOrder[b];

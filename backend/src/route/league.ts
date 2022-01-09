@@ -8,13 +8,11 @@ import {
 import { Router } from "express";
 import { v4 } from "uuid";
 import admin, { db } from "../config/firebase-config.js";
-import {
-  League,
-  ScoringError,
-  SinglePosition,
-  Team,
-} from "ff-mern/src/ff-types/types";
 import { DatabasePlayer, StatKey } from "ff-mern/src/ff-types/DatabasePlayer";
+import { Team } from "ff-mern/src/ff-types/Team";
+import { League } from "ff-mern/src/ff-types/League";
+import { LocalPlayer } from "ff-mern/src/ff-types/LocalPlayer";
+import { ScoringError } from "ff-mern/src/ff-types/ScoringError";
 
 const router = Router();
 
@@ -96,6 +94,7 @@ router.post("/create/", async (req, res) => {
       let comms: string[] = [];
       for await (const team of teams) {
         const teamId = v4();
+        console.log(team);
         await admin
           .auth()
           .getUserByEmail(team.ownerName)
@@ -103,18 +102,12 @@ router.post("/create/", async (req, res) => {
             db.collection("teams")
               .doc(teamId)
               .set({
-                name: team.name,
+                ...team,
                 owner: user.uid,
-                ownerName: user.email,
                 id: teamId,
                 isCommissioner: team.isCommissioner || comms.includes(user.uid),
                 league: leagueId,
-                leagueName: league,
                 leagueLogo: logo,
-                logo: "/football.jfif",
-                players: [],
-                weekScores: [...Array(18).fill(0)],
-                addedPoints: [],
               });
             if (team.isCommissioner) comms.push(user.uid);
           })
@@ -123,18 +116,14 @@ router.post("/create/", async (req, res) => {
             db.collection("teams")
               .doc(teamId)
               .set({
+                ...team,
                 name: team.name,
                 owner: "default",
                 ownerName: "default",
                 id: teamId,
                 isCommissioner: false,
                 league: leagueId,
-                leagueName: league,
                 leagueLogo: logo,
-                logo: "/football.jfif",
-                players: [],
-                weekScores: [...Array(18).fill(0)],
-                addedPoints: [],
               });
           });
       }
@@ -156,7 +145,6 @@ router.post("/create/", async (req, res) => {
 router.post("/:id/join/", async (req, res) => {
   const { id } = req.params;
   const { owner } = req.body;
-  console.log(`${id}, ${owner}`);
   const firstValidTeam = await db
     .collection("teams")
     .where("league", "==", id)
@@ -300,7 +288,11 @@ router.post("/:leagueId/updateScoringSettings/", async (req, res) => {
 
 router.post("/:leagueId/update/", async (req, res) => {
   const { leagueId } = req.params;
-  const { league, teams, deletedTeams } = req.body;
+  const {
+    league,
+    teams,
+    deletedTeams,
+  }: { league: League; teams: Team[]; deletedTeams: Team[] } = req.body;
   await db
     .collection("leagues")
     .doc(leagueId)
@@ -309,12 +301,16 @@ router.post("/:leagueId/update/", async (req, res) => {
     try {
       db.collection("teams")
         .doc(team.id)
-        .update({ ...team });
+        .update({
+          ...team,
+          leagueName: league.name,
+          leagueLogo: league.logo,
+        } as Team);
     } catch (e) {
       const teamId = v4();
       await admin
         .auth()
-        .getUserByEmail(team.teamOwner)
+        .getUserByEmail(team.ownerName)
         .then(async (user) => {
           db.collection("teams")
             .doc(teamId)
