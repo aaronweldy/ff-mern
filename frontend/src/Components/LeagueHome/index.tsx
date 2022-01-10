@@ -16,7 +16,7 @@ import { useLeague } from "../../hooks/useLeague";
 import { auth, storage } from "../../firebase-config";
 import "firebase/auth";
 import "../../CSS/LeaguePages.css";
-import { Team } from "../../ff-types/Team";
+import { Team } from "@ff-mern/ff-types";
 
 function LeagueHome() {
   const { id } = useParams<{ id: string }>();

@@ -11,7 +11,7 @@ import {
 } from "react-bootstrap";
 import { Redirect } from "react-router-dom";
 import { storage, auth } from "../../firebase-config";
-import { League } from "../../ff-types/League";
+import { League } from "@ff-mern/ff-types";
 
 const JoinLeague = () => {
   const [leagueName, setLeagueName] = useState("");

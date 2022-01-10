@@ -10,9 +10,7 @@ import EditWeek from "../shared/EditWeek";
 import { lineupSorter } from "../../constants/index";
 import { useLeague } from "../../hooks/useLeague";
 import "../../CSS/LeaguePages.css";
-import { LocalPlayer } from "../../ff-types/LocalPlayer";
-import { Position, SinglePosition } from "../../ff-types/Position";
-import { Team } from "../../ff-types/Team";
+import { Team, LocalPlayer, Position, SinglePosition } from "@ff-mern/ff-types";
 
 const TeamPage = () => {
   const { id, leagueId } = useParams<{ id: string; leagueId: string }>();
@@ -64,13 +62,13 @@ const TeamPage = () => {
       }
     }
     if (team) {
-      setTeam({ ...team });
+      setTeam({ ...team } as Team);
     }
   };
   const handleBenchPlayer = (selectedPlayer: LocalPlayer) => {
     selectedPlayer.lineup[week] = "bench";
     if (team) {
-      setTeam({ ...team });
+      setTeam({ ...team } as Team);
     }
   };
   const handleInfoSubmission = (imageUrl: string, teamName?: string) => {

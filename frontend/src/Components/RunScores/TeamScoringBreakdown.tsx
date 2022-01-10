@@ -7,8 +7,8 @@ import {
   Image,
   Tooltip,
 } from "react-bootstrap";
-import { ScoringSetting } from "../../ff-types/Scoring";
-import { Team } from "../../ff-types/Team";
+import { ScoringSetting } from "@ff-mern/ff-types";
+import { Team } from "@ff-mern/ff-types";
 
 type TeamScoringBreakdownProps = {
   league: ScoringSetting[];

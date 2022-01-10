@@ -11,11 +11,11 @@ import ScoringSettingCheckGroup, {
   ScoringType,
 } from "./ScoringSettingCheckGroup";
 import {
+  Team,
+  PositionInfo,
   emptyDefaultPositions,
   Position,
-  PositionInfo,
-} from "../../ff-types/Position";
-import { Team } from "../../ff-types/Team";
+} from "@ff-mern/ff-types";
 
 function CreateLeague() {
   const [numTeams, setNumTeams] = useState(0);

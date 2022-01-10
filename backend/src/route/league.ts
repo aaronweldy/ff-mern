@@ -8,11 +8,13 @@ import {
 import { Router } from "express";
 import { v4 } from "uuid";
 import admin, { db } from "../config/firebase-config.js";
-import { DatabasePlayer, StatKey } from "ff-mern/src/ff-types/DatabasePlayer";
-import { Team } from "ff-mern/src/ff-types/Team";
-import { League } from "ff-mern/src/ff-types/League";
-import { LocalPlayer } from "ff-mern/src/ff-types/LocalPlayer";
-import { ScoringError } from "ff-mern/src/ff-types/ScoringError";
+import {
+  DatabasePlayer,
+  League,
+  ScoringError,
+  StatKey,
+  Team,
+} from "@ff-mern/ff-types";
 
 const router = Router();
 

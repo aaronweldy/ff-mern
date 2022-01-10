@@ -1,6 +1,6 @@
 import React from "react";
 import { Table, Dropdown, DropdownButton, SplitButton } from "react-bootstrap";
-import { LocalPlayer } from "../../ff-types/LocalPlayer";
+import { LocalPlayer } from "@ff-mern/ff-types";
 
 type TableType = "starters" | "bench" | "backup";
 

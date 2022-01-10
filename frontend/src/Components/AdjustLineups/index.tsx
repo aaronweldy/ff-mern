@@ -8,9 +8,7 @@ import EditWeek from "../shared/EditWeek";
 import { lineupSorter } from "../../constants/index";
 import { useLeague } from "../../hooks/useLeague";
 import "../../CSS/LeaguePages.css";
-import { LocalPlayer } from "../../ff-types/LocalPlayer";
-import { Position } from "../../ff-types/Position";
-import { Team } from "../../ff-types/Team";
+import { Team, LocalPlayer, Position } from "@ff-mern/ff-types";
 
 export default function AdjustLineups() {
   const { id } = useParams<{ id: string }>();

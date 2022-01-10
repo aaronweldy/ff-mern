@@ -9,13 +9,13 @@ import EditLineupSettingsForm from "../shared/EditLineupSettingsForm";
 import { useLeague } from "../../hooks/useLeague";
 import LeagueCreationTable from "../shared/LeagueCreationTable";
 import LeagueCreationHeader from "../shared/LeagueCreationHeader";
-import { League } from "../../ff-types/League";
 import {
+  Team,
+  PositionInfo,
   emptyDefaultPositions,
   Position,
-  PositionInfo,
-} from "../../ff-types/Position";
-import { Team } from "../../ff-types/Team";
+  League,
+} from "@ff-mern/ff-types";
 
 function EditLeagueSettings() {
   const { id } = useParams<{ id: string }>();

@@ -8,9 +8,7 @@ import ErrorTable from "./ErrorTable";
 import EditWeek from "../shared/EditWeek";
 import { auth } from "../../firebase-config";
 import "../../CSS/LeaguePages.css";
-import { League } from "../../ff-types/League";
-import { ScoringError } from "../../ff-types/ScoringError";
-import { Team } from "../../ff-types/Team";
+import { Team, League, ScoringError } from "@ff-mern/ff-types";
 
 type ApiResponse = {
   teams: Team[];

@@ -1,4 +1,4 @@
-import { Position } from "../ff-types/Position";
+import { Position } from "@ff-mern/ff-types";
 
 export const lineupOrder = {
   QB: 1,

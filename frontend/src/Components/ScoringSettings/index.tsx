@@ -10,12 +10,12 @@ import {
 } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
 import { auth } from "../../firebase-config";
-import { Position } from "../../ff-types/Position";
 import {
+  Position,
   ScoringSetting,
   Qualifier,
   ScoringCategory,
-} from "../../ff-types/Scoring";
+} from "@ff-mern/ff-types";
 
 const positionTypes = [
   "QB",

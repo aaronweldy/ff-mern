@@ -1,6 +1,6 @@
 import React from "react";
 import { Table, Button } from "react-bootstrap";
-import { ScoringError } from "../../ff-types/ScoringError";
+import { ScoringError } from "@ff-mern/ff-types";
 
 type ErrorTableProps = {
   errors: ScoringError[];

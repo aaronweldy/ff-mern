@@ -1,6 +1,6 @@
 import React from "react";
 import { Form, Row, Col } from "react-bootstrap";
-import { Position, PositionInfo, positionTypes } from "../../ff-types/Position";
+import { Position, PositionInfo, positionTypes } from "@ff-mern/ff-types";
 
 type LineupSettingsProps = {
   handleChange: (

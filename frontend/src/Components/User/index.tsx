@@ -14,7 +14,7 @@ import ImageModal from "../shared/ImageModal";
 import firebase, { auth, storage } from "../../firebase-config";
 
 import "../../CSS/LeaguePages.css";
-import { Team } from "../../ff-types/Team";
+import { Team } from "@ff-mern/ff-types";
 
 type PasswordReducerState = {
   oldPassword: string;

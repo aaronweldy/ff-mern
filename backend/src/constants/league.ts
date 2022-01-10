@@ -1,6 +1,9 @@
-import { StatKey } from "ff-mern/src/ff-types/DatabasePlayer";
-import { SinglePosition } from "ff-mern/src/ff-types/Position";
-import { ScoringCategory, ScoringSetting } from "ff-mern/src/ff-types/Scoring";
+import {
+  SinglePosition,
+  ScoringCategory,
+  StatKey,
+  ScoringSetting,
+} from "@ff-mern/ff-types";
 
 export const convertedScoringTypes: Record<
   SinglePosition,

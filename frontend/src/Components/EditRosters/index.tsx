@@ -14,8 +14,7 @@ import LeagueButton from "../shared/LeagueButton";
 import { usePlayers } from "../../hooks/usePlayers";
 import { auth } from "../../firebase-config";
 import "react-bootstrap-typeahead/css/Typeahead.css";
-import { SinglePosition } from "../../ff-types/Position";
-import { Team } from "../../ff-types/Team";
+import { Team, SinglePosition } from "@ff-mern/ff-types";
 
 const EditRosters = () => {
   const [teams, setTeams] = useState<Team[]>([]);

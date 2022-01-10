@@ -5,7 +5,7 @@ import { auth } from "../../firebase-config";
 import { useLeague } from "../../hooks/useLeague";
 import LeagueButton from "../shared/LeagueButton";
 import "../../CSS/LeaguePages.css";
-import { Team } from "../../ff-types/Team";
+import { Team } from "@ff-mern/ff-types";
 
 export default function AddPoints() {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +15,6 @@ export default function AddPoints() {
   const [redirect, setRedirect] = useState(false);
 
   const user = auth.currentUser;
-  console.log(initTeams);
   useEffect(() => {
     if (initTeams.length) {
       setTeams(initTeams);

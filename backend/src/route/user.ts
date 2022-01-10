@@ -1,7 +1,7 @@
 import { Router } from "express";
 import env from "dotenv";
 import { db } from "../config/firebase-config.js";
-import { Team } from "ff-mern/src/ff-types/Team";
+import { Team } from "@ff-mern/ff-types";
 const router = Router();
 
 env.config();

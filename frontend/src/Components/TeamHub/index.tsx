@@ -3,7 +3,7 @@ import { Card, CardDeck, Button, Container, Row } from "react-bootstrap";
 import { auth, storage } from "../../firebase-config";
 import "firebase/auth";
 import "../../CSS/LeaguePages.css";
-import { Team } from "../../ff-types/Team";
+import { Team } from "@ff-mern/ff-types";
 
 const TeamHub = () => {
   const [teams, setTeams] = useState<Team[]>([]);

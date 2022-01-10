@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+      "esModuleInterop": true,
+      "target": "es6",
+      "noImplicitAny": true,
+      "moduleResolution": "node",
+      "sourceMap": true,
+      "outDir": "dist",
+      "baseUrl": ".",
+      "strictPropertyInitialization": false,
+      "declaration": true
+  },
+  "exclude": [
+      "node_modules",
+      "dist"
+  ]
+}

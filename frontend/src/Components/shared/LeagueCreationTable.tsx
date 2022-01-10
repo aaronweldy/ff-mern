@@ -1,6 +1,6 @@
 import React from "react";
 import { Table, Form, Row, OverlayTrigger, Button, Col } from "react-bootstrap";
-import { Team } from "../../ff-types/Team";
+import { Team } from "@ff-mern/ff-types";
 
 type LeagueCreationTableProps = {
   teams: Team[];
