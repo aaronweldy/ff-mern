@@ -79,7 +79,7 @@ function CreateLeague() {
       case "weeks":
         setNumWeeks(parseInt(evtKey));
         teams.forEach((team) => {
-          team.updateNumWeeks(parseInt(evtKey));
+          Team.updateNumWeeks(team, parseInt(evtKey));
         });
         break;
     }

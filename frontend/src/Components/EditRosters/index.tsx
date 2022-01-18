@@ -14,7 +14,7 @@ import LeagueButton from "../shared/LeagueButton";
 import { usePlayers } from "../../hooks/usePlayers";
 import { auth } from "../../firebase-config";
 import "react-bootstrap-typeahead/css/Typeahead.css";
-import { Team, SinglePosition } from "@ff-mern/ff-types";
+import { Team, SinglePosition, RosteredPlayer } from "@ff-mern/ff-types";
 
 const EditRosters = () => {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -38,16 +38,7 @@ const EditRosters = () => {
   }, [id]);
   const handleAddPlayer = (idx: number) => {
     const tempTeams = [...teams];
-    tempTeams[idx].players.push({
-      name: "",
-      position: "QB",
-      lineup: [...Array(18).fill("bench")],
-      points: [...Array(18).fill(0)],
-      weekStats: [...Array(18).fill(0)],
-      backup: [...Array(18).fill("None")],
-      error: false,
-      dummyPlayer: false,
-    });
+    tempTeams[idx].rosteredPlayers.push(new RosteredPlayer("", "QB"));
     setTeams(tempTeams);
   };
 
@@ -57,7 +48,7 @@ const EditRosters = () => {
     playerIdx: number
   ) => {
     const tempTeams = [...teams];
-    tempTeams[teamIdx].players.splice(playerIdx, 1);
+    tempTeams[teamIdx].rosteredPlayers.splice(playerIdx, 1);
     setTeams(tempTeams);
   };
 
@@ -67,7 +58,8 @@ const EditRosters = () => {
     player: number
   ) => {
     const tempTeams = [...teams];
-    tempTeams[team].players[player].position = e.target.value as SinglePosition;
+    tempTeams[team].rosteredPlayers[player].position = e.target
+      .value as SinglePosition;
     setTeams(tempTeams);
   };
 
@@ -93,7 +85,7 @@ const EditRosters = () => {
 
   const handleNameChange = (team: number, player: number, newName: string) => {
     const tempTeams = [...teams];
-    tempTeams[team].players[player].name = newName;
+    tempTeams[team].rosteredPlayers[player].name = newName;
     setTeams(tempTeams);
   };
 
@@ -157,7 +149,7 @@ const EditRosters = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {team.players.map((player, j) => (
+                    {team.rosteredPlayers.map((player, j) => (
                       <OverlayTrigger
                         key={j}
                         placement="left"

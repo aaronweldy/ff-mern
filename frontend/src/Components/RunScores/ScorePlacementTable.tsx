@@ -1,6 +1,6 @@
 import { Table } from "react-bootstrap";
 import React from "react";
-import { Team } from "@ff-mern/ff-types";
+import { Team, TeamWeekInfo } from "@ff-mern/ff-types";
 
 const backgroundIters = [
   "first-background",
@@ -15,9 +15,7 @@ type ScorePlacementTableProps = {
 
 const ScorePlacementTable = ({ teams, week }: ScorePlacementTableProps) => {
   const teamSorter = (a: Team, b: Team) =>
-    b.weekScores[week] +
-    (b.addedPoints[week] || 0) -
-    (a.weekScores[week] + (a.addedPoints[week] || 0));
+    Team.sumWeekScore(b, week) - Team.sumWeekScore(a, week);
   return (
     <Table striped bordered hover className="table-width">
       <thead>
@@ -34,7 +32,7 @@ const ScorePlacementTable = ({ teams, week }: ScorePlacementTableProps) => {
             <td>{team.name}</td>
             <td>
               {(
-                (team.weekScores[week] || 0) + (team.addedPoints[week] || 0)
+                team.weekInfo[week].weekScore + team.weekInfo[week].addedPoints
               ).toFixed(2)}
             </td>
           </tr>

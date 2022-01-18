@@ -1,32 +1,62 @@
 import React from "react";
 import { Table, Dropdown, DropdownButton, SplitButton } from "react-bootstrap";
-import { LocalPlayer } from "@ff-mern/ff-types";
+import {
+  FinalizedLineup,
+  FinalizedPlayer,
+  LineupSettings,
+  Position,
+} from "@ff-mern/ff-types";
+import { lineupSorter } from "../../constants";
 
 type TableType = "starters" | "bench" | "backup";
 
 type TeamTableProps = {
-  players: LocalPlayer[];
-  oppPlayers: LocalPlayer[];
+  players: FinalizedLineup;
+  positionsInTable: LineupSettings;
   name: TableType;
-  week: number;
   isOwner: boolean;
   handlePlayerChange: (
-    player: LocalPlayer,
+    player: FinalizedPlayer,
     name: TableType,
-    opp: LocalPlayer
+    opp: FinalizedPlayer,
+    sidx: number
   ) => void;
-  handleBenchPlayer: (player: LocalPlayer, idx: number) => void;
+  handleBenchPlayer: (player: FinalizedPlayer) => void;
 };
 
-export default function TeamTable({
+const findOppositePlayers = (
+  player: FinalizedPlayer,
+  isStarter: boolean,
+  allPlayers: FinalizedLineup
+) => {
+  if (isStarter) {
+    return allPlayers["bench"].filter(
+      (benchPlayer) => player.lineup.indexOf(benchPlayer.position) >= 0
+    );
+  }
+  return Object.keys(allPlayers)
+    .filter((pos) => pos.indexOf(player.position) >= 0)
+    .reduce((acc: FinalizedPlayer[], position: string) => {
+      acc = acc.concat(allPlayers[position as Position]);
+      return acc;
+    }, []);
+};
+
+export const TeamTable = ({
   players,
-  oppPlayers,
+  positionsInTable,
   name,
-  week,
   isOwner,
   handlePlayerChange,
   handleBenchPlayer,
-}: TeamTableProps) {
+}: TeamTableProps) => {
+  const iterablePositions = Object.keys(positionsInTable)
+    .reduce((acc: Position[], pos: string) => {
+      acc = acc.concat([...Array<Position>(1).fill(pos as Position)]);
+      return acc;
+    }, [])
+    .sort(lineupSorter);
+
   return (
     <Table striped bordered hover>
       <thead>
@@ -38,113 +68,109 @@ export default function TeamTable({
         </tr>
       </thead>
       <tbody>
-        {players.map((player, i) => (
-          <tr key={i}>
-            {isOwner ? (
-              <td>
-                <DropdownButton title="">
-                  {oppPlayers
-                    .filter(
-                      (oppPlayer) =>
-                        oppPlayer.lineup[week].indexOf(player.position) >= 0 ||
-                        player.lineup[week].indexOf(oppPlayer.position) >= 0
-                    )
-                    .map((starter, j) => {
-                      const swapPlayer = oppPlayers.findIndex(
-                        (oppPlayer) =>
-                          oppPlayer.name === starter.name &&
-                          oppPlayer.lineup[week] === starter.lineup[week]
-                      );
-                      return (
-                        <Dropdown.Item
-                          key={j}
-                          onClick={() =>
-                            handlePlayerChange(
-                              player,
-                              name,
-                              oppPlayers[swapPlayer]
-                            )
-                          }
-                        >
-                          {starter.lineup[week]}:{starter.name}
-                        </Dropdown.Item>
-                      );
-                    })}
-                  {name === "starters" && player.name !== "" ? (
-                    <Dropdown.Item onClick={() => handleBenchPlayer(player, i)}>
-                      bench
-                    </Dropdown.Item>
-                  ) : null}
-                </DropdownButton>
-              </td>
-            ) : null}
-            <td>
-              <span>
-                {name === "starters" ? player.lineup[week] : player.position}
-              </span>
-            </td>
-            <td>
-              <span>{player.name}</span>
-            </td>
-            {isOwner && name === "starters" ? (
-              <td>
-                <SplitButton
-                  id="backup"
-                  title={
-                    player.backup[week] === "" ? "None" : player.backup[week]
+        {iterablePositions.reduce((acc: JSX.Element[], pos: Position) => {
+          if (positionsInTable[pos] === 0) {
+            return acc;
+          }
+          const newRows = players[pos];
+          acc = acc.concat(
+            newRows.map((player, i) => {
+              return (
+                <tr
+                  key={
+                    player.position + player.lineup + player.name + i.toString()
                   }
-                  variant="secondary"
                 >
-                  {oppPlayers
-                    .filter(
-                      (oppPlayer) =>
-                        oppPlayer.lineup[week].indexOf(player.position) >= 0 ||
-                        player.lineup[week].indexOf(oppPlayer.position) >= 0
-                    )
-                    .map((starter, j) => {
-                      const swapPlayer = oppPlayers.findIndex(
-                        (oppPlayer) =>
-                          oppPlayer.name === starter.name &&
-                          oppPlayer.position === starter.position
-                      );
-                      return (
+                  {isOwner ? (
+                    <td>
+                      <DropdownButton title="Move">
+                        {findOppositePlayers(
+                          player,
+                          name === "starters",
+                          players
+                        ).map((oppPlayer, j) => {
+                          return (
+                            <Dropdown.Item
+                              key={
+                                oppPlayer.position +
+                                oppPlayer.lineup +
+                                oppPlayer.name +
+                                j.toString()
+                              }
+                              onClick={() =>
+                                handlePlayerChange(player, name, oppPlayer, i)
+                              }
+                            >
+                              {oppPlayer.lineup}: {oppPlayer.name}
+                            </Dropdown.Item>
+                          );
+                        })}
+                        {name === "starters" && player.name !== "" ? (
+                          <Dropdown.Item
+                            onClick={() => handleBenchPlayer(player)}
+                          >
+                            bench
+                          </Dropdown.Item>
+                        ) : null}
+                      </DropdownButton>
+                    </td>
+                  ) : null}
+                  <td>
+                    <span>
+                      {name === "starters" ? player.lineup : player.position}
+                    </span>
+                  </td>
+                  <td>
+                    <span>{player.name}</span>
+                  </td>
+                  {isOwner && name === "starters" ? (
+                    <td>
+                      <SplitButton
+                        id="backup"
+                        title={!player.backup ? "None" : player.backup}
+                        variant="secondary"
+                      >
+                        {findOppositePlayers(player, true, players).map(
+                          (oppPlayer, j) => {
+                            return (
+                              <Dropdown.Item
+                                key={j}
+                                onClick={() =>
+                                  handlePlayerChange(
+                                    player,
+                                    "backup",
+                                    oppPlayer,
+                                    -1
+                                  )
+                                }
+                              >
+                                {oppPlayer.name}
+                              </Dropdown.Item>
+                            );
+                          }
+                        )}
                         <Dropdown.Item
-                          key={j}
                           onClick={() =>
                             handlePlayerChange(
                               player,
                               "backup",
-                              oppPlayers[swapPlayer]
+                              new FinalizedPlayer("", player.position, "bench"),
+                              -1
                             )
                           }
                         >
-                          {starter.name}
+                          None
                         </Dropdown.Item>
-                      );
-                    })}
-                  <Dropdown.Item
-                    onClick={() =>
-                      handlePlayerChange(
-                        player,
-                        "backup",
-                        new LocalPlayer(
-                          "",
-                          player.position,
-                          "bench",
-                          player.weekStats.length,
-                          true
-                        )
-                      )
-                    }
-                  >
-                    None
-                  </Dropdown.Item>
-                </SplitButton>
-              </td>
-            ) : null}
-          </tr>
-        ))}
+                      </SplitButton>
+                    </td>
+                  ) : null}
+                </tr>
+              );
+            })
+          );
+          return acc;
+        }, [])}
       </tbody>
     </Table>
   );
-}
+};

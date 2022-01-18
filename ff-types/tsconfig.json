@@ -6,12 +6,9 @@
       "moduleResolution": "node",
       "sourceMap": true,
       "outDir": "dist",
-      "baseUrl": ".",
-      "strictPropertyInitialization": false,
       "declaration": true
   },
-  "exclude": [
-      "node_modules",
-      "dist"
+  "include": [
+      "src/*"
   ]
 }

@@ -131,3 +131,7 @@
     transform: rotate(360deg);
   }
 }
+
+.top-bordered-row {
+  border-top: 3px solid black;
+}

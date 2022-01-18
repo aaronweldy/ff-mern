@@ -7,19 +7,28 @@ import {
   Image,
   Tooltip,
 } from "react-bootstrap";
-import { ScoringSetting } from "@ff-mern/ff-types";
+import {
+  ApiTypes,
+  Position,
+  sanitizePlayerName,
+  ScoringSetting,
+} from "@ff-mern/ff-types";
 import { Team } from "@ff-mern/ff-types";
+import { lineupSorter } from "../../constants";
+import "../../CSS/LeaguePages.css";
 
 type TeamScoringBreakdownProps = {
   league: ScoringSetting[];
   team: Team;
   week: number;
+  playerData: ApiTypes.PlayerScoreData;
 };
 
 const TeamScoringBreakdown = ({
   league,
   team,
   week,
+  playerData,
 }: TeamScoringBreakdownProps) => {
   return (
     <>
@@ -60,77 +69,67 @@ const TeamScoringBreakdown = ({
             </tr>
           </thead>
           <tbody>
-            {team.players
-              .filter((player) => player.lineup[week] !== "bench")
-              .map((player, i) => {
-                const nameCard = player.error ? (
-                  <OverlayTrigger
-                    key={i}
-                    placement="top"
-                    overlay={
-                      <Tooltip id="tooltip-top">
-                        Player not found in database. Make sure the name is
-                        spelled correctly.
-                      </Tooltip>
-                    }
-                  >
-                    <td className="error-background">
-                      <span>{player.name}</span>
-                    </td>
-                  </OverlayTrigger>
-                ) : (
-                  <td>
-                    <span>{player.name}</span>
-                  </td>
-                );
-                return (
-                  <tr key={i}>
-                    <td>
-                      <span>{player.lineup[week]}</span>
-                    </td>
-                    <td>
-                      <span>{player.position}</span>
-                    </td>
-                    {nameCard}
-                    <td>
-                      <span>{player.points[week]?.toFixed(2) || 0}</span>
-                    </td>
-                    {league
-                      ? league.map((stat, idx) => {
-                          const cat = stat.category;
-                          const hashVal =
-                            cat.qualifier === "between"
-                              ? `${cat.qualifier}|${cat.thresholdMin}${cat.thresholdMax}|${cat.statType}`
-                              : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
-                          return (
-                            <td key={idx}>
-                              {stat.position.indexOf(player.position) >= 0 &&
-                              player.weekStats[week]
-                                ? player.weekStats[week][hashVal]?.toFixed(2) ||
-                                  0
-                                : 0}
-                            </td>
-                          );
-                        })
-                      : null}
-                  </tr>
-                );
-              })}
+            {Object.keys(team.weekInfo[week].finalizedLineup)
+              .sort((a, b) => lineupSorter(a as Position, b as Position))
+              .reduce((acc: JSX.Element[], pos) => {
+                const players =
+                  team.weekInfo[week].finalizedLineup[pos as Position];
+                players.forEach((player, i) => {
+                  const data = playerData[sanitizePlayerName(player.name)];
+                  console.log(data);
+                  acc.push(
+                    <tr
+                      className={
+                        pos === "bench" && i === 0 ? "top-bordered-row" : ""
+                      }
+                      key={player.name + pos + i.toString()}
+                    >
+                      <td>
+                        <span>{player.lineup}</span>
+                      </td>
+                      <td>
+                        <span>{player.position}</span>
+                      </td>
+                      <td>{player.name}</td>
+                      <td>
+                        <span>
+                          {data?.scoring?.totalPoints?.toFixed(2) || 0}
+                        </span>
+                      </td>
+                      {league
+                        ? league.map((stat, idx) => {
+                            const cat = stat.category;
+                            const hashVal =
+                              cat.qualifier === "between"
+                                ? `${cat.qualifier}|${cat.thresholdMin}${cat.thresholdMax}|${cat.statType}`
+                                : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
+                            return (
+                              <td key={idx}>
+                                {(stat.position.indexOf(player.position) >= 0 &&
+                                  data?.scoring?.categories[hashVal]?.toFixed(
+                                    2
+                                  )) ||
+                                  0}
+                              </td>
+                            );
+                          })
+                        : null}
+                    </tr>
+                  );
+                });
+                return acc;
+              }, [])}
             <tr>
               <td colSpan={3}>
                 <b>Point Adjustment</b>
               </td>
-              <td>{team.addedPoints[week] || 0}</td>
+              <td>{team.weekInfo[week].addedPoints}</td>
             </tr>
             <tr>
               <td colSpan={3}>
                 <b>Total points:</b>
               </td>
-              <td>
-                {(
-                  (team.weekScores[week] || 0) + (team.addedPoints[week] || 0)
-                ).toFixed(2)}
-              </td>
+              <td>{Team.sumWeekScore(team, week).toFixed(2)}</td>
             </tr>
           </tbody>
         </Table>

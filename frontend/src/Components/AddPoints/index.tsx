@@ -25,15 +25,10 @@ export default function AddPoints() {
     index: number
   ) => {
     const tempTeams = [...teams];
-    tempTeams[index].addedPoints[week] = parseInt(e.target.value);
+    tempTeams[index].weekInfo[week].addedPoints = parseInt(e.target.value);
     setTeams(tempTeams);
   };
   const updateTeams = () => {
-    teams.forEach((team) => {
-      team.addedPoints = team.addedPoints.map((pts) =>
-        typeof pts === "string" ? Number.parseFloat(pts) || 0 : pts
-      );
-    });
     const body = { teams };
     const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/adjustTeamSettings/`;
     const reqDict = {
@@ -91,16 +86,13 @@ export default function AddPoints() {
         <tbody>
           {teams && league
             ? teams.map((team, i) => {
-                if (team.addedPoints.length === 0) {
-                  team.addedPoints = [...Array(league.numWeeks + 1)].fill(0);
-                }
                 return (
                   <tr key={i}>
                     <td>{team.name}</td>
-                    <td>{(team.weekScores[week] || 0).toFixed(2)}</td>
+                    <td>{(team.weekInfo[week].weekScore || 0).toFixed(2)}</td>
                     <td>
                       <Form.Control
-                        value={team.addedPoints[week] || 0}
+                        value={team.weekInfo[week].addedPoints || 0}
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                           handleAddedPoints(e, i)
                         }

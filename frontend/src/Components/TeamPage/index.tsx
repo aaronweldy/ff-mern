@@ -1,25 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Container, Col, Button, Alert, Row, Image } from "react-bootstrap";
+import { Container, Button, Alert, Row } from "react-bootstrap";
 import { auth, storage } from "../../firebase-config";
-import TeamTable from "../shared/TeamTable";
+import { TeamTable } from "../shared/TeamTable";
 import LeagueButton from "../shared/LeagueButton";
 import ImageModal from "../shared/ImageModal";
 import EditWeek from "../shared/EditWeek";
-
-import { lineupSorter } from "../../constants/index";
 import { useLeague } from "../../hooks/useLeague";
 import "../../CSS/LeaguePages.css";
-import { Team, LocalPlayer, Position, SinglePosition } from "@ff-mern/ff-types";
+import { Team, LineupSettings, FinalizedPlayer } from "@ff-mern/ff-types";
+import { useTeamTable } from "../../hooks/useTeamTable";
+import { Header } from "./Header";
+import { getWeeklyLineup } from "../utils/getWeeklyLineup";
 
 const TeamPage = () => {
   const { id, leagueId } = useParams<{ id: string; leagueId: string }>();
   const { league } = useLeague(leagueId);
-  const [team, setTeam] = useState<Team | null>(null);
+  const [team, setTeam] = useState<Team | undefined>();
   const [success, setSuccess] = useState(false);
   const [showImageModal, setShowModal] = useState(false);
   const [week, setWeek] = useState(1);
   const [userIsOwner, setIsOwner] = useState(false);
+  const lineup = getWeeklyLineup(week, team, league?.lineupSettings);
+  console.log(lineup);
+  const { handlePlayerChange, handleBenchPlayer } = useTeamTable(lineup);
+
   useEffect(() => {
     const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${leagueId}/team/${id}/`;
     const unsub = auth.onAuthStateChanged(async (user) => {
@@ -38,39 +43,7 @@ const TeamPage = () => {
       setWeek(league.lastScoredWeek + 1 || 1);
     }
   }, [league]);
-  const handlePlayerChange = (
-    selectedPlayer: LocalPlayer,
-    name: string,
-    swapPlayer: LocalPlayer
-  ) => {
-    console.log(selectedPlayer);
-    console.log(name);
-    console.log(swapPlayer);
-    if (name === "starters") {
-      swapPlayer.lineup[week] = selectedPlayer.lineup[week];
-      selectedPlayer.lineup[week] = "bench";
-    } else if (name === "backup") {
-      if (swapPlayer.dummyPlayer) {
-        selectedPlayer.backup[week] = "";
-      } else {
-        selectedPlayer.backup[week] = swapPlayer.name;
-      }
-    } else {
-      selectedPlayer.lineup[week] = swapPlayer.lineup[week];
-      if (!swapPlayer.dummyPlayer) {
-        swapPlayer.lineup[week] = "bench";
-      }
-    }
-    if (team) {
-      setTeam({ ...team } as Team);
-    }
-  };
-  const handleBenchPlayer = (selectedPlayer: LocalPlayer) => {
-    selectedPlayer.lineup[week] = "bench";
-    if (team) {
-      setTeam({ ...team } as Team);
-    }
-  };
+
   const handleInfoSubmission = (imageUrl: string, teamName?: string) => {
     const sendUrl = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeamInfo/`;
     const body = { id, url: imageUrl, name: teamName };
@@ -110,6 +83,7 @@ const TeamPage = () => {
         .catch((e) => console.log(e));
     }
   };
+
   const sendUpdatedTeams = () => {
     const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams/`;
     const body = { teams: [team], week };
@@ -125,39 +99,26 @@ const TeamPage = () => {
         setTimeout(() => setSuccess(false), 8000);
       });
   };
-  let starters: LocalPlayer[] = [];
-  let bench: LocalPlayer[] = [];
-  if (team && league) {
-    starters = (Object.keys(league.lineupSettings) as Position[])
-      .sort(lineupSorter)
-      .map((pos: Position) => [
-        ...Array(league.lineupSettings[pos])
-          .fill({})
-          .map(
-            () =>
-              new LocalPlayer(
-                "",
-                pos.split("/")[0] as SinglePosition,
-                pos,
-                league.numWeeks + 1,
-                true
-              )
-          ),
-      ])
-      .flat();
-    team.players
-      .filter((player) => player.lineup[week] !== "bench")
-      .forEach((starter) => {
-        starters[
-          starters.findIndex(
-            (player) =>
-              player.lineup[week] === starter.lineup[week] && player.name === ""
-          )
-        ] = starter;
-      });
 
-    bench = team.players.filter((player) => player.lineup[week] === "bench");
-  }
+  const onChange = (
+    selectedPlayer: FinalizedPlayer,
+    name: string,
+    swapPlayer: FinalizedPlayer,
+    selectedIndex: number
+  ) => {
+    if (team) {
+      handlePlayerChange(selectedPlayer, name, swapPlayer, selectedIndex);
+      setTeam({ ...team });
+    }
+  };
+
+  const onBench = (selectedPlayer: FinalizedPlayer) => {
+    if (team) {
+      handleBenchPlayer(selectedPlayer);
+      setTeam({ ...team });
+    }
+  };
+
   return (
     <Container>
       <ImageModal
@@ -170,29 +131,9 @@ const TeamPage = () => {
       <Row>
         <LeagueButton id={leagueId} />
       </Row>
-      {team ? (
+      {team && league ? (
         <>
-          <Row className="mt-3 mb-3">
-            <Col sm="auto">
-              <Image
-                className="image-fit-height"
-                src={team.logo || process.env.REACT_APP_DEFAULT_LOGO}
-              />
-            </Col>
-            <Col sm="auto">
-              <h1 className="mt-2">
-                {team.name}
-                <div className="subtitle mb-3 mt-2">{team.ownerName}</div>
-              </h1>
-            </Col>
-            {userIsOwner ? (
-              <Col className="mt-3">
-                <Button onClick={() => setShowModal(true)}>
-                  Change/Set Team Logo
-                </Button>
-              </Col>
-            ) : null}
-          </Row>
+          <Header team={team} isOwner={userIsOwner} showModal={setShowModal} />
           <EditWeek
             week={week}
             maxWeeks={(league && league.numWeeks) || 18}
@@ -203,13 +144,12 @@ const TeamPage = () => {
           </Row>
           <Row>
             <TeamTable
-              isOwner={userIsOwner}
-              players={starters}
-              oppPlayers={bench}
-              week={week}
+              isOwner={userIsOwner && week > (league.lastScoredWeek || -1)}
+              players={lineup}
+              positionsInTable={league.lineupSettings}
               name="starters"
-              handleBenchPlayer={handleBenchPlayer}
-              handlePlayerChange={handlePlayerChange}
+              handleBenchPlayer={onBench}
+              handlePlayerChange={onChange}
             />
           </Row>
           <Row>
@@ -218,12 +158,11 @@ const TeamPage = () => {
           <Row>
             <TeamTable
               isOwner={userIsOwner}
-              players={bench}
-              oppPlayers={starters}
-              week={week}
+              players={lineup}
+              positionsInTable={{ bench: 1 } as LineupSettings}
               name="bench"
-              handleBenchPlayer={handleBenchPlayer}
-              handlePlayerChange={handlePlayerChange}
+              handleBenchPlayer={onBench}
+              handlePlayerChange={onChange}
             />
           </Row>
           <Row>

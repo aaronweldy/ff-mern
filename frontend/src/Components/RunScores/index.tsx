@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, Redirect } from "react-router-dom";
 import { Container, Button, Row, Toast } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
@@ -6,57 +6,43 @@ import ScorePlacementTable from "./ScorePlacementTable";
 import TeamScoringBreakdown from "./TeamScoringBreakdown";
 import ErrorTable from "./ErrorTable";
 import EditWeek from "../shared/EditWeek";
-import { auth } from "../../firebase-config";
 import "../../CSS/LeaguePages.css";
-import { Team, League, ScoringError } from "@ff-mern/ff-types";
-
-type ApiResponse = {
-  teams: Team[];
-  league: League;
-};
+import { ScoringError } from "@ff-mern/ff-types";
+import { API } from "@ff-mern/ff-types";
+import { useLeagueScoringData } from "../../hooks/useLeagueScoringData";
 
 const RunScores = () => {
   const { id } = useParams<{ id: string }>();
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [league, setLeague] = useState<League | null>(null);
-  const [isCommissioner, setIsCommissioner] = useState(false);
-  const [week, setWeek] = useState(1);
-  const [errors, setErrors] = useState([]);
-
+  const {
+    league,
+    teams,
+    setTeams,
+    week,
+    setWeek,
+    playerData,
+    setPlayerData,
+    isCommissioner,
+  } = useLeagueScoringData(id);
+  const [errors, setErrors] = useState<ScoringError[]>([]);
   const [loading, setLoading] = useState(false);
   const [redirect, setRedirect] = useState(false);
   const [show, setShow] = useState(false);
   const [popupText, setText] = useState("");
-  useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (user) => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/`;
-      const resp = await fetch(url);
-      const json = (await resp.json()) as ApiResponse;
-      setTeams(json.teams);
-      setLeague(json.league);
-      setWeek(json.league.lastScoredWeek + 1 || 1);
-      setIsCommissioner(json.league.commissioners.includes(user!.uid));
-    });
-    return () => unsub();
-  }, [id]);
+
   const sendData = () => {
     setLoading(true);
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/runScores/`;
-    const body = { week };
-    const reqDict = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    };
-    fetch(url, reqDict)
-      .then((resp) => resp.json())
-      .then((data) => {
-        setTeams(data.teams);
-        setErrors(data.errors);
-        setLoading(false);
-      });
+    const sendWeek = week || 1;
+    API.runScores(id, sendWeek, teams).then((data) => {
+      setTeams(data.teams);
+      setErrors(data.errors);
+      setPlayerData(data.data);
+      setLoading(false);
+    });
   };
   const handleFix = async (error: ScoringError, ind: number) => {
+    if (!teams) {
+      return;
+    }
     switch (error.type) {
       case "NOT FOUND":
         setErrors((oldErrors) => {
@@ -67,37 +53,33 @@ const RunScores = () => {
         break;
       case "POSSIBLE BACKUP": {
         const teamInd = teams.findIndex((check) => check.id === error.team.id);
-        const playerInd = error.team.players.findIndex(
+        const info = teams[teamInd].weekInfo[week || 1];
+        const playerInd = info.finalizedLineup[error.player.position].findIndex(
           (check) => check.name === error.player.name
         );
-        const backupInd = error.team.players.findIndex(
-          (check) => check.name === error.player.backup[week]
+        const backupInd = info.finalizedLineup.bench.findIndex(
+          (check) => check.name === error.player.backup
         );
-        teams[teamInd].players[backupInd].lineup[week] =
-          error.player.lineup[week];
-        teams[teamInd].players[playerInd].lineup[week] = "bench";
-        const body = {
-          teams,
-        };
-        const reqDict = {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(body),
-        };
-        const resp = await fetch(
-          `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams`,
-          reqDict
+        const backupPlayer = info.finalizedLineup.bench[backupInd];
+        backupPlayer.lineup = error.player.lineup;
+        info.finalizedLineup[error.player.position].splice(
+          playerInd,
+          1,
+          backupPlayer
         );
-        const data = await resp.json();
-        setTeams(data.teams);
-        setErrors((oldErrors) => {
-          oldErrors.splice(ind, 1);
-          return oldErrors;
+        error.player.lineup = "bench";
+        info.finalizedLineup.bench.splice(backupInd, 1, error.player);
+        API.updateTeams([...teams]).then((data) => {
+          setTeams(data);
+          setErrors((oldErrors) => {
+            oldErrors.splice(ind, 1);
+            return oldErrors;
+          });
+          setText(
+            `Replaced ${error.player.name} with ${error.player.backup}. Rerun scores to finalize.`
+          );
+          setShow(true);
         });
-        setText(
-          `Replaced ${error.player.name} with ${error.player.backup[week]}. Rerun scores to finalize.`
-        );
-        setShow(true);
         break;
       }
       default:
@@ -113,26 +95,30 @@ const RunScores = () => {
       <Row>
         <LeagueButton id={id} />
       </Row>
-      {league && (
+      {league && teams && (
         <EditWeek
-          week={week}
+          week={week || 1}
           maxWeeks={league?.numWeeks}
           onChange={(e) => setWeek(parseInt(e.target.value))}
         />
       )}
-      {teams.length > 0 &&
-        league &&
+      {league &&
+        teams &&
+        playerData &&
         teams.map((team, i) => (
           <TeamScoringBreakdown
             key={i}
-            league={league!.scoringSettings}
+            league={league.scoringSettings}
             team={team}
-            week={week}
+            week={week || 1}
+            playerData={playerData}
           />
         ))}
-      <Row>
-        <ScorePlacementTable teams={teams} week={week} />
-      </Row>
+      {teams && (
+        <Row>
+          <ScorePlacementTable teams={teams} week={week || 1} />
+        </Row>
+      )}
       {isCommissioner ? (
         <>
           <Row>

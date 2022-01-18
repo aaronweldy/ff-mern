@@ -1,27 +1,24 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
-// @ts-ignore
-import scraper from "table-scraper";
-import {
-  convertedScoringTypes,
-  defaultScoringSettings,
-} from "../constants/league.js";
+import { defaultScoringSettings } from "../constants/league.js";
 import { Router } from "express";
 import { v4 } from "uuid";
 import admin, { db } from "../config/firebase-config.js";
 import {
-  DatabasePlayer,
+  ApiTypes,
   League,
+  sanitizePlayerName,
   ScoringError,
-  StatKey,
   Team,
 } from "@ff-mern/ff-types";
+import {
+  fetchPlayers,
+  getTeamsInLeague,
+  scoreAllPlayers,
+} from "../utils/fetchRoutes.js";
 
 const router = Router();
 
-const positions = ["qb", "rb", "wr", "te", "k"];
-
 type LeagueScoringDefault = "Standard" | "PPR";
-type ScrapedPlayer = Record<string, string>;
 
 router.get("/find/:query/", async (req, res) => {
   const query = req.params["query"];
@@ -39,19 +36,10 @@ router.get("/find/:query/", async (req, res) => {
 router.get("/allPlayers/", async (req, res) => {
   const allPlayers = await db.collection("globalPlayers").doc("players").get();
   if (!allPlayers.exists) {
-    let players: string[] = [];
-    for (const pos of positions) {
-      const url = `https://www.fantasypros.com/nfl/projections/${pos}.php`;
-      const tableData = await scraper.get(url);
-      for (const player of tableData[0] as ScrapedPlayer[]) {
-        const segments = player.Player.split(" ");
-        if (segments.length > 0) {
-          players.push(segments.slice(0, segments.length - 1).join(" "));
-        }
-      }
-    }
-    db.collection("globalPlayers").doc("players").set({ players });
-    res.status(200).send(players);
+    fetchPlayers().then((players) => {
+      db.collection("globalPlayers").doc("players").set({ players });
+      res.status(200).send(players);
+    });
   } else {
     res.status(200).send({ players: allPlayers.data() });
   }
@@ -60,21 +48,9 @@ router.get("/allPlayers/", async (req, res) => {
 router.get("/:id/", async (req, res) => {
   const leagueId = req.params["id"];
   try {
-    db.collection("teams")
-      .where("league", "==", leagueId)
-      .get()
-      .then((teamSnapshot) => {
-        const teams: Team[] = [];
-        teamSnapshot.forEach((teamData) => {
-          teams.push(teamData.data() as Team);
-        });
-        db.collection("leagues")
-          .doc(leagueId)
-          .get()
-          .then((league) => {
-            res.status(200).json({ league: league.data(), teams });
-          });
-      });
+    const teams = await getTeamsInLeague(leagueId);
+    const league = (await db.collection("leagues").doc(leagueId).get()).data();
+    res.status(200).json({ league, teams });
   } catch (e) {
     console.log(e);
     res.status(500).send();
@@ -91,6 +67,7 @@ router.post("/create/", async (req, res) => {
       lineupSettings: posInfo,
       logo,
       numWeeks,
+      lastScoredWeek: 0,
     })
     .then(async () => {
       let comms: string[] = [];
@@ -234,20 +211,20 @@ router.post("/updateTeams/", (req, res) => {
       .auth()
       .getUserByEmail(team.ownerName)
       .then(async (user) => {
-        db.collection("teams").doc(team.id).update({
-          name: team.name,
-          owner: user.uid,
-          ownerName: team.ownerName,
-          players: team.players,
-        });
+        db.collection("teams")
+          .doc(team.id)
+          .update({
+            ...team,
+            owner: user.uid,
+          });
       })
       .catch(async () => {
-        db.collection("teams").doc(team.id).update({
-          name: team.name,
-          owner: "default",
-          ownerName: "default",
-          players: team.players,
-        });
+        db.collection("teams")
+          .doc(team.id)
+          .update({
+            owner: "default",
+            ...team,
+          });
       });
   });
   res.status(200).send({ teams });
@@ -359,163 +336,103 @@ router.post("/:leagueId/update/", async (req, res) => {
 });
 
 router.post("/:leagueId/runScores/", async (req, res) => {
-  const { week } = req.body;
+  const { week, teams }: { week: number; teams: Team[] } = req.body;
   const { leagueId } = req.params;
-  const league: League = (
+  const league = (
     await db.collection("leagues").doc(leagueId).get()
   ).data() as League;
-  const teams: Team[] = [];
   const errors: ScoringError[] = [];
-  const year = new Date().getFullYear();
-  await db
-    .collection("teams")
-    .where("league", "==", leagueId)
-    .get()
-    .then((snapshot) => {
-      snapshot.forEach((doc) => teams.push(doc.data() as Team));
+  const data = await scoreAllPlayers(league, leagueId, week);
+  console.log(data);
+  teams.forEach(async (team) => {
+    team.weekInfo[week].weekScore = 0;
+    Object.values(team.weekInfo[week].finalizedLineup).forEach((players) => {
+      players
+        .filter((player) => player.name !== "")
+        .forEach((player) => {
+          const playerName = sanitizePlayerName(player.name);
+          console.log(playerName);
+          if (!(playerName in data)) {
+            errors.push({
+              type: "NOT FOUND",
+              desc: "Player not found in database",
+              player,
+              team,
+            });
+            return;
+          }
+
+          if (
+            data[playerName].scoring.totalPoints === 0 &&
+            player.backup !== "None" &&
+            player.backup !== "" &&
+            player.lineup !== "bench"
+          ) {
+            errors.push({
+              type: "POSSIBLE BACKUP",
+              desc: "Player scored 0 points & may be eligible for a backup",
+              player,
+              team,
+            });
+          }
+          if (player.lineup !== "bench") {
+            team.weekInfo[week].weekScore +=
+              data[playerName].scoring.totalPoints;
+          }
+        });
     });
-  let statsAtt = await db
-    .collection("weekStats")
-    .doc(year + "week" + week)
-    .get();
-  let usableStats: Record<string, DatabasePlayer> = {};
-  if (!statsAtt.exists) {
-    for await (const pos of positions) {
-      const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${year}&week=${week}&range=week`;
-      const table = await scraper.get(url);
-      for (const player of table[0]) {
-        const hashedName = player["Player"].replace(/\./g, "").toLowerCase();
-        if (hashedName) {
-          usableStats[hashedName.slice(0, hashedName.indexOf("(") - 1)] =
-            pos === "QB"
-              ? {
-                  ...player,
-                  "CP%":
-                    Number.parseFloat(player["CMP"]) /
-                    Number.parseFloat(player["ATT"]),
-                  "Y/A":
-                    Number.parseFloat(player["YDS"]) /
-                    Number.parseFloat(player["ATT"]),
-                }
-              : player;
-        }
-      }
-    }
-    await db
-      .collection("weekStats")
-      .doc(year + "week" + week)
-      .set({ usableStats });
-  } else {
-    usableStats = (
-      statsAtt.data() as { playerMap: Record<string, DatabasePlayer> }
-    ).playerMap;
-  }
-  for await (const team of teams) {
-    team.weekScores[week] = 0;
-    team.players
-      .filter((player) => player.lineup[week] !== "bench")
-      .forEach((player) => {
-        const playerName = player.name.replace(/\./g, "").toLowerCase();
-        if (!Object.keys(usableStats).includes(playerName)) {
-          errors.push({
-            type: "NOT FOUND",
-            desc: "Player not found in database",
-            player,
-            team,
-          });
-          player["error"] = true;
-          player.points[week] = 0;
-          return;
-        }
-        const catPoints = league.scoringSettings
-          .filter((set) => set.position.indexOf(player.position) >= 0)
-          .map((category) => {
-            player.error = false;
-            const cat = category["category"];
-            const hashVal =
-              cat.qualifier === "between"
-                ? `${cat.qualifier}|${cat.thresholdMax}${cat.thresholdMin}|${cat.statType}`
-                : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
-            let points = 0;
-            try {
-              const statNumber = Number.parseFloat(
-                usableStats[playerName][
-                  convertedScoringTypes[player.position][
-                    cat.statType
-                  ] as StatKey
-                ]
-              );
-              if (isNaN(statNumber)) return { hashVal: 0 };
-              switch (cat.qualifier) {
-                case "per":
-                  console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
-                  points = (statNumber / cat.threshold) * category.points;
-                  break;
-                case "greater than":
-                  console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
-                  if (statNumber >= cat.threshold) points = category.points;
-                  break;
-                case "between":
-                  if (
-                    statNumber >= (cat.thresholdMin || Infinity) &&
-                    statNumber <= (cat.thresholdMax || -Infinity)
-                  )
-                    points = category.points;
-                  break;
-              }
-              const successMins = category.minimums.filter((min) => {
-                const statNumber = Number.parseFloat(
-                  usableStats[playerName][
-                    convertedScoringTypes[player.position][
-                      min.statType
-                    ] as StatKey
-                  ]
-                );
-                return statNumber > min.threshold;
-              });
-              let retObj: Record<string, number> = {};
-              retObj[hashVal] =
-                successMins.length === category.minimums.length ? points : 0;
-              return retObj;
-            } catch (error) {
-              console.log(
-                `Error finding stats for player ${player.name}, ${player.lineup[week]}`
-              );
-              return { hashVal: 0 };
-            }
-          });
-        player.weekStats[week] = Object.assign({}, ...catPoints);
-        player.points[week] = Number.parseFloat(
-          catPoints
-            .reduce((acc, i) => acc + Object.values(i)[0], 0)
-            .toPrecision(4)
-        );
-        console.log(player.backup);
-        if (player.points[week] === 0 && player?.backup[week]) {
-          errors.push({
-            type: "POSSIBLE BACKUP",
-            desc: "Player scored 0 points & may be eligible for a backup",
-            player,
-            team,
-          });
-        }
-      });
-    const weekScore = team.players
-      .filter((player) => player.lineup[week] !== "bench")
-      .reduce(
-        (acc, player) =>
-          player.points[week] ? acc + player.points[week] : acc,
-        0
-      );
-    console.log(team.weekScores);
-    team.weekScores[week] = weekScore;
-    await db
-      .collection("teams")
-      .doc(team.id)
-      .update({ ...team });
-  }
+    await db.collection("teams").doc(team.id).update(team);
+  });
   await db.collection("leagues").doc(leagueId).update({ lastScoredWeek: week });
-  res.status(200).json({ teams, errors });
+  res.status(200).json({ teams, errors, data });
+});
+
+router.post("/:leagueId/playerScores/", async (req, res) => {
+  const { leagueId } = req.params;
+  const { players, week }: { players: string[]; week: number } = req.body;
+  const teams = await getTeamsInLeague(leagueId);
+  const league = (
+    await db.collection("leagues").doc(leagueId).get()
+  ).data() as League;
+  console.log(week);
+  if (week > league.lastScoredWeek) {
+    const resp: ApiTypes.PlayerScoresResponse = { teams, league, players: {} };
+    return res.status(200).send(resp);
+  }
+  const yearWeek = new Date().getFullYear() + week.toString();
+  const data = (
+    await db
+      .collection("leagueScoringData")
+      .doc(yearWeek + leagueId)
+      .get()
+  ).data() as Record<number, ApiTypes.PlayerScoreData>;
+
+  if (!data) {
+    const resp: ApiTypes.PlayerScoresResponse = { teams, league, players: {} };
+    return res.status(200).send(resp);
+  }
+  if (!players) {
+    const resp: ApiTypes.PlayerScoresResponse = {
+      teams,
+      league,
+      players: data[week],
+    };
+    return res.status(200).send(resp);
+  }
+
+  const respData: ApiTypes.PlayerScoreData = {};
+  for (const player in players) {
+    if (!(player in data[week])) {
+      continue;
+    }
+    respData[player] = data[week][player];
+  }
+  const resp: ApiTypes.PlayerScoresResponse = {
+    teams,
+    league,
+    players: respData,
+  };
+  res.status(200).send(resp);
 });
 
 export default router;

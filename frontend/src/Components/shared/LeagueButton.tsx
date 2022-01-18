@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "react-bootstrap";
+import { Button, Col, Row } from "react-bootstrap";
 import "../../CSS/LeaguePages.css";
 
 type LeagueButtonProps = {
@@ -8,8 +8,16 @@ type LeagueButtonProps = {
 
 export default function LeagueButton({ id }: LeagueButtonProps) {
   return (
-    <Button className="left-corner" href={`/league/${id}/`} variant="primary">
-      Back to league home
-    </Button>
+    <Row>
+      <Col>
+        <Button
+          className="left-corner"
+          href={`/league/${id}/`}
+          variant="primary"
+        >
+          Back to league home
+        </Button>
+      </Col>
+    </Row>
   );
 }

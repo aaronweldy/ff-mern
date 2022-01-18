@@ -3,12 +3,18 @@ import { Redirect, useParams } from "react-router-dom";
 import { Alert, Container, Col, Row, Button } from "react-bootstrap";
 import { auth } from "../../firebase-config";
 import LeagueButton from "../shared/LeagueButton";
-import TeamTable from "../shared/TeamTable";
+import { TeamTable } from "../shared/TeamTable";
 import EditWeek from "../shared/EditWeek";
-import { lineupSorter } from "../../constants/index";
 import { useLeague } from "../../hooks/useLeague";
 import "../../CSS/LeaguePages.css";
-import { Team, LocalPlayer, Position } from "@ff-mern/ff-types";
+import {
+  Team,
+  FinalizedLineup,
+  FinalizedPlayer,
+  LineupSettings,
+} from "@ff-mern/ff-types";
+import { getWeeklyLineup } from "../utils/getWeeklyLineup";
+import { useTeamTable } from "../../hooks/useTeamTable";
 
 export default function AdjustLineups() {
   const { id } = useParams<{ id: string }>();
@@ -16,47 +22,63 @@ export default function AdjustLineups() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [success, setSuccess] = useState(false);
   const [week, setWeek] = useState(1);
+  const { handlePlayerChange, handleBenchPlayer } = useTeamTable(
+    {} as FinalizedLineup
+  );
+  const [lineupsPerTeam, setLineupsPerTeam] = useState(
+    {} as Record<string, FinalizedLineup>
+  );
   const currUser = auth.currentUser;
+  useEffect(() => {
+    if (teams && league) {
+      setLineupsPerTeam(
+        teams.reduce((acc: Record<string, FinalizedLineup>, team: Team) => {
+          console.log(week);
+          acc[team.id] = getWeeklyLineup(week, team, league.lineupSettings);
+          return acc;
+        }, {})
+      );
+    }
+  }, [teams, league, week]);
+
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(() => {
       if (league) {
-        setWeek(league.lastScoredWeek);
+        setWeek(league.lastScoredWeek + 1);
         setTeams(initTeams);
       }
     });
     return () => unsub();
   }, [league, initTeams]);
-  const handlePlayerChange = (
-    selectedPlayer: LocalPlayer,
+
+  const onPlayerChange = (
+    selectedPlayer: FinalizedPlayer,
     name: string,
-    swapPlayer: LocalPlayer
+    swapPlayer: FinalizedPlayer,
+    selectedIndex: number,
+    teamId: string
   ) => {
-    if (name === "starters") {
-      swapPlayer.lineup[week] = selectedPlayer.lineup[week];
-      selectedPlayer.lineup[week] = "bench";
-    } else if (name === "backup") {
-      if (swapPlayer.name === "none") {
-        selectedPlayer.backup[week] = "";
-      } else {
-        selectedPlayer.backup[week] = swapPlayer.name;
-      }
-    } else {
-      selectedPlayer.lineup[week] = swapPlayer.lineup[week];
-      if (swapPlayer.name !== "") {
-        swapPlayer.lineup[week] = "bench";
-      }
-    }
+    handlePlayerChange(
+      selectedPlayer,
+      name,
+      swapPlayer,
+      selectedIndex,
+      lineupsPerTeam[teamId]
+    );
     setTeams([...teams]);
   };
-  const handleBenchPlayer = (selectedPlayer: LocalPlayer) => {
-    const tempTeams = [...teams];
-    selectedPlayer.lineup[week] = "bench";
-    setTeams(tempTeams);
+
+  const onBench = (selectedPlayer: FinalizedPlayer, teamId: string) => {
+    handleBenchPlayer(selectedPlayer, lineupsPerTeam[teamId]);
+    setTeams([...teams]);
   };
+
   const submitLineups = () => {
     const tempTeams = [...teams];
     for (const team of tempTeams) {
-      team.players = team.players.filter((player) => player.name !== "");
+      team.rosteredPlayers = team.rosteredPlayers.filter(
+        (player) => player.name !== ""
+      );
     }
     const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams/`;
     const body = { teams: tempTeams };
@@ -72,46 +94,24 @@ export default function AdjustLineups() {
         setTimeout(() => setSuccess(false), 8000);
       });
   };
-  if (teams && teams.length && !league!.commissioners.includes(currUser!.uid)) {
+
+  if (league && !league.commissioners.includes(currUser!.uid)) {
     return <Redirect to={`/league/${id}/`} />;
   }
+
   return (
     <Container id="small-left">
       <LeagueButton id={id} />
-      {teams && league
+      <EditWeek
+        week={week}
+        maxWeeks={league?.numWeeks}
+        onChange={(e) => setWeek(parseInt(e.target.value))}
+      />
+      {teams && league && Object.keys(lineupsPerTeam).length > 0
         ? teams.map((team, i) => {
-            const starters = (Object.keys(league.lineupSettings) as Position[])
-              .sort(lineupSorter)
-              .map((pos: Position) => [
-                ...Array(league.lineupSettings[pos])
-                  .fill(0)
-                  .map(
-                    () =>
-                      new LocalPlayer("", "QB", pos, league.numWeeks + 1, true)
-                  ),
-              ])
-              .flat();
-            team.players
-              .filter((player) => player.lineup[week] !== "bench")
-              .forEach((starter) => {
-                starters[
-                  starters.findIndex(
-                    (player) =>
-                      player.lineup[week] === starter.lineup[week] &&
-                      player.name === ""
-                  )
-                ] = starter;
-              });
-            const bench = team.players.filter(
-              (player) => player.lineup[week] === "bench"
-            );
+            console.log(lineupsPerTeam);
             return (
               <>
-                <EditWeek
-                  week={week}
-                  maxWeeks={league!.numWeeks}
-                  onChange={(e) => setWeek(parseInt(e.target.value))}
-                />
                 <Row key={i}>
                   <Col xs={12}>
                     <h2>{team.name}</h2>
@@ -121,24 +121,52 @@ export default function AdjustLineups() {
                   </Col>
                   <Col>
                     <TeamTable
-                      players={starters}
-                      week={week}
-                      oppPlayers={bench}
+                      players={lineupsPerTeam[team.id]}
+                      positionsInTable={league.lineupSettings}
                       name="starters"
-                      handleBenchPlayer={handleBenchPlayer}
-                      handlePlayerChange={handlePlayerChange}
+                      handleBenchPlayer={(selectedPlayer: FinalizedPlayer) =>
+                        onBench(selectedPlayer, team.id)
+                      }
+                      handlePlayerChange={(
+                        selectedPlayer: FinalizedPlayer,
+                        name: string,
+                        swapPlayer: FinalizedPlayer,
+                        selectedIndex: number
+                      ) =>
+                        onPlayerChange(
+                          selectedPlayer,
+                          name,
+                          swapPlayer,
+                          selectedIndex,
+                          team.id
+                        )
+                      }
                       isOwner
                     />
                     <div>
                       <h4>Bench</h4>
                     </div>
                     <TeamTable
-                      players={bench}
-                      week={week}
-                      oppPlayers={starters}
+                      players={lineupsPerTeam[team.id]}
+                      positionsInTable={{ bench: 1 } as LineupSettings}
                       name="bench"
-                      handleBenchPlayer={handleBenchPlayer}
-                      handlePlayerChange={handlePlayerChange}
+                      handleBenchPlayer={(selectedPlayer: FinalizedPlayer) =>
+                        onBench(selectedPlayer, team.id)
+                      }
+                      handlePlayerChange={(
+                        selectedPlayer: FinalizedPlayer,
+                        name: string,
+                        swapPlayer: FinalizedPlayer,
+                        selectedIndex: number
+                      ) =>
+                        onPlayerChange(
+                          selectedPlayer,
+                          name,
+                          swapPlayer,
+                          selectedIndex,
+                          team.id
+                        )
+                      }
                       isOwner
                     />
                   </Col>

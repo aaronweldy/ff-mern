@@ -1,12 +1,19 @@
 {
   "name": "@ff-mern/ff-types",
-  "version": "1.0.0",
+  "version": "1.8.1",
   "description": "Type definitions for Orca Fantasy Football usage.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "tsc && rollup -c"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^8.3.0",
+    "rollup": "^2.64.0",
+    "rollup-plugin-dts": "^4.1.0"
+  }
 }

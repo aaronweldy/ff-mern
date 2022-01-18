@@ -90,7 +90,7 @@ function EditLeagueSettings() {
 
   function handleSizeChange(evtKey: string) {
     setNumWeeks(parseInt(evtKey, 10));
-    teams.forEach((team) => team.updateNumWeeks(parseInt(evtKey, 10)));
+    teams.forEach((team) => Team.updateNumWeeks(team, parseInt(evtKey, 10)));
   }
 
   function handleOverlay(ind: number) {

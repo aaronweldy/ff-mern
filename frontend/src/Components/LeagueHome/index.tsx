@@ -16,7 +16,7 @@ import { useLeague } from "../../hooks/useLeague";
 import { auth, storage } from "../../firebase-config";
 import "firebase/auth";
 import "../../CSS/LeaguePages.css";
-import { Team } from "@ff-mern/ff-types";
+import { Team, TeamWeekInfo } from "@ff-mern/ff-types";
 
 function LeagueHome() {
   const { id } = useParams<{ id: string }>();
@@ -32,13 +32,9 @@ function LeagueHome() {
     const unsub = auth.onAuthStateChanged(async (newUser) => {
       if (newUser && league) {
         const sortedTeams = initTeams.sort((a, b) => {
-          const reducer = (acc: number, i: number | null) =>
-            i ? acc + i : acc + 0;
-          return (
-            b.weekScores.reduce(reducer, 0) +
-            b.addedPoints.reduce(reducer, 0) -
-            (a.weekScores.reduce(reducer, 0) + a.addedPoints.reduce(reducer, 0))
-          );
+          const reducer = (acc: number, i: TeamWeekInfo) =>
+            acc + i.weekScore + i.addedPoints;
+          return b.weekInfo.reduce(reducer, 0) - a.weekInfo.reduce(reducer, 0);
         });
         setTeams(sortedTeams);
         if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
@@ -177,6 +173,7 @@ function LeagueHome() {
                   ) : (
                     team.ownerName
                   );
+                console.log(team);
                 return (
                   <tr key={i}>
                     <td>
@@ -210,17 +207,19 @@ function LeagueHome() {
                         .map((_, idx) => (
                           <td key={idx}>
                             {(
-                              team.weekScores[idx + 1] +
-                              team.addedPoints[idx + 1]
+                              team.weekInfo[idx + 1].weekScore +
+                              team.weekInfo[idx + 1].addedPoints
                             ).toFixed(2)}
                           </td>
                         )),
                     ]}
                     <td>
-                      {(
-                        team.weekScores.reduce((acc, v) => acc + v, 0) +
-                        team.addedPoints.reduce((acc, v) => acc + v, 0)
-                      ).toFixed(2)}
+                      {team.weekInfo
+                        .reduce(
+                          (acc, _, week) => acc + Team.sumWeekScore(team, week),
+                          0
+                        )
+                        .toFixed(2)}
                     </td>
                   </tr>
                 );

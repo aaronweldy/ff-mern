@@ -12,7 +12,7 @@
               "node_modules/*"
           ]
       },
-      "typeRoots": ["./types"],
+      "typeRoots": ["src/types"],
       "strictPropertyInitialization": false,
   },
   "include": [

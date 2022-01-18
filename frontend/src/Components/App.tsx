@@ -17,8 +17,14 @@ import EditLeagueSettings from "./EditLeagueSettings";
 import "bootstrap/dist/css/bootstrap.min.css";
 import JoinLeague from "./JoinLeague";
 import CreateLeague from "./CreateLeague";
+import { useEffect } from "react";
+import { API } from "@ff-mern/ff-types";
 
 const App = () => {
+  useEffect(() => {
+    API.serverAddress = process.env.REACT_APP_PUBLIC_URL as string;
+  }, []);
+
   return (
     <Router>
       <NavHeader />
