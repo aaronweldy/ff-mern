@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams, Redirect } from "react-router-dom";
-import { Container, Button, Row, Toast } from "react-bootstrap";
+import { Container, Button, Row, Toast, Col } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
 import ScorePlacementTable from "./ScorePlacementTable";
 import TeamScoringBreakdown from "./TeamScoringBreakdown";
@@ -10,6 +10,10 @@ import "../../CSS/LeaguePages.css";
 import { ScoringError } from "@ff-mern/ff-types";
 import { API } from "@ff-mern/ff-types";
 import { useLeagueScoringData } from "../../hooks/useLeagueScoringData";
+import {
+  ScoringToggleType,
+  StatTypeToggleButton,
+} from "../shared/StatTypeToggleButton";
 
 const RunScores = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +32,7 @@ const RunScores = () => {
   const [redirect, setRedirect] = useState(false);
   const [show, setShow] = useState(false);
   const [popupText, setText] = useState("");
+  const [selectedDisplay, setDisplay] = useState<ScoringToggleType>("scoring");
 
   const sendData = () => {
     setLoading(true);
@@ -87,6 +92,10 @@ const RunScores = () => {
     }
   };
 
+  const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDisplay(e.target.value as ScoringToggleType);
+  };
+
   if (redirect) {
     return <Redirect to={`/league/${id}/editTeams/`} />;
   }
@@ -94,6 +103,15 @@ const RunScores = () => {
     <Container className="ml-5">
       <Row>
         <LeagueButton id={id} />
+      </Row>
+      <Row>
+        <Col className="mt-3">
+          Display:{" "}
+          <StatTypeToggleButton
+            selected={selectedDisplay}
+            onChange={handleToggle}
+          />
+        </Col>
       </Row>
       {league && teams && (
         <EditWeek
@@ -108,10 +126,11 @@ const RunScores = () => {
         teams.map((team, i) => (
           <TeamScoringBreakdown
             key={i}
-            league={league.scoringSettings}
+            leagueScoringCategories={league.scoringSettings}
             team={team}
             week={week || 1}
             playerData={playerData}
+            dataDisplay={selectedDisplay}
           />
         ))}
       {teams && (

@@ -10,14 +10,16 @@ export type LeagueAPIResponse = {
   league: League;
 };
 
-export type PlayerScoreData = {
-  [key: string]: {
-    statistics: DatabasePlayer;
-    scoring: {
-      totalPoints: number;
-      categories: Record<string, number>;
-    };
+export type StoredPlayerInformation = {
+  statistics: DatabasePlayer;
+  scoring: {
+    totalPoints: number;
+    categories: Record<string, number>;
   };
+};
+
+export type PlayerScoreData = {
+  [key: string]: StoredPlayerInformation;
 };
 
 export type PlayerScoresResponse = {

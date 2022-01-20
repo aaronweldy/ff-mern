@@ -4,6 +4,7 @@ import { Team } from "../Team";
 
 export type ScoringCategory =
   | "ATT"
+  | "CMP"
   | "PASS YD"
   | "REC YD"
   | "RUSH YD"
@@ -74,6 +75,8 @@ export class ScoringError {
 export type StatKey =
   | "20+"
   | "ATT"
+  | "CMP"
+  | "Y/CMP"
   | "FL"
   | "FPTS"
   | "FPTS/G"

@@ -14,11 +14,10 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
     function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
     function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
 };
-import { RosteredPlayer, sanitizePlayerName, } from "@ff-mern/ff-types";
+import { convertedScoringTypes, RosteredPlayer, sanitizePlayerName, } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
 // @ts-ignore
 import scraper from "table-scraper";
-import { convertedScoringTypes } from "../constants/league.js";
 export const positions = ["qb", "rb", "wr", "te", "k"];
 export const fetchPlayers = () => {
     return new Promise((resolve, _) => __awaiter(void 0, void 0, void 0, function* () {
@@ -56,7 +55,8 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
                             pos === "QB"
                                 ? Object.assign(Object.assign({}, player), { "CP%": Number.parseFloat(player["CMP"]) /
                                         Number.parseFloat(player["ATT"]), "Y/A": Number.parseFloat(player["YDS"]) /
-                                        Number.parseFloat(player["ATT"]) }) : player;
+                                        Number.parseFloat(player["ATT"]), "Y/CMP": Number.parseFloat(player["YDS"]) /
+                                        Number.parseFloat(player["CMP"]) }) : player;
                     }
                 }
             }

@@ -15,6 +15,7 @@ import {
   ScoringSetting,
   Qualifier,
   ScoringCategory,
+  scoringTypes,
 } from "@ff-mern/ff-types";
 
 const positionTypes = [
@@ -26,32 +27,6 @@ const positionTypes = [
   "WR/RB",
   "WR/RB/TE",
   "QB/WR/RB/TE",
-];
-const scoringTypes = [
-  "ATT",
-  "PASS YD",
-  "REC YD",
-  "RUSH YD",
-  "CARRIES",
-  "YD PER CARRY",
-  "YD PER CATCH",
-  "REC",
-  "TARGETS",
-  "PASS TD",
-  "RUSH TD",
-  "REC TD",
-  "YD PER ATT",
-  "YD PER COMPLETION",
-  "CP%",
-  "INT",
-  "FUM",
-  "XPT",
-  "FG 1-19",
-  "FG 20-29",
-  "FG 30-39",
-  "FG 40-49",
-  "FG 50+",
-  "FG/XP MISS",
 ];
 
 type CategoryChange =

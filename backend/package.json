@@ -17,7 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ff-mern/ff-types": "^1.8.1",
+    "@ff-mern/ff-types": "^1.9.2",
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.13",
     "@types/uuid": "^8.3.4",

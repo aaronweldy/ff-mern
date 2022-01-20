@@ -1,7 +1,8 @@
 import {
-  ApiTypes,
+  convertedScoringTypes,
   DatabasePlayer,
   League,
+  PlayerScoreData,
   RosteredPlayer,
   sanitizePlayerName,
   SinglePosition,
@@ -11,7 +12,6 @@ import {
 import { db } from "../config/firebase-config.js";
 // @ts-ignore
 import scraper from "table-scraper";
-import { convertedScoringTypes } from "../constants/league.js";
 
 export type ScrapedPlayer = Record<string, string>;
 export const positions = ["qb", "rb", "wr", "te", "k"];
@@ -61,6 +61,9 @@ export const fetchWeeklyStats = async (week: number) => {
                   "Y/A":
                     Number.parseFloat(player["YDS"]) /
                     Number.parseFloat(player["ATT"]),
+                  "Y/CMP":
+                    Number.parseFloat(player["YDS"]) /
+                    Number.parseFloat(player["CMP"]),
                 }
               : player;
         }
@@ -85,7 +88,7 @@ export const scoreAllPlayers = async (
 ) => {
   const players = await fetchPlayers();
   const stats = await fetchWeeklyStats(week);
-  const data: ApiTypes.PlayerScoreData = {};
+  const data: PlayerScoreData = {};
   players
     .filter((player) => player.name in stats)
     .forEach((player) => {

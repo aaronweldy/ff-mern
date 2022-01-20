@@ -1,35 +1,101 @@
 import React from "react";
+import { Row, Col, Table, Image } from "react-bootstrap";
 import {
-  Row,
-  Col,
-  Table,
-  OverlayTrigger,
-  Image,
-  Tooltip,
-} from "react-bootstrap";
-import {
-  ApiTypes,
+  convertedScoringTypes,
+  PlayerScoreData,
   Position,
   sanitizePlayerName,
+  ScoringCategory,
   ScoringSetting,
+  scoringTypes,
+  SinglePosition,
 } from "@ff-mern/ff-types";
-import { Team } from "@ff-mern/ff-types";
+import { Team, StoredPlayerInformation } from "@ff-mern/ff-types";
 import { lineupSorter } from "../../constants";
 import "../../CSS/LeaguePages.css";
+import { ScoringToggleType } from "../shared/StatTypeToggleButton";
 
 type TeamScoringBreakdownProps = {
-  league: ScoringSetting[];
+  leagueScoringCategories: ScoringSetting[];
   team: Team;
   week: number;
-  playerData: ApiTypes.PlayerScoreData;
+  playerData: PlayerScoreData;
+  dataDisplay: "statistics" | "scoring";
+};
+
+const getCategoryHeaders = (
+  type: ScoringToggleType,
+  leagueCategories: ScoringSetting[]
+) => {
+  switch (type) {
+    case "scoring":
+      return leagueCategories.map((stat, i) => {
+        const cat = stat.category;
+        return (
+          <th key={i}>
+            {cat.qualifier}{" "}
+            {cat.qualifier === "between"
+              ? `${cat.thresholdMin}/${cat.thresholdMax}`
+              : cat.threshold}{" "}
+            {cat.statType}
+          </th>
+        );
+      });
+    case "statistics":
+      return scoringTypes.map((type, i) => <th key={i}>{type}</th>);
+  }
+};
+
+const getScoringData = (
+  position: SinglePosition,
+  playerData: StoredPlayerInformation,
+  categories: ScoringSetting[]
+) => {
+  return categories.map((stat, idx) => {
+    const cat = stat.category;
+    const hashVal =
+      cat.qualifier === "between"
+        ? `${cat.qualifier}|${cat.thresholdMin}${cat.thresholdMax}|${cat.statType}`
+        : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
+    return (
+      <td key={idx}>
+        {(stat.position.indexOf(position) >= 0 &&
+          playerData?.scoring?.categories[hashVal]?.toFixed(2)) ||
+          0}
+      </td>
+    );
+  });
+};
+
+const getStatsData = (
+  position: SinglePosition,
+  playerData: StoredPlayerInformation
+) => {
+  return scoringTypes.map((category, i) => {
+    const categoriesForPosition = convertedScoringTypes[position];
+    return (
+      <td key={i}>
+        {category in categoriesForPosition && playerData
+          ? playerData.statistics[
+              categoriesForPosition[category as ScoringCategory]!
+            ]
+          : 0}
+      </td>
+    );
+  });
 };
 
 const TeamScoringBreakdown = ({
-  league,
+  leagueScoringCategories,
   team,
   week,
   playerData,
+  dataDisplay,
 }: TeamScoringBreakdownProps) => {
+  const scoringHeaders = getCategoryHeaders(
+    dataDisplay,
+    leagueScoringCategories
+  );
   return (
     <>
       <Row className="mb-3 align-items-center">
@@ -52,20 +118,7 @@ const TeamScoringBreakdown = ({
               <th>Position</th>
               <th>Player Name</th>
               <th>Points</th>
-              {league
-                ? league.map((stat, i) => {
-                    const cat = stat.category;
-                    return (
-                      <th key={i}>
-                        {cat.qualifier}{" "}
-                        {cat.qualifier === "between"
-                          ? `${cat.thresholdMin}/${cat.thresholdMax}`
-                          : cat.threshold}{" "}
-                        {cat.statType}
-                      </th>
-                    );
-                  })
-                : null}
+              {scoringHeaders}
             </tr>
           </thead>
           <tbody>
@@ -76,7 +129,6 @@ const TeamScoringBreakdown = ({
                   team.weekInfo[week].finalizedLineup[pos as Position];
                 players.forEach((player, i) => {
                   const data = playerData[sanitizePlayerName(player.name)];
-                  console.log(data);
                   acc.push(
                     <tr
                       className={
@@ -96,24 +148,13 @@ const TeamScoringBreakdown = ({
                           {data?.scoring?.totalPoints?.toFixed(2) || 0}
                         </span>
                       </td>
-                      {league
-                        ? league.map((stat, idx) => {
-                            const cat = stat.category;
-                            const hashVal =
-                              cat.qualifier === "between"
-                                ? `${cat.qualifier}|${cat.thresholdMin}${cat.thresholdMax}|${cat.statType}`
-                                : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
-                            return (
-                              <td key={idx}>
-                                {(stat.position.indexOf(player.position) >= 0 &&
-                                  data?.scoring?.categories[hashVal]?.toFixed(
-                                    2
-                                  )) ||
-                                  0}
-                              </td>
-                            );
-                          })
-                        : null}
+                      {dataDisplay === "scoring"
+                        ? getScoringData(
+                            player.position,
+                            data,
+                            leagueScoringCategories
+                          )
+                        : getStatsData(player.position, data)}
                     </tr>
                   );
                 });

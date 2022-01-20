@@ -359,32 +359,37 @@ router.post("/:leagueId/playerScores/", (req, res) => __awaiter(void 0, void 0, 
     console.log(week);
     if (week > league.lastScoredWeek) {
         const resp = { teams, league, players: {} };
-        return res.status(200).send(resp);
+        res.status(200).send(resp);
+        return;
     }
     const yearWeek = new Date().getFullYear() + week.toString();
     const data = (yield db
         .collection("leagueScoringData")
         .doc(yearWeek + leagueId)
         .get()).data();
+    console.log(data);
     if (!data) {
         const resp = { teams, league, players: {} };
-        return res.status(200).send(resp);
+        res.status(200).send(resp);
+        return;
     }
     if (!players) {
         const resp = {
             teams,
             league,
-            players: data[week],
+            players: data,
         };
-        return res.status(200).send(resp);
+        res.status(200).send(resp);
+        return;
     }
     const respData = {};
     for (const player in players) {
-        if (!(player in data[week])) {
+        if (!(player in data)) {
             continue;
         }
-        respData[player] = data[week][player];
+        respData[player] = data[player];
     }
+    console.log(respData);
     const resp = {
         teams,
         league,

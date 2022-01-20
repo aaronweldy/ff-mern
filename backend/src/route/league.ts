@@ -4,11 +4,12 @@ import { Router } from "express";
 import { v4 } from "uuid";
 import admin, { db } from "../config/firebase-config.js";
 import {
-  ApiTypes,
   League,
   sanitizePlayerName,
   ScoringError,
   Team,
+  PlayerScoreData,
+  PlayerScoresResponse,
 } from "@ff-mern/ff-types";
 import {
   fetchPlayers,
@@ -396,8 +397,9 @@ router.post("/:leagueId/playerScores/", async (req, res) => {
   ).data() as League;
   console.log(week);
   if (week > league.lastScoredWeek) {
-    const resp: ApiTypes.PlayerScoresResponse = { teams, league, players: {} };
-    return res.status(200).send(resp);
+    const resp: PlayerScoresResponse = { teams, league, players: {} };
+    res.status(200).send(resp);
+    return;
   }
   const yearWeek = new Date().getFullYear() + week.toString();
   const data = (
@@ -405,29 +407,32 @@ router.post("/:leagueId/playerScores/", async (req, res) => {
       .collection("leagueScoringData")
       .doc(yearWeek + leagueId)
       .get()
-  ).data() as Record<number, ApiTypes.PlayerScoreData>;
-
+  ).data() as PlayerScoreData;
+  console.log(data);
   if (!data) {
-    const resp: ApiTypes.PlayerScoresResponse = { teams, league, players: {} };
-    return res.status(200).send(resp);
+    const resp: PlayerScoresResponse = { teams, league, players: {} };
+    res.status(200).send(resp);
+    return;
   }
   if (!players) {
-    const resp: ApiTypes.PlayerScoresResponse = {
+    const resp: PlayerScoresResponse = {
       teams,
       league,
-      players: data[week],
+      players: data,
     };
-    return res.status(200).send(resp);
+    res.status(200).send(resp);
+    return;
   }
 
-  const respData: ApiTypes.PlayerScoreData = {};
+  const respData: PlayerScoreData = {};
   for (const player in players) {
-    if (!(player in data[week])) {
+    if (!(player in data)) {
       continue;
     }
-    respData[player] = data[week][player];
+    respData[player] = data[player];
   }
-  const resp: ApiTypes.PlayerScoresResponse = {
+  console.log(respData);
+  const resp: PlayerScoresResponse = {
     teams,
     league,
     players: respData,
