@@ -20,7 +20,7 @@ import { Router } from "express";
 import { v4 } from "uuid";
 import admin, { db } from "../config/firebase-config.js";
 import { sanitizePlayerName, } from "@ff-mern/ff-types";
-import { fetchPlayers, getTeamsInLeague, scoreAllPlayers, } from "../utils/fetchRoutes.js";
+import { getTeamsInLeague, scoreAllPlayers, } from "../utils/fetchRoutes.js";
 const router = Router();
 router.get("/find/:query/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const query = req.params["query"];
@@ -33,18 +33,6 @@ router.get("/find/:query/", (req, res) => __awaiter(void 0, void 0, void 0, func
     const foundLeagues = {};
     cursor.forEach((doc) => (foundLeagues[doc.id] = doc.data()));
     res.status(200).send(foundLeagues);
-}));
-router.get("/allPlayers/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const allPlayers = yield db.collection("globalPlayers").doc("players").get();
-    if (!allPlayers.exists) {
-        fetchPlayers().then((players) => {
-            db.collection("globalPlayers").doc("players").set({ players });
-            res.status(200).send(players);
-        });
-    }
-    else {
-        res.status(200).send({ players: allPlayers.data() });
-    }
 }));
 router.get("/:id/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const leagueId = req.params["id"];

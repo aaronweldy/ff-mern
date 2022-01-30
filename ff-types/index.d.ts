@@ -1,32 +1,27 @@
+declare type FullNflTeam = "green bay packers" | "pittsburgh steelers" | "kansas city chiefs" | "new england patriots" | "buffalo bills" | "carolina panthers" | "seattle seahawks" | "indianapolis colts" | "arizona cardinals" | "baltimore ravens" | "houston texans" | "new orleans saints" | "philadelphia eagles" | "denver broncos" | "detroit lions" | "minnesota vikings" | "atlanta falcons" | "new york giants" | "dallas cowboys" | "jacksonville jaguars" | "miami dolphins" | "cincinnati bengals" | "las vegas raiders" | "tampa bay buccaneers" | "los angeles rams" | "chicago bears" | "cleveland browns" | "los angeles chargers" | "san francisco 49ers" | "new york jets" | "washington football team" | "tennessee titans";
+declare type AbbreviatedNflTeam = "ARI" | "ATL" | "BAL" | "BUF" | "CAR" | "CHI" | "CIN" | "CLE" | "DAL" | "DEN" | "DET" | "GB" | "HOU" | "IND" | "JAC" | "KC" | "LAC" | "LAR" | "LV" | "MIA" | "MIN" | "NE" | "NO" | "NYG" | "NYJ" | "PHI" | "PIT" | "SEA" | "SF" | "TB" | "TEN" | "WAS" | "WSH";
+declare const AbbreviationToFullTeam: Record<AbbreviatedNflTeam, FullNflTeam>;
+declare type Week = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "18";
+
 declare class FinalizedPlayer {
     name: string;
     position: SinglePosition;
+    team: AbbreviatedNflTeam;
     lineup: Position;
     backup: string;
-    constructor(name: string, position: SinglePosition, lineup: Position);
+    constructor(name: string, position: SinglePosition, team: AbbreviatedNflTeam, lineup: Position);
 }
 declare class RosteredPlayer {
     name: string;
     position: SinglePosition;
-    constructor(name: string, pos: SinglePosition);
+    team: AbbreviatedNflTeam;
+    constructor(name: string, team: AbbreviatedNflTeam, pos: SinglePosition);
 }
 declare type SinglePosition = "QB" | "RB" | "WR" | "TE" | "K";
 declare type Position = "QB" | "RB" | "WR" | "TE" | "K" | "WR/RB" | "WR/RB/TE" | "QB/WR/RB/TE" | "bench";
 declare type PositionInfo = Record<Position, number>;
 declare const positionTypes: Position[];
 declare const emptyDefaultPositions: PositionInfo;
-
-declare class FinalizedPlayer$1 {
-    name: string;
-    position: SinglePosition$1;
-    lineup: Position$1;
-    backup: string;
-    constructor(name: string, position: SinglePosition$1, lineup: Position$1);
-}
-declare type SinglePosition$1 = "QB" | "RB" | "WR" | "TE" | "K";
-declare type Position$1 = "QB" | "RB" | "WR" | "TE" | "K" | "WR/RB" | "WR/RB/TE" | "QB/WR/RB/TE" | "bench";
-declare type StatKey$1 = "20+" | "ATT" | "CMP" | "Y/CMP" | "FL" | "FPTS" | "FPTS/G" | "G" | "LG" | "Player" | "REC" | "ROST" | "Rank" | "TD" | "TD_2" | "TGT" | "Y/R" | "YDS" | "YDS_2" | "ATT_2" | "Y/A" | "PCT" | "INT" | "1-19" | "20-29" | "30-39" | "40-49" | "50+" | "XPT";
-declare type DatabasePlayer$1 = Record<StatKey$1, string>;
 
 declare class Team {
     name: string;
@@ -75,9 +70,9 @@ declare type ErrorType = "NOT FOUND" | "POSSIBLE BACKUP";
 declare class ScoringError {
     type: ErrorType;
     desc: string;
-    player: FinalizedPlayer$1;
+    player: FinalizedPlayer;
     team: Team;
-    constructor(type: ErrorType, desc: string, player: FinalizedPlayer$1, team: Team);
+    constructor(type: ErrorType, desc: string, player: FinalizedPlayer, team: Team);
 }
 declare type StatKey = "20+" | "ATT" | "CMP" | "Y/CMP" | "FL" | "FPTS" | "FPTS/G" | "G" | "LG" | "Player" | "REC" | "ROST" | "Rank" | "TD" | "TD_2" | "TGT" | "Y/R" | "YDS" | "YDS_2" | "ATT_2" | "Y/A" | "PCT" | "INT" | "1-19" | "20-29" | "30-39" | "40-49" | "50+" | "XPT";
 declare type DatabasePlayer = Record<StatKey, string>;
@@ -102,7 +97,7 @@ declare type LeagueAPIResponse = {
     league: League;
 };
 declare type StoredPlayerInformation = {
-    statistics: DatabasePlayer$1;
+    statistics: DatabasePlayer;
     scoring: {
         totalPoints: number;
         categories: Record<string, number>;
@@ -124,17 +119,13 @@ declare type RunScoresResponse = {
     errors: ScoringError[];
     data: PlayerScoreData;
 };
-
-declare class API {
-    static serverAddress: string;
-    static fetchLeague(leagueId: string): Promise<LeagueAPIResponse>;
-    static runScores(id: string, week: number, teams: Team[]): Promise<RunScoresResponse>;
-    static fetchPlayerScores({ leagueId, week, players, }: FetchPlayerScoresRequest): Promise<PlayerScoresResponse>;
-    static updateTeams(teams: Team[]): Promise<Team[]>;
-}
+declare type FantasyPerformanceByPosition = Record<SinglePosition, number>;
+declare type TeamFantasyPositionPerformance = Record<FullNflTeam, FantasyPerformanceByPosition>;
+declare type TeamToSchedule = Record<AbbreviatedNflTeam, Record<Week, AbbreviatedNflTeam | "BYE">>;
 
 declare const sanitizePlayerName: (name: string) => string;
+declare const sanitizeNflScheduleTeamName: (name: string) => string;
 declare const convertedScoringTypes: Record<SinglePosition, Partial<Record<ScoringCategory, StatKey>>>;
 declare const scoringTypes: string[];
 
-export { API, DatabasePlayer, ErrorType, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, GenericRequest, League, LeagueAPIResponse, LineupSettings, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, Qualifier, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, SinglePosition, StatKey, StoredPlayerInformation, Team, TeamWeekInfo, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, positionTypes, sanitizePlayerName, scoringTypes };
+export { AbbreviatedNflTeam, AbbreviationToFullTeam, DatabasePlayer, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, League, LeagueAPIResponse, LineupSettings, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, Qualifier, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, SinglePosition, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Week, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes };

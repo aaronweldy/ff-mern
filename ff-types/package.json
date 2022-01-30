@@ -1,6 +1,6 @@
 {
   "name": "@ff-mern/ff-types",
-  "version": "1.9.3",
+  "version": "1.9.19",
   "description": "Type definitions for Orca Fantasy Football usage.",
   "type": "module",
   "main": "index.js",

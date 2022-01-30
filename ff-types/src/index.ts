@@ -2,6 +2,6 @@ export * from "./League";
 export * from "./Scoring";
 export * from "./Player";
 export * from "./Team";
-export { API } from "./API";
-export * from "./API/types";
+export * from "./API";
 export * from "./Utils";
+export * from "./Constants";

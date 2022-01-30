@@ -1,66 +1,56 @@
-import { Team } from "..";
+import { Team, League, ScoringError, Week } from "..";
 import {
-  FetchPlayerScoresRequest,
-  GenericRequest,
-  LeagueAPIResponse,
-  PlayerScoresResponse,
-  RunScoresResponse,
-} from "./types";
+  AbbreviatedNflTeam,
+  DatabasePlayer,
+  FullNflTeam,
+  SinglePosition,
+} from "..";
 
-const generatePostRequest = (body: GenericRequest) => {
-  return {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+export type GenericRequest = {
+  [key: string]: any;
+};
+
+export type LeagueAPIResponse = {
+  teams: Team[];
+  league: League;
+};
+
+export type StoredPlayerInformation = {
+  statistics: DatabasePlayer;
+  scoring: {
+    totalPoints: number;
+    categories: Record<string, number>;
   };
 };
 
-const toJSON = (data: Response) => data.json();
+export type PlayerScoreData = {
+  [key: string]: StoredPlayerInformation;
+};
 
-export class API {
-  static serverAddress = "";
+export type PlayerScoresResponse = {
+  players: PlayerScoreData;
+} & LeagueAPIResponse;
 
-  static fetchLeague(leagueId: string) {
-    const url = this.serverAddress + `/api/v1/league/${leagueId}/`;
-    return new Promise<LeagueAPIResponse>((resolve, _) => {
-      fetch(url)
-        .then((data) => data.json())
-        .then((json) => resolve(json));
-    });
-  }
+export type FetchPlayerScoresRequest = {
+  leagueId: string;
+  week: number;
+  players?: string[];
+};
 
-  static runScores(id: string, week: number = 1, teams: Team[]) {
-    const url = this.serverAddress + `/api/v1/league/${id}/runScores/`;
-    const reqDict = generatePostRequest({ week, teams });
-    return new Promise<RunScoresResponse>((resolve, _) => {
-      fetch(url, reqDict)
-        .then(toJSON)
-        .then((json) => resolve(json));
-    });
-  }
+export type RunScoresResponse = {
+  teams: Team[];
+  errors: ScoringError[];
+  data: PlayerScoreData;
+};
 
-  static fetchPlayerScores({
-    leagueId,
-    week,
-    players,
-  }: FetchPlayerScoresRequest) {
-    const url = this.serverAddress + `/api/v1/league/${leagueId}/playerScores/`;
-    const req = generatePostRequest({ players, week });
-    return new Promise<PlayerScoresResponse>((resolve, reject) =>
-      fetch(url, req)
-        .then(toJSON)
-        .then((json) => resolve(json))
-        .catch((err) => reject(err))
-    );
-  }
+export type FantasyPerformanceByPosition = Record<SinglePosition, number>;
 
-  static updateTeams(teams: Team[]) {
-    const url = this.serverAddress + `/api/v1/league/updateTeams/`;
-    const req = generatePostRequest({ teams });
-    return new Promise<Team[]>((resolve, _) =>
-      fetch(url, req)
-        .then(toJSON)
-        .then((json) => resolve(json.teams))
-    );
-  }
-}
+export type TeamFantasyPositionPerformance = Record<
+  FullNflTeam,
+  FantasyPerformanceByPosition
+>;
+
+export type TeamToSchedule = Record<
+  AbbreviatedNflTeam,
+  Record<Week, AbbreviatedNflTeam | "BYE">
+>;

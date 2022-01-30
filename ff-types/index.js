@@ -19,16 +19,18 @@ class ScoringError {
 }
 
 class FinalizedPlayer {
-    constructor(name, position, lineup) {
+    constructor(name, position, team, lineup) {
         this.name = name;
         this.position = position;
         this.lineup = lineup;
+        this.team = team;
     }
 }
 class RosteredPlayer {
-    constructor(name, pos) {
+    constructor(name, team, pos) {
         this.name = name;
         this.position = pos;
+        this.team = team;
     }
 }
 const positionTypes = [
@@ -93,51 +95,10 @@ const lineupToIterable = (lineup) => {
     }, []);
 };
 
-const generatePostRequest = (body) => {
-    return {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-    };
-};
-const toJSON = (data) => data.json();
-class API {
-    static fetchLeague(leagueId) {
-        const url = this.serverAddress + `/api/v1/league/${leagueId}/`;
-        return new Promise((resolve, _) => {
-            fetch(url)
-                .then((data) => data.json())
-                .then((json) => resolve(json));
-        });
-    }
-    static runScores(id, week = 1, teams) {
-        const url = this.serverAddress + `/api/v1/league/${id}/runScores/`;
-        const reqDict = generatePostRequest({ week, teams });
-        return new Promise((resolve, _) => {
-            fetch(url, reqDict)
-                .then(toJSON)
-                .then((json) => resolve(json));
-        });
-    }
-    static fetchPlayerScores({ leagueId, week, players, }) {
-        const url = this.serverAddress + `/api/v1/league/${leagueId}/playerScores/`;
-        const req = generatePostRequest({ players, week });
-        return new Promise((resolve, reject) => fetch(url, req)
-            .then(toJSON)
-            .then((json) => resolve(json))
-            .catch((err) => reject(err)));
-    }
-    static updateTeams(teams) {
-        const url = this.serverAddress + `/api/v1/league/updateTeams/`;
-        const req = generatePostRequest({ teams });
-        return new Promise((resolve, _) => fetch(url, req)
-            .then(toJSON)
-            .then((json) => resolve(json.teams)));
-    }
-}
-API.serverAddress = "";
-
 const sanitizePlayerName = (name) => name.replace(/\./g, "").toLowerCase();
+const sanitizeNflScheduleTeamName = (name) => {
+    return name.replace(/\@/g, "");
+};
 const convertedScoringTypes = {
     QB: {
         ATT: "ATT",
@@ -226,4 +187,40 @@ const scoringTypes = [
     "FG/XP MISS",
 ];
 
-export { API, FinalizedPlayer, League, RosteredPlayer, ScoringError, Team, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, positionTypes, sanitizePlayerName, scoringTypes };
+const AbbreviationToFullTeam = {
+    ARI: "arizona cardinals",
+    ATL: "atlanta falcons",
+    BAL: "baltimore ravens",
+    BUF: "buffalo bills",
+    CAR: "carolina panthers",
+    CHI: "chicago bears",
+    CIN: "cincinnati bengals",
+    CLE: "cleveland browns",
+    DAL: "dallas cowboys",
+    DEN: "denver broncos",
+    DET: "detroit lions",
+    GB: "green bay packers",
+    HOU: "houston texans",
+    IND: "indianapolis colts",
+    JAC: "jacksonville jaguars",
+    KC: "kansas city chiefs",
+    LAC: "los angeles chargers",
+    LAR: "los angeles rams",
+    LV: "las vegas raiders",
+    MIA: "miami dolphins",
+    MIN: "minnesota vikings",
+    NE: "new england patriots",
+    NO: "new orleans saints",
+    NYG: "new york giants",
+    NYJ: "new york jets",
+    PHI: "philadelphia eagles",
+    PIT: "pittsburgh steelers",
+    SEA: "seattle seahawks",
+    SF: "san francisco 49ers",
+    TB: "tampa bay buccaneers",
+    TEN: "tennessee titans",
+    WAS: "washington football team",
+    WSH: "washington football team",
+};
+
+export { AbbreviationToFullTeam, FinalizedPlayer, League, RosteredPlayer, ScoringError, Team, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes };

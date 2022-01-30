@@ -1,5 +1,5 @@
-import { FinalizedPlayer } from "../..";
-import { Position, RosteredPlayer } from "../Player";
+import { FinalizedPlayer } from "..";
+import { Position } from "../Player";
 import { Team } from "../Team";
 
 export type ScoringCategory =

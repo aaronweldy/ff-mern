@@ -14,7 +14,9 @@ import LeagueButton from "../shared/LeagueButton";
 import { usePlayers } from "../../hooks/usePlayers";
 import { auth } from "../../firebase-config";
 import "react-bootstrap-typeahead/css/Typeahead.css";
-import { Team, SinglePosition, RosteredPlayer } from "@ff-mern/ff-types";
+import { Team, RosteredPlayer, AbbreviatedNflTeam } from "@ff-mern/ff-types";
+import { capitalizePlayerName } from "../utils/capitalizePlayerName";
+import { API } from "../../API";
 
 const EditRosters = () => {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -24,9 +26,7 @@ const EditRosters = () => {
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/`;
-        const data = await fetch(url);
-        const json = await data.json();
+        const json = await API.fetchLeague(id);
         const isComm = json.league.commissioners.includes(user.uid);
         if (!isComm) {
           setRedirect(true);
@@ -38,7 +38,9 @@ const EditRosters = () => {
   }, [id]);
   const handleAddPlayer = (idx: number) => {
     const tempTeams = [...teams];
-    tempTeams[idx].rosteredPlayers.push(new RosteredPlayer("", "QB"));
+    tempTeams[idx].rosteredPlayers.push(
+      new RosteredPlayer("", "" as AbbreviatedNflTeam, "QB")
+    );
     setTeams(tempTeams);
   };
 
@@ -49,17 +51,6 @@ const EditRosters = () => {
   ) => {
     const tempTeams = [...teams];
     tempTeams[teamIdx].rosteredPlayers.splice(playerIdx, 1);
-    setTeams(tempTeams);
-  };
-
-  const handlePositionChange = (
-    e: React.ChangeEvent<HTMLSelectElement>,
-    team: number,
-    player: number
-  ) => {
-    const tempTeams = [...teams];
-    tempTeams[team].rosteredPlayers[player].position = e.target
-      .value as SinglePosition;
     setTeams(tempTeams);
   };
 
@@ -83,10 +74,22 @@ const EditRosters = () => {
     setTeams(tempTeams);
   };
 
-  const handleNameChange = (team: number, player: number, newName: string) => {
+  const handleInputChange = (team: number, player: number, input: string) => {
     const tempTeams = [...teams];
-    tempTeams[team].rosteredPlayers[player].name = newName;
+    tempTeams[team].rosteredPlayers[player].name = input;
     setTeams(tempTeams);
+  };
+
+  const handleSelectPlayer = (
+    team: number,
+    player: number,
+    selected: RosteredPlayer[]
+  ) => {
+    if (selected.length === 1) {
+      const tempTeams = [...teams];
+      tempTeams[team].rosteredPlayers[player] = selected[0];
+      setTeams(tempTeams);
+    }
   };
 
   const sendUpdatedTeams = () => {
@@ -144,8 +147,9 @@ const EditRosters = () => {
                 <Table striped bordered hover>
                   <thead>
                     <tr>
-                      <th>Position</th>
-                      <th>Player Name</th>
+                      <th className="centered-td">Position</th>
+                      <th className="centered-td">Player Name</th>
+                      <th className="centered-td">Team</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -167,31 +171,30 @@ const EditRosters = () => {
                         }
                       >
                         <tr>
-                          <td>
-                            <Form.Control
-                              as="select"
-                              value={player.position}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLSelectElement>
-                              ) => handlePositionChange(e, i, j)}
-                            >
-                              <option value="QB">QB</option>
-                              <option value="RB">RB</option>
-                              <option value="WR">WR</option>
-                              <option value="TE">TE</option>
-                              <option value="K">K</option>
-                            </Form.Control>
+                          <td className="centered-td align-middle">
+                            {player.position}
                           </td>
                           <td>
                             <Typeahead
                               id="player-typeahead"
-                              selected={player.name ? [player.name] : []}
+                              selected={[player]}
                               options={players || []}
                               placeholder="Select Player"
+                              onInputChange={(input) =>
+                                handleInputChange(i, j, input)
+                              }
                               onChange={(selected) =>
-                                handleNameChange(i, j, selected[0])
+                                handleSelectPlayer(i, j, selected)
+                              }
+                              labelKey={(player) =>
+                                player.name
+                                  ? capitalizePlayerName(player.name)
+                                  : ""
                               }
                             />
+                          </td>
+                          <td className="centered-td align-middle">
+                            {player.team}
                           </td>
                         </tr>
                       </OverlayTrigger>

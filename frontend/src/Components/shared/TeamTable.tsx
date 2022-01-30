@@ -1,19 +1,30 @@
 import React from "react";
 import { Table, Dropdown, DropdownButton, SplitButton } from "react-bootstrap";
 import {
+  AbbreviatedNflTeam,
+  AbbreviationToFullTeam,
   FinalizedLineup,
   FinalizedPlayer,
   LineupSettings,
   Position,
+  sanitizeNflScheduleTeamName,
+  TeamFantasyPositionPerformance,
+  TeamToSchedule,
+  Week,
 } from "@ff-mern/ff-types";
 import { lineupSorter } from "../../constants";
+import { NflRankedText } from "./NflRankedText";
+import { capitalizePlayerName } from "../utils/capitalizePlayerName";
 
 type TableType = "starters" | "bench" | "backup";
 
 type TeamTableProps = {
   players: FinalizedLineup;
   positionsInTable: LineupSettings;
+  nflSchedule?: TeamToSchedule;
+  nflDefenseStats?: TeamFantasyPositionPerformance;
   name: TableType;
+  week: Week;
   isOwner: boolean;
   handlePlayerChange: (
     player: FinalizedPlayer,
@@ -45,7 +56,10 @@ const findOppositePlayers = (
 export const TeamTable = ({
   players,
   positionsInTable,
+  nflSchedule,
+  nflDefenseStats,
   name,
+  week,
   isOwner,
   handlePlayerChange,
   handleBenchPlayer,
@@ -58,12 +72,15 @@ export const TeamTable = ({
     .sort(lineupSorter);
 
   return (
-    <Table striped bordered hover>
+    <Table striped bordered hover className="w-auto">
       <thead>
         <tr>
           {isOwner ? <th>Move</th> : null}
           <th>Position</th>
           <th>Player Name</th>
+          <th>Team</th>
+          <th>Matchup</th>
+          <th>Matchup vs. Position</th>
           {isOwner && name === "starters" ? <th>Backup</th> : null}
         </tr>
       </thead>
@@ -82,7 +99,7 @@ export const TeamTable = ({
                   }
                 >
                   {isOwner ? (
-                    <td>
+                    <td className="centered-td align-middle">
                       <DropdownButton title="Move">
                         {findOppositePlayers(
                           player,
@@ -101,7 +118,8 @@ export const TeamTable = ({
                                 handlePlayerChange(player, name, oppPlayer, i)
                               }
                             >
-                              {oppPlayer.lineup}: {oppPlayer.name}
+                              {oppPlayer.lineup}:{" "}
+                              {capitalizePlayerName(oppPlayer.name)}
                             </Dropdown.Item>
                           );
                         })}
@@ -115,19 +133,53 @@ export const TeamTable = ({
                       </DropdownButton>
                     </td>
                   ) : null}
-                  <td>
+                  <td className="centered-td align-middle">
                     <span>
                       {name === "starters" ? player.lineup : player.position}
                     </span>
                   </td>
-                  <td>
-                    <span>{player.name}</span>
+                  <td className="centered-td align-middle">
+                    <span>{capitalizePlayerName(player.name)}</span>
                   </td>
+                  <td className="centered-td align-middle">
+                    <span>{player.team}</span>
+                  </td>
+                  {nflSchedule && nflDefenseStats && (
+                    <>
+                      <td className="centered-td align-middle">
+                        <span>
+                          {player.team ? nflSchedule[player.team][week] : ""}
+                        </span>
+                      </td>
+                      <td className="centered-td align-middle">
+                        {player.team &&
+                        nflSchedule[player.team][week] !== "BYE" ? (
+                          <NflRankedText
+                            rank={
+                              nflDefenseStats[
+                                AbbreviationToFullTeam[
+                                  sanitizeNflScheduleTeamName(
+                                    nflSchedule[player.team][week]
+                                  ) as AbbreviatedNflTeam
+                                ]
+                              ][player.position]
+                            }
+                          />
+                        ) : (
+                          "n/a"
+                        )}
+                      </td>
+                    </>
+                  )}
                   {isOwner && name === "starters" ? (
                     <td>
                       <SplitButton
                         id="backup"
-                        title={!player.backup ? "None" : player.backup}
+                        title={
+                          !player.backup
+                            ? "None"
+                            : capitalizePlayerName(player.backup)
+                        }
                         variant="secondary"
                       >
                         {findOppositePlayers(player, true, players).map(
@@ -144,7 +196,7 @@ export const TeamTable = ({
                                   )
                                 }
                               >
-                                {oppPlayer.name}
+                                {capitalizePlayerName(oppPlayer.name)}
                               </Dropdown.Item>
                             );
                           }
@@ -154,7 +206,12 @@ export const TeamTable = ({
                             handlePlayerChange(
                               player,
                               "backup",
-                              new FinalizedPlayer("", player.position, "bench"),
+                              new FinalizedPlayer(
+                                "",
+                                player.position,
+                                "" as AbbreviatedNflTeam,
+                                "bench"
+                              ),
                               -1
                             )
                           }

@@ -34,18 +34,6 @@ router.get("/find/:query/", async (req, res) => {
   res.status(200).send(foundLeagues);
 });
 
-router.get("/allPlayers/", async (req, res) => {
-  const allPlayers = await db.collection("globalPlayers").doc("players").get();
-  if (!allPlayers.exists) {
-    fetchPlayers().then((players) => {
-      db.collection("globalPlayers").doc("players").set({ players });
-      res.status(200).send(players);
-    });
-  } else {
-    res.status(200).send({ players: allPlayers.data() });
-  }
-});
-
 router.get("/:id/", async (req, res) => {
   const leagueId = req.params["id"];
   try {

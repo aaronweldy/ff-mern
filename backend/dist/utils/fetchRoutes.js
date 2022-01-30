@@ -27,7 +27,7 @@ export const fetchPlayers = () => {
             const tableData = yield scraper.get(url);
             for (const player of tableData[0]) {
                 if (player.Player !== "") {
-                    players.push(new RosteredPlayer(sanitizePlayerName(player.Player), pos.toUpperCase()));
+                    players.push(new RosteredPlayer(sanitizePlayerName(player.Player), player.Team, pos.toUpperCase()));
                 }
             }
         }

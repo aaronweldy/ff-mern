@@ -5,6 +5,7 @@ import {
   SinglePosition,
   FinalizedPlayer,
   FinalizedLineup,
+  AbbreviatedNflTeam,
 } from "@ff-mern/ff-types";
 import { lineupSorter } from "../../constants";
 
@@ -30,7 +31,12 @@ export const getWeeklyLineup = (
             currLineup[pos] = [];
           }
           currLineup[pos].push(
-            new FinalizedPlayer("", pos.split("/")[0] as SinglePosition, pos)
+            new FinalizedPlayer(
+              "",
+              pos.split("/")[0] as SinglePosition,
+              "" as AbbreviatedNflTeam,
+              pos
+            )
           );
         }
       }
@@ -39,7 +45,14 @@ export const getWeeklyLineup = (
   currentFinalizedLineup["bench"] = team.rosteredPlayers.reduce(
     (acc, player) => {
       if (!notBenched.has(player.name)) {
-        acc.push(new FinalizedPlayer(player.name, player.position, "bench"));
+        acc.push(
+          new FinalizedPlayer(
+            player.name,
+            player.position,
+            player.team,
+            "bench"
+          )
+        );
       }
       return acc;
     },

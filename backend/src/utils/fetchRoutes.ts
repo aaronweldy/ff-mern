@@ -8,6 +8,7 @@ import {
   SinglePosition,
   StatKey,
   Team,
+  AbbreviatedNflTeam,
 } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
 // @ts-ignore
@@ -27,6 +28,7 @@ export const fetchPlayers = () => {
           players.push(
             new RosteredPlayer(
               sanitizePlayerName(player.Player),
+              player.Team as AbbreviatedNflTeam,
               pos.toUpperCase() as SinglePosition
             )
           );

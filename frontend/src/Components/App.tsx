@@ -18,7 +18,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import JoinLeague from "./JoinLeague";
 import CreateLeague from "./CreateLeague";
 import { useEffect } from "react";
-import { API } from "@ff-mern/ff-types";
+import { API } from "../API";
 
 const App = () => {
   useEffect(() => {

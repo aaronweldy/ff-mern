@@ -8,12 +8,12 @@ import ErrorTable from "./ErrorTable";
 import EditWeek from "../shared/EditWeek";
 import "../../CSS/LeaguePages.css";
 import { ScoringError } from "@ff-mern/ff-types";
-import { API } from "@ff-mern/ff-types";
 import { useLeagueScoringData } from "../../hooks/useLeagueScoringData";
 import {
   ScoringToggleType,
   StatTypeToggleButton,
 } from "../shared/StatTypeToggleButton";
+import { API } from "../../API";
 
 const RunScores = () => {
   const { id } = useParams<{ id: string }>();

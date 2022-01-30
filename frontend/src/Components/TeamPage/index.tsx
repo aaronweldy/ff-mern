@@ -8,14 +8,18 @@ import ImageModal from "../shared/ImageModal";
 import EditWeek from "../shared/EditWeek";
 import { useLeague } from "../../hooks/useLeague";
 import "../../CSS/LeaguePages.css";
-import { Team, LineupSettings, FinalizedPlayer } from "@ff-mern/ff-types";
+import { Team, LineupSettings, FinalizedPlayer, Week } from "@ff-mern/ff-types";
 import { useTeamTable } from "../../hooks/useTeamTable";
 import { Header } from "./Header";
 import { getWeeklyLineup } from "../utils/getWeeklyLineup";
+import { useNflSchedule } from "../../hooks/useNflSchedule";
+import { useNflDefenseStats } from "../../hooks/useNflDefenseStats";
 
 const TeamPage = () => {
   const { id, leagueId } = useParams<{ id: string; leagueId: string }>();
   const { league } = useLeague(leagueId);
+  const schedule = useNflSchedule();
+  const defenseStats = useNflDefenseStats();
   const [team, setTeam] = useState<Team | undefined>();
   const [success, setSuccess] = useState(false);
   const [showImageModal, setShowModal] = useState(false);
@@ -23,7 +27,7 @@ const TeamPage = () => {
   const [userIsOwner, setIsOwner] = useState(false);
   const lineup = getWeeklyLineup(week, team, league?.lineupSettings);
   console.log(lineup);
-  const { handlePlayerChange, handleBenchPlayer } = useTeamTable(lineup);
+  const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
 
   useEffect(() => {
     const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${leagueId}/team/${id}/`;
@@ -107,14 +111,20 @@ const TeamPage = () => {
     selectedIndex: number
   ) => {
     if (team) {
-      handlePlayerChange(selectedPlayer, name, swapPlayer, selectedIndex);
+      handlePlayerChange(
+        selectedPlayer,
+        name,
+        swapPlayer,
+        selectedIndex,
+        lineup
+      );
       setTeam({ ...team });
     }
   };
 
   const onBench = (selectedPlayer: FinalizedPlayer) => {
     if (team) {
-      handleBenchPlayer(selectedPlayer);
+      handleBenchPlayer(selectedPlayer, lineup);
       setTeam({ ...team });
     }
   };
@@ -147,7 +157,10 @@ const TeamPage = () => {
               isOwner={userIsOwner && week > (league.lastScoredWeek || -1)}
               players={lineup}
               positionsInTable={league.lineupSettings}
+              nflSchedule={schedule}
+              nflDefenseStats={defenseStats}
               name="starters"
+              week={week.toString() as Week}
               handleBenchPlayer={onBench}
               handlePlayerChange={onChange}
             />
@@ -160,7 +173,10 @@ const TeamPage = () => {
               isOwner={userIsOwner}
               players={lineup}
               positionsInTable={{ bench: 1 } as LineupSettings}
+              nflSchedule={schedule}
+              nflDefenseStats={defenseStats}
               name="bench"
+              week={week.toString() as Week}
               handleBenchPlayer={onBench}
               handlePlayerChange={onChange}
             />

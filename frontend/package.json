@@ -4,7 +4,7 @@
   "private": true,
   "proxy": "https://us-central1-ff-mern.cloudfunctions.net/app",
   "dependencies": {
-    "@ff-mern/ff-types": "^1.9.3",
+    "@ff-mern/ff-types": "^1.9.19",
     "@reduxjs/toolkit": "^1.5.0",
     "@testing-library/jest-dom": "^5.11.6",
     "@testing-library/react": "^11.2.2",

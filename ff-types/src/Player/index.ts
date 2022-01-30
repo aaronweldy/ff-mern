@@ -1,23 +1,34 @@
+import { AbbreviatedNflTeam } from "../Constants";
+
 export class FinalizedPlayer {
   name: string;
   position: SinglePosition;
+  team: AbbreviatedNflTeam;
   lineup: Position;
   backup: string;
 
-  constructor(name: string, position: SinglePosition, lineup: Position) {
+  constructor(
+    name: string,
+    position: SinglePosition,
+    team: AbbreviatedNflTeam,
+    lineup: Position
+  ) {
     this.name = name;
     this.position = position;
     this.lineup = lineup;
+    this.team = team;
   }
 }
 
 export class RosteredPlayer {
   name: string;
   position: SinglePosition;
+  team: AbbreviatedNflTeam;
 
-  constructor(name: string, pos: SinglePosition) {
+  constructor(name: string, team: AbbreviatedNflTeam, pos: SinglePosition) {
     this.name = name;
     this.position = pos;
+    this.team = team;
   }
 }
 

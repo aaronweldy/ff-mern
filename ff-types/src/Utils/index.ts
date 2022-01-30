@@ -3,6 +3,10 @@ import { SinglePosition, ScoringCategory, StatKey } from "..";
 export const sanitizePlayerName = (name: string) =>
   name.replace(/\./g, "").toLowerCase();
 
+export const sanitizeNflScheduleTeamName = (name: string) => {
+  return name.replace(/\@/g, "");
+};
+
 export const convertedScoringTypes: Record<
   SinglePosition,
   Partial<Record<ScoringCategory, StatKey>>

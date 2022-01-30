@@ -1,6 +1,6 @@
 import { Table } from "react-bootstrap";
 import React from "react";
-import { Team, TeamWeekInfo } from "@ff-mern/ff-types";
+import { Team } from "@ff-mern/ff-types";
 
 const backgroundIters = [
   "first-background",

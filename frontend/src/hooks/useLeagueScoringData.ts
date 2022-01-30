@@ -5,7 +5,7 @@ import {
   Team,
 } from "@ff-mern/ff-types";
 import { useEffect, useState } from "react";
-import { API } from "@ff-mern/ff-types";
+import { API } from "../API";
 import { auth } from "../firebase-config";
 
 export const useLeagueScoringData = (id: string) => {

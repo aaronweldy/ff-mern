@@ -1,20 +1,17 @@
 import { FinalizedLineup, FinalizedPlayer } from "@ff-mern/ff-types";
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 
-export const useTeamTable = (lineup: FinalizedLineup) => {
-  const mutableLineup = useRef(lineup);
+export const useTeamTable = () => {
   const handlePlayerChange = useCallback(
     (
       selectedPlayer: FinalizedPlayer,
       name: string,
       swapPlayer: FinalizedPlayer,
       selectedIndex: number,
-      manualLineup?: FinalizedLineup
+      lineup: FinalizedLineup
     ) => {
-      if (manualLineup) {
-        mutableLineup.current = manualLineup;
-      }
-      const swapIndex = mutableLineup.current[swapPlayer.lineup].findIndex(
+      console.log(lineup);
+      const swapIndex = lineup[swapPlayer.lineup].findIndex(
         (v) => v.name === swapPlayer.name
       );
       if (swapPlayer.name === "") {
@@ -24,12 +21,8 @@ export const useTeamTable = (lineup: FinalizedLineup) => {
             console.log(selectedIndex);
             console.log(swapIndex);
             selectedPlayer.lineup = swapPlayer.lineup;
-            mutableLineup.current[swapPlayer.lineup].splice(
-              swapIndex,
-              1,
-              selectedPlayer
-            );
-            mutableLineup.current.bench.splice(selectedIndex, 1);
+            lineup[swapPlayer.lineup].splice(swapIndex, 1, selectedPlayer);
+            lineup.bench.splice(selectedIndex, 1);
             break;
           case "backup":
             break;
@@ -39,12 +32,8 @@ export const useTeamTable = (lineup: FinalizedLineup) => {
           case "starters":
           case "bench":
             swapPlayer.lineup = selectedPlayer.lineup;
-            mutableLineup.current[selectedPlayer.lineup].splice(
-              selectedIndex,
-              1,
-              swapPlayer
-            );
-            mutableLineup.current.bench.splice(swapIndex, 1);
+            lineup[selectedPlayer.lineup].splice(selectedIndex, 1, swapPlayer);
+            lineup.bench.splice(swapIndex, 1);
             break;
           case "backup":
             break;
@@ -53,16 +42,8 @@ export const useTeamTable = (lineup: FinalizedLineup) => {
         switch (name) {
           case "starters":
           case "bench":
-            mutableLineup.current[swapPlayer.lineup].splice(
-              swapIndex,
-              1,
-              selectedPlayer
-            );
-            mutableLineup.current[selectedPlayer.lineup].splice(
-              selectedIndex,
-              1,
-              swapPlayer
-            );
+            lineup[swapPlayer.lineup].splice(swapIndex, 1, selectedPlayer);
+            lineup[selectedPlayer.lineup].splice(selectedIndex, 1, swapPlayer);
             const temp = swapPlayer.lineup;
             swapPlayer.lineup = selectedPlayer.lineup;
             selectedPlayer.lineup = temp;
@@ -77,14 +58,12 @@ export const useTeamTable = (lineup: FinalizedLineup) => {
   );
 
   const handleBenchPlayer = useCallback(
-    (selectedPlayer: FinalizedPlayer, manualLineup?: FinalizedLineup) => {
-      if (manualLineup) {
-        mutableLineup.current = manualLineup;
-      }
-      mutableLineup.current.bench.push(
+    (selectedPlayer: FinalizedPlayer, lineup: FinalizedLineup) => {
+      lineup.bench.push(
         new FinalizedPlayer(
           selectedPlayer.name,
           selectedPlayer.position,
+          selectedPlayer.team,
           selectedPlayer.lineup
         )
       );

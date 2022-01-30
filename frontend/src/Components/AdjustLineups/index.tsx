@@ -12,19 +12,22 @@ import {
   FinalizedLineup,
   FinalizedPlayer,
   LineupSettings,
+  Week,
 } from "@ff-mern/ff-types";
 import { getWeeklyLineup } from "../utils/getWeeklyLineup";
 import { useTeamTable } from "../../hooks/useTeamTable";
+import { useNflSchedule } from "../../hooks/useNflSchedule";
+import { useNflDefenseStats } from "../../hooks/useNflDefenseStats";
 
 export default function AdjustLineups() {
   const { id } = useParams<{ id: string }>();
   const { league, teams: initTeams } = useLeague(id);
+  const schedule = useNflSchedule();
+  const defenseStats = useNflDefenseStats();
   const [teams, setTeams] = useState<Team[]>([]);
   const [success, setSuccess] = useState(false);
   const [week, setWeek] = useState(1);
-  const { handlePlayerChange, handleBenchPlayer } = useTeamTable(
-    {} as FinalizedLineup
-  );
+  const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
   const [lineupsPerTeam, setLineupsPerTeam] = useState(
     {} as Record<string, FinalizedLineup>
   );
@@ -124,6 +127,9 @@ export default function AdjustLineups() {
                       players={lineupsPerTeam[team.id]}
                       positionsInTable={league.lineupSettings}
                       name="starters"
+                      nflDefenseStats={defenseStats}
+                      nflSchedule={schedule}
+                      week={week.toString() as Week}
                       handleBenchPlayer={(selectedPlayer: FinalizedPlayer) =>
                         onBench(selectedPlayer, team.id)
                       }
@@ -150,6 +156,9 @@ export default function AdjustLineups() {
                       players={lineupsPerTeam[team.id]}
                       positionsInTable={{ bench: 1 } as LineupSettings}
                       name="bench"
+                      nflDefenseStats={defenseStats}
+                      nflSchedule={schedule}
+                      week={week.toString() as Week}
                       handleBenchPlayer={(selectedPlayer: FinalizedPlayer) =>
                         onBench(selectedPlayer, team.id)
                       }

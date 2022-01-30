@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  ButtonGroup,
-  Col,
-  Row,
-  ToggleButton,
-  ToggleButtonGroup,
-} from "react-bootstrap";
+import { ToggleButton, ToggleButtonGroup } from "react-bootstrap";
 
 type StatTypeToggleButtonProps = {
   selected: ScoringToggleType;
