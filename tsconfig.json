@@ -1,0 +1,11 @@
+{
+  "references": [
+    { "path": "./frontend" },
+    { "path": "./backend" },
+    { "path": "./ff-types" },
+    { "path": "./functions" }
+  ],
+  "files": [],
+  "include": [],
+  "exclude": ["**/node_modules"]
+}

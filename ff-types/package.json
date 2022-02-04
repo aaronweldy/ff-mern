@@ -1,12 +1,12 @@
 {
   "name": "@ff-mern/ff-types",
-  "version": "1.9.19",
+  "version": "1.9.20",
   "description": "Type definitions for Orca Fantasy Football usage.",
   "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && rollup -c",
     "prepublishOnly": "tsc && rollup -c"
   },
   "author": "",
@@ -15,5 +15,8 @@
     "@rollup/plugin-typescript": "^8.3.0",
     "rollup": "^2.64.0",
     "rollup-plugin-dts": "^4.1.0"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.3"
   }
 }

@@ -65,3 +65,11 @@ export const emptyDefaultPositions = positionTypes.reduce(
   },
   {}
 ) as PositionInfo;
+
+export type CumulativePlayerScore = {
+  position: SinglePosition;
+  totalPointsInSeason: number;
+  pointsByWeek: number[];
+};
+
+export type CumulativePlayerScores = Record<string, CumulativePlayerScore>;

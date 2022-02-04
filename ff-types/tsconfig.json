@@ -6,9 +6,11 @@
       "moduleResolution": "node",
       "sourceMap": true,
       "outDir": "dist",
-      "declaration": true
+      "declaration": true,
+      "composite": true,
+      "skipLibCheck": true
   },
   "include": [
-      "src/*"
+      "src/**/*"
   ]
 }

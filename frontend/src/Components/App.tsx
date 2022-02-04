@@ -17,14 +17,9 @@ import EditLeagueSettings from "./EditLeagueSettings";
 import "bootstrap/dist/css/bootstrap.min.css";
 import JoinLeague from "./JoinLeague";
 import CreateLeague from "./CreateLeague";
-import { useEffect } from "react";
-import { API } from "../API";
+import { CumulativePlayers } from "./CumulativePlayers";
 
 const App = () => {
-  useEffect(() => {
-    API.serverAddress = process.env.REACT_APP_PUBLIC_URL as string;
-  }, []);
-
   return (
     <Router>
       <NavHeader />
@@ -44,6 +39,10 @@ const App = () => {
         <Route path="/league/:id/runScores/" component={RunScores} />
         <Route path="/league/:id/addPoints/" component={AddPoints} />
         <Route path="/league/:id/adjustLineups/" component={AdjustLineups} />
+        <Route
+          path="/league/:id/cumulativePlayerScores/"
+          component={CumulativePlayers}
+        />
         <SecureRoute path="/league/:id/" component={LeagueHome} />
         <SecureRoute path="/user/:userid/" component={User} />
         <Route path="/login/" component={Login} />

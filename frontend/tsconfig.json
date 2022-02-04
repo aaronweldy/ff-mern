@@ -1,8 +1,14 @@
 {
   "extends": "@tsconfig/create-react-app/tsconfig.json",
   "compilerOptions": {
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "downlevelIteration": true
   },
+  "references": [
+    {
+      "path" : "../ff-types"
+    }
+  ],
   "exclude": [
     "node_modules",
     "tsbuild",

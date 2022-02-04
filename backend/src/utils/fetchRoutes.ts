@@ -149,6 +149,7 @@ export const scoreAllPlayers = async (
           }
         });
       data[player.name] = {
+        position: player.position,
         scoring: {
           totalPoints: Number.parseFloat(
             catPoints
@@ -164,7 +165,7 @@ export const scoreAllPlayers = async (
   await db
     .collection("leagueScoringData")
     .doc(yearWeek + leagueId)
-    .set(data);
+    .set({ playerData: data });
   return data;
 };
 

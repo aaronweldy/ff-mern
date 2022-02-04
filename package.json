@@ -1,5 +1,10 @@
 {
-  "devDependencies": {
-    "@types/react-bootstrap-typeahead": "^5.1.8"
-  }
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "ff-types",
+    "functions"
+  ],
+  "packageManager": "yarn@3.1.1"
 }

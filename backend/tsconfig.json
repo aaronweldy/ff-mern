@@ -15,6 +15,11 @@
       "typeRoots": ["src/types"],
       "strictPropertyInitialization": false,
   },
+  "references": [
+      {
+          "path": "../ff-types"
+      }
+  ],
   "include": [
       "src/**/*"
   ]

@@ -1,4 +1,5 @@
 import {
+  CumulativePlayerScores,
   FetchPlayerScoresRequest,
   GenericRequest,
   LeagueAPIResponse,
@@ -21,10 +22,9 @@ const generatePostRequest = (body: GenericRequest) => {
 const toJSON = (data: Response) => data.json();
 
 export class API {
-  static serverAddress = "";
-
   static fetchLeague(leagueId: string) {
-    const url = API.serverAddress + `/api/v1/league/${leagueId}/`;
+    const url =
+      process.env.REACT_APP_PUBLIC_URL + `/api/v1/league/${leagueId}/`;
     return new Promise<LeagueAPIResponse>((resolve, _) => {
       fetch(url)
         .then((data) => data.json())
@@ -33,7 +33,8 @@ export class API {
   }
 
   static runScores(id: string, week: number = 1, teams: Team[]) {
-    const url = API.serverAddress + `/api/v1/league/${id}/runScores/`;
+    const url =
+      process.env.REACT_APP_PUBLIC_URL + `/api/v1/league/${id}/runScores/`;
     const reqDict = generatePostRequest({ week, teams });
     return new Promise<RunScoresResponse>((resolve, _) => {
       fetch(url, reqDict)
@@ -47,7 +48,9 @@ export class API {
     week,
     players,
   }: FetchPlayerScoresRequest) {
-    const url = API.serverAddress + `/api/v1/league/${leagueId}/playerScores/`;
+    const url =
+      process.env.REACT_APP_PUBLIC_URL +
+      `/api/v1/league/${leagueId}/playerScores/`;
     const req = generatePostRequest({ players, week });
     return new Promise<PlayerScoresResponse>((resolve, reject) =>
       fetch(url, req)
@@ -58,7 +61,8 @@ export class API {
   }
 
   static updateTeams(teams: Team[]) {
-    const url = API.serverAddress + `/api/v1/league/updateTeams/`;
+    const url =
+      process.env.REACT_APP_PUBLIC_URL + `/api/v1/league/updateTeams/`;
     const req = generatePostRequest({ teams });
     return new Promise<Team[]>((resolve, _) =>
       fetch(url, req)
@@ -68,7 +72,8 @@ export class API {
   }
 
   static fetchGlobalPlayers() {
-    const url = API.serverAddress + "/api/v1/nflData/allPlayers/";
+    const url =
+      process.env.REACT_APP_PUBLIC_URL + "/api/v1/nflData/allPlayers/";
     return new Promise<RosteredPlayer[]>((resolve, reject) => {
       fetch(url)
         .then((data) => data.json())
@@ -78,7 +83,8 @@ export class API {
   }
 
   static fetchNflSchedule() {
-    const url = API.serverAddress + "/api/v1/nflData/nflSchedule/";
+    const url =
+      process.env.REACT_APP_PUBLIC_URL + "/api/v1/nflData/nflSchedule/";
     return new Promise<TeamToSchedule>((resolve, reject) => {
       fetch(url)
         .then((data) => data.json())
@@ -88,13 +94,26 @@ export class API {
   }
 
   static fetchNflDefenseStats() {
-    const url = API.serverAddress + "/api/v1/nflData/nflDefenseStats/";
+    const url =
+      process.env.REACT_APP_PUBLIC_URL + "/api/v1/nflData/nflDefenseStats/";
     return new Promise<TeamFantasyPositionPerformance>((resolve, reject) => {
       fetch(url)
         .then((data) => data.json())
         .then((json: { data: TeamFantasyPositionPerformance }) =>
           resolve(json.data)
         )
+        .catch((err) => reject(err));
+    });
+  }
+
+  static fetchCumulativePlayerScores(leagueId: string) {
+    const url =
+      process.env.REACT_APP_PUBLIC_URL +
+      `/api/v1/league/${leagueId}/cumulativePlayerScores/`;
+    return new Promise<CumulativePlayerScores>((resolve, reject) => {
+      fetch(url)
+        .then((data) => data.json())
+        .then((json: CumulativePlayerScores) => resolve(json))
         .catch((err) => reject(err));
     });
   }

@@ -14,6 +14,7 @@ import { Team, StoredPlayerInformation } from "@ff-mern/ff-types";
 import { lineupSorter } from "../../constants";
 import "../../CSS/LeaguePages.css";
 import { ScoringToggleType } from "../shared/StatTypeToggleButton";
+import { capitalizePlayerName } from "../utils/capitalizePlayerName";
 
 type TeamScoringBreakdownProps = {
   leagueScoringCategories: ScoringSetting[];
@@ -142,7 +143,7 @@ const TeamScoringBreakdown = ({
                       <td>
                         <span>{player.position}</span>
                       </td>
-                      <td>{player.name}</td>
+                      <td>{capitalizePlayerName(player.name)}</td>
                       <td>
                         <span>
                           {data?.scoring?.totalPoints?.toFixed(2) || 0}

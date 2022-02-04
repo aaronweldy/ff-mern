@@ -20,7 +20,8 @@ import { Router } from "express";
 import { v4 } from "uuid";
 import admin, { db } from "../config/firebase-config.js";
 import { sanitizePlayerName, } from "@ff-mern/ff-types";
-import { getTeamsInLeague, scoreAllPlayers, } from "../utils/fetchRoutes.js";
+import { fetchPlayers, getTeamsInLeague, scoreAllPlayers, } from "../utils/fetchRoutes.js";
+import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
 const router = Router();
 router.get("/find/:query/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const query = req.params["query"];
@@ -307,7 +308,6 @@ router.post("/:leagueId/runScores/", (req, res) => __awaiter(void 0, void 0, voi
                 .filter((player) => player.name !== "")
                 .forEach((player) => {
                 const playerName = sanitizePlayerName(player.name);
-                console.log(playerName);
                 if (!(playerName in data)) {
                     errors.push({
                         type: "NOT FOUND",
@@ -338,24 +338,23 @@ router.post("/:leagueId/runScores/", (req, res) => __awaiter(void 0, void 0, voi
     }));
     yield db.collection("leagues").doc(leagueId).update({ lastScoredWeek: week });
     res.status(200).json({ teams, errors, data });
+    updateCumulativeStats(leagueId, week, data);
 }));
 router.post("/:leagueId/playerScores/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { leagueId } = req.params;
     const { players, week } = req.body;
     const teams = yield getTeamsInLeague(leagueId);
     const league = (yield db.collection("leagues").doc(leagueId).get()).data();
-    console.log(week);
     if (week > league.lastScoredWeek) {
         const resp = { teams, league, players: {} };
         res.status(200).send(resp);
         return;
     }
     const yearWeek = new Date().getFullYear() + week.toString();
-    const data = (yield db
+    let data = (yield db
         .collection("leagueScoringData")
         .doc(yearWeek + leagueId)
         .get()).data();
-    console.log(data);
     if (!data) {
         const resp = { teams, league, players: {} };
         res.status(200).send(resp);
@@ -365,25 +364,48 @@ router.post("/:leagueId/playerScores/", (req, res) => __awaiter(void 0, void 0, 
         const resp = {
             teams,
             league,
-            players: data,
+            players: data.playerData,
         };
         res.status(200).send(resp);
         return;
     }
-    const respData = {};
-    for (const player in players) {
-        if (!(player in data)) {
-            continue;
-        }
-        respData[player] = data[player];
-    }
-    console.log(respData);
     const resp = {
         teams,
         league,
-        players: respData,
+        players: data.playerData,
     };
     res.status(200).send(resp);
+}));
+router.get("/:id/cumulativePlayerScores/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const cumulativeData = yield db
+        .collection("cumulativePlayerScores")
+        .doc(id)
+        .get();
+    if (!cumulativeData.exists) {
+        const curPlayers = yield fetchPlayers();
+        const initData = curPlayers.reduce((acc, player) => {
+            acc[player.name] = {
+                totalPointsInSeason: 0,
+                pointsByWeek: Array(18).fill(0),
+                position: player.position,
+            };
+            return acc;
+        }, {});
+        res.status(200).send(initData);
+        db.collection("cumulativePlayerScores").doc(id).set(initData);
+        return;
+    }
+    const retData = cumulativeData.data();
+    const sortedData = Object.keys(retData)
+        .sort((a, b) => {
+        return retData[b].totalPointsInSeason - retData[a].totalPointsInSeason;
+    })
+        .reduce((acc, i) => {
+        acc[i] = retData[i];
+        return acc;
+    }, {});
+    res.status(200).send(sortedData);
 }));
 export default router;
 //# sourceMappingURL=league.js.map

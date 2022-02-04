@@ -10,12 +10,14 @@ import {
   Team,
   PlayerScoreData,
   PlayerScoresResponse,
+  CumulativePlayerScores,
 } from "@ff-mern/ff-types";
 import {
   fetchPlayers,
   getTeamsInLeague,
   scoreAllPlayers,
 } from "../utils/fetchRoutes.js";
+import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
 
 const router = Router();
 
@@ -340,7 +342,7 @@ router.post("/:leagueId/runScores/", async (req, res) => {
         .filter((player) => player.name !== "")
         .forEach((player) => {
           const playerName = sanitizePlayerName(player.name);
-          console.log(playerName);
+
           if (!(playerName in data)) {
             errors.push({
               type: "NOT FOUND",
@@ -374,6 +376,7 @@ router.post("/:leagueId/runScores/", async (req, res) => {
   });
   await db.collection("leagues").doc(leagueId).update({ lastScoredWeek: week });
   res.status(200).json({ teams, errors, data });
+  updateCumulativeStats(leagueId, week, data);
 });
 
 router.post("/:leagueId/playerScores/", async (req, res) => {
@@ -383,49 +386,77 @@ router.post("/:leagueId/playerScores/", async (req, res) => {
   const league = (
     await db.collection("leagues").doc(leagueId).get()
   ).data() as League;
-  console.log(week);
+
   if (week > league.lastScoredWeek) {
     const resp: PlayerScoresResponse = { teams, league, players: {} };
     res.status(200).send(resp);
     return;
   }
   const yearWeek = new Date().getFullYear() + week.toString();
-  const data = (
+  let data = (
     await db
       .collection("leagueScoringData")
       .doc(yearWeek + leagueId)
       .get()
-  ).data() as PlayerScoreData;
-  console.log(data);
+  ).data() as { playerData: PlayerScoreData };
+
   if (!data) {
     const resp: PlayerScoresResponse = { teams, league, players: {} };
     res.status(200).send(resp);
     return;
   }
+
   if (!players) {
     const resp: PlayerScoresResponse = {
       teams,
       league,
-      players: data,
+      players: data.playerData,
     };
     res.status(200).send(resp);
     return;
   }
 
-  const respData: PlayerScoreData = {};
-  for (const player in players) {
-    if (!(player in data)) {
-      continue;
-    }
-    respData[player] = data[player];
-  }
-  console.log(respData);
   const resp: PlayerScoresResponse = {
     teams,
     league,
-    players: respData,
+    players: data.playerData,
   };
   res.status(200).send(resp);
+});
+
+router.get("/:id/cumulativePlayerScores/", async (req, res) => {
+  const { id } = req.params;
+  const cumulativeData = await db
+    .collection("cumulativePlayerScores")
+    .doc(id)
+    .get();
+  if (!cumulativeData.exists) {
+    const curPlayers = await fetchPlayers();
+    const initData = curPlayers.reduce(
+      (acc: CumulativePlayerScores, player) => {
+        acc[player.name] = {
+          totalPointsInSeason: 0,
+          pointsByWeek: Array(18).fill(0),
+          position: player.position,
+        };
+        return acc;
+      },
+      {}
+    );
+    res.status(200).send(initData);
+    db.collection("cumulativePlayerScores").doc(id).set(initData);
+    return;
+  }
+  const retData = cumulativeData.data() as CumulativePlayerScores;
+  const sortedData = Object.keys(retData)
+    .sort((a, b) => {
+      return retData[b].totalPointsInSeason - retData[a].totalPointsInSeason;
+    })
+    .reduce((acc: CumulativePlayerScores, i: string) => {
+      acc[i] = retData[i];
+      return acc;
+    }, {});
+  res.status(200).send(sortedData);
 });
 
 export default router;

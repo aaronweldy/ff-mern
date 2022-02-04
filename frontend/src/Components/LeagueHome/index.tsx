@@ -22,7 +22,6 @@ function LeagueHome() {
   const { id } = useParams<{ id: string }>();
   const { league, teams: initTeams } = useLeague(id);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [runScores, setRunScores] = useState(false);
   const [showDelete, setDelete] = useState(false);
   const [redirect, setRedirect] = useState(false);
   const [deleteName, setName] = useState("");
@@ -51,9 +50,7 @@ function LeagueHome() {
     });
     return () => unsub();
   }, [id, user, league, initTeams]);
-  if (runScores) {
-    return <Redirect to={`/league/${id}/runScores/`} />;
-  }
+
   const deleteLeague = () => {
     const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/delete/`;
     const body = { user: user ? user.uid : 0 };
@@ -173,7 +170,6 @@ function LeagueHome() {
                   ) : (
                     team.ownerName
                   );
-                console.log(team);
                 return (
                   <tr key={i}>
                     <td>
@@ -229,23 +225,24 @@ function LeagueHome() {
         )}
       </Row>
       <Row className="justify-content-center">
-        {user && league && league.commissioners.includes(user.uid) ? (
+        {user && league && (
           <Button
             className="mt-3 mb-3"
             variant="primary"
-            onClick={() => setRunScores(true)}
+            href={`/league/${id}/runScores/`}
           >
-            Run Scores
-          </Button>
-        ) : (
-          <Button
-            className="mt-3 mb-3"
-            variant="primary"
-            onClick={() => setRunScores(true)}
-          >
-            View Weekly Scoring Breakdown
+            {league.commissioners.includes(user.uid)
+              ? "Run Scores"
+              : "View Weekly Scoring Breakdown"}
           </Button>
         )}
+        <Button
+          className="mt-3 mb-3 ml-3"
+          variant="primary"
+          href={`/league/${id}/cumulativePlayerScores/`}
+        >
+          Cumulative Player Scoring
+        </Button>
       </Row>
     </Container>
   );

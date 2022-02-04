@@ -128,6 +128,7 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
             }
         });
         data[player.name] = {
+            position: player.position,
             scoring: {
                 totalPoints: Number.parseFloat(catPoints
                     .reduce((acc, i) => acc + Object.values(i)[0], 0)
@@ -141,7 +142,7 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
     yield db
         .collection("leagueScoringData")
         .doc(yearWeek + leagueId)
-        .set(data);
+        .set({ playerData: data });
     return data;
 });
 export const getTeamsInLeague = (id) => __awaiter(void 0, void 0, void 0, function* () {

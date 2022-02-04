@@ -9,8 +9,15 @@ export const capitalizePlayerName = (name: string) =>
     .map((partialName) => {
       if (partialName.length <= 1) {
         return partialName;
+      } else if (partialName.length === 2) {
+        if (partialName === "jr") {
+          return "Jr.";
+        }
+        return partialName[0].toUpperCase() + partialName[1].toUpperCase();
       } else if (partialName === "ii") {
         return "II";
+      } else if (partialName === "iii") {
+        return "III";
       }
       return partialName[0].toUpperCase() + partialName.slice(1);
     })

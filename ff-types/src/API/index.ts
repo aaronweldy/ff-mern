@@ -16,6 +16,7 @@ export type LeagueAPIResponse = {
 };
 
 export type StoredPlayerInformation = {
+  position: SinglePosition;
   statistics: DatabasePlayer;
   scoring: {
     totalPoints: number;
