@@ -1,10 +1,14 @@
 node_modules/
 db/
 backend/.env
+backend/.yarn/**
+backend/.eslintrc.cjs
 ff-mern-firebase*
-.**
+ff-types/.rollup.cache/**
+ff-types/.npmignore
+.firebase/**
+.github**
 
-.yarn/*
 !.yarn/cache
 !.yarn/releases
 !.yarn/plugins

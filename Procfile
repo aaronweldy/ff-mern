@@ -1,0 +1,1 @@
+web: yarn node backend/dist/index.js
