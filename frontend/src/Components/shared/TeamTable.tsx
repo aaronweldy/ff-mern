@@ -72,7 +72,7 @@ export const TeamTable = ({
     .sort(lineupSorter);
 
   return (
-    <Table striped bordered hover className="w-auto">
+    <Table striped bordered hover className="w-auto scrollable-table">
       <thead>
         <tr>
           {isOwner ? <th>Move</th> : null}

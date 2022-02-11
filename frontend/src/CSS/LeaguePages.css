@@ -150,17 +150,21 @@
 
 .scrollable-table {
   display: block;
-  overflow: scroll;
-  height: 75vh;
+  overflow: auto;
+  width: fit-content;
+  max-width: 90vw;
 }
 
 .sticky-col {
   position: sticky;
-  background-color: white;
   z-index: 1;
 }
 
 .sticky-td {
   left: 0;
   width: 100px;
+}
+
+.gray-col {
+  background-color: lightgray;
 }

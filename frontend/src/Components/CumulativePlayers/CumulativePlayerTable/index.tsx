@@ -12,7 +12,12 @@ export const CumulativePlayerTable = ({
   return (
     <Row className="justify-content-center mt-3">
       <Col>
-        <Table responsive="lg" striped bordered className="scrollable-table">
+        <Table
+          style={{ height: "73vh" }}
+          striped
+          bordered
+          className="scrollable-table"
+        >
           <thead>
             <tr>
               <th

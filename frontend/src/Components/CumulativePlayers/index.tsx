@@ -35,7 +35,7 @@ export const CumulativePlayers = () => {
     return playerData;
   }, [selectedFilter, playerData]);
   return (
-    <Container>
+    <Container fluid>
       <LeagueButton id={id} />
       <PositionToggle selectedFilter={selectedFilter} onChange={onChange} />
       {playersToRender && <CumulativePlayerTable players={playersToRender} />}

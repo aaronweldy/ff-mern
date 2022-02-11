@@ -78,7 +78,7 @@ function LeagueHome() {
     return <Redirect to="/" />;
   }
   return (
-    <Container>
+    <Container fluid>
       <Modal show={showDelete} onHide={() => setDelete(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Delete League</Modal.Title>
@@ -148,7 +148,7 @@ function LeagueHome() {
       </Row>
       <Row className="mb-3 mt-3 justify-content-center">
         {league && (
-          <Table striped hover className="hide-cells">
+          <Table striped hover className="hide-cells scrollable-table">
             <thead>
               <tr>
                 <th />

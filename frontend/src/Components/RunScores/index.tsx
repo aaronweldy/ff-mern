@@ -100,7 +100,7 @@ const RunScores = () => {
     return <Redirect to={`/league/${id}/editTeams/`} />;
   }
   return (
-    <Container className="ml-5">
+    <Container fluid className="pl-5">
       <Row>
         <LeagueButton id={id} />
       </Row>

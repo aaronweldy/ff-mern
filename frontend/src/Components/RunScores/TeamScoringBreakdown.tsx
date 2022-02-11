@@ -112,7 +112,13 @@ const TeamScoringBreakdown = ({
         </Col>
       </Row>
       <Row>
-        <Table striped bordered hover className="table-width">
+        <Table
+          striped
+          bordered
+          hover
+          className="scrollable-table"
+          style={{ maxHeight: "90vh" }}
+        >
           <thead>
             <tr>
               <th>Lineup</th>
@@ -137,13 +143,15 @@ const TeamScoringBreakdown = ({
                       }
                       key={player.name + pos + i.toString()}
                     >
-                      <td>
+                      <td className="gray-col">
                         <span>{player.lineup}</span>
                       </td>
-                      <td>
+                      <td className="gray-col">
                         <span>{player.position}</span>
                       </td>
-                      <td>{capitalizePlayerName(player.name)}</td>
+                      <td className="sticky-td sticky-col gray-col">
+                        {capitalizePlayerName(player.name)}
+                      </td>
                       <td>
                         <span>
                           {data?.scoring?.totalPoints?.toFixed(2) || 0}
@@ -161,6 +169,10 @@ const TeamScoringBreakdown = ({
                 });
                 return acc;
               }, [])}
+          </tbody>
+        </Table>
+        <Table striped bordered className="w-auto">
+          <tbody>
             <tr>
               <td colSpan={3}>
                 <b>Point Adjustment</b>
