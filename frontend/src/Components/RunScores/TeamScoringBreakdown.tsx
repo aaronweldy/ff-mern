@@ -111,7 +111,7 @@ const TeamScoringBreakdown = ({
           <div className="subtitle">{team.ownerName}</div>
         </Col>
       </Row>
-      <Row>
+      <Row className="table-wrapper">
         <Table
           striped
           bordered

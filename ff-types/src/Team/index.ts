@@ -1,29 +1,23 @@
-import { RosteredPlayer, Position, FinalizedPlayer } from "../Player";
+import { RosteredPlayer, Position, FinalizedPlayer } from "..";
 
 export class Team {
-  public name: string;
   public id: string;
   public league: string;
   public leagueLogo: string;
-  public leagueName: string;
   public logo: string;
   public owner: string;
-  public ownerName: string;
-  public isCommissioner: boolean;
   public rosteredPlayers: RosteredPlayer[];
   public weekInfo: TeamWeekInfo[];
+  public lastUpdated: Date;
 
   constructor(
-    name: string,
-    league: string,
-    ownerName: string,
-    isCommissioner: boolean,
+    public name: string,
+    public leagueName: string,
+    public ownerName: string,
+    public isCommissioner: boolean,
     numWeeks: number
   ) {
-    this.ownerName = ownerName;
-    this.name = name;
-    this.leagueName = league;
-    this.isCommissioner = isCommissioner;
+    this.lastUpdated = new Date();
     this.rosteredPlayers = [];
     this.logo = "/football.jfif";
     this.weekInfo = [

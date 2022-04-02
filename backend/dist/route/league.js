@@ -38,9 +38,19 @@ router.get("/find/:query/", (req, res) => __awaiter(void 0, void 0, void 0, func
 router.get("/:id/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const leagueId = req.params["id"];
     try {
-        const teams = yield getTeamsInLeague(leagueId);
         const league = (yield db.collection("leagues").doc(leagueId).get()).data();
-        res.status(200).json({ league, teams });
+        res.status(200).json({ league });
+    }
+    catch (e) {
+        console.log(e);
+        res.status(500).send();
+    }
+}));
+router.get("/:id/teams/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const leagueId = req.params["id"];
+    try {
+        const teams = yield getTeamsInLeague(leagueId);
+        res.status(200).json({ teams });
     }
     catch (e) {
         console.log(e);
@@ -162,12 +172,6 @@ router.post("/:id/delete/", (req, res) => __awaiter(void 0, void 0, void 0, func
         .delete()
         .then(() => res.status(200).send({ message: "League deleted successfully" }));
 }));
-router.get("/:leagueId/team/:id/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const team = yield db.collection("teams").doc(req.params.id).get();
-    res.status(200).json({
-        team: team.data(),
-    });
-}));
 router.get("/:leagueId/teams/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const league = req.params["leagueId"];
     db.collection("teams")
@@ -181,59 +185,20 @@ router.get("/:leagueId/teams/", (req, res) => __awaiter(void 0, void 0, void 0, 
         res.status(200).json({ teams });
     });
 }));
-router.post("/updateTeams/", (req, res) => {
-    const { teams } = req.body;
-    teams.forEach((team) => {
-        admin
-            .auth()
-            .getUserByEmail(team.ownerName)
-            .then((user) => __awaiter(void 0, void 0, void 0, function* () {
-            db.collection("teams")
-                .doc(team.id)
-                .update(Object.assign(Object.assign({}, team), { owner: user.uid }));
-        }))
-            .catch(() => __awaiter(void 0, void 0, void 0, function* () {
-            db.collection("teams")
-                .doc(team.id)
-                .update(Object.assign({ owner: "default" }, team));
-        }));
-    });
-    res.status(200).send({ teams });
-});
-router.post("/updateTeamInfo/", (req, res) => {
-    const { id, url, name } = req.body;
-    try {
-        const doc = db.collection("teams").doc(id);
-        doc.update({ logo: url, name }).then(() => __awaiter(void 0, void 0, void 0, function* () {
-            const teamData = (yield doc.get()).data();
-            res.status(200).send({ team: teamData });
-        }));
-    }
-    catch (e) {
-        console.log(e);
-        res.status(500).send();
-    }
-});
-router.post("/adjustTeamSettings/", (req, res) => {
-    const { teams } = req.body;
-    for (const team of teams) {
-        db.collection("teams")
-            .doc(team.id)
-            .update(Object.assign({}, team));
-    }
-    res.status(200).send({ message: "updated teams successfully" });
-});
-router.post("/:leagueId/updateScoringSettings/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.patch("/:leagueId/updateScoringSettings/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { settings } = req.body;
     const { leagueId } = req.params;
-    db.collection("leagues")
-        .doc(leagueId)
+    const leagueRef = db.collection("leagues").doc(leagueId);
+    leagueRef
         .update({ scoringSettings: settings })
         .then(() => {
-        res.status(200).send({ message: "updated settings successfully" });
+        return leagueRef.get();
+    })
+        .then((updatedLeague) => {
+        res.status(200).send({ league: updatedLeague.data() });
     });
 }));
-router.post("/:leagueId/update/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.patch("/:leagueId/update/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { leagueId } = req.params;
     const { league, teams, deletedTeams, } = req.body;
     yield db
@@ -407,5 +372,23 @@ router.get("/:id/cumulativePlayerScores/", (req, res) => __awaiter(void 0, void 
     }, {});
     res.status(200).send(sortedData);
 }));
+router.get("/:leagueId/:userId/isCommissioner", (req, res) => {
+    const { leagueId, userId } = req.params;
+    db.collection("leagues")
+        .doc(leagueId)
+        .get()
+        .then((league) => {
+        if (!league.exists) {
+            res.status(200).send({ isCommissioner: false });
+            return;
+        }
+        const { commissioners } = league.data();
+        if (!commissioners.includes(userId)) {
+            res.status(200).send({ isCommissioner: false });
+            return;
+        }
+        res.status(200).send({ isCommissioner: true });
+    });
+});
 export default router;
 //# sourceMappingURL=league.js.map

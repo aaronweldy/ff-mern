@@ -1,14 +1,18 @@
 import React from "react";
-import { Route, Redirect } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { selectStatus } from "../../Redux/userSlice";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuthUser } from "@react-query-firebase/auth";
+import { auth } from "../../firebase-config";
+import { Spinner } from "react-bootstrap";
 
-const SecureRoute = ({ ...routeProps }) => {
-  const loggedIn = useSelector(selectStatus);
-  if (!loggedIn) {
-    return <Redirect to="/login/" />;
+const SecureRoute = () => {
+  const user = useAuthUser(["user"], auth);
+  if (user.isLoading) {
+    return <Spinner animation="grow" />;
   }
-  return <Route {...routeProps} />;
+  if (user.isSuccess) {
+    return <Outlet />;
+  }
+  return <Navigate to="/login/" />;
 };
 
 export default SecureRoute;

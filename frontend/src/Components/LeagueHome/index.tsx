@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Redirect, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import {
   Table,
   Form,
@@ -12,21 +12,27 @@ import {
   OverlayTrigger,
   Image,
 } from "react-bootstrap";
-import { useLeague } from "../../hooks/useLeague";
+import { useLeague } from "../../hooks/query/useLeague";
 import { auth, storage } from "../../firebase-config";
 import "firebase/auth";
 import "../../CSS/LeaguePages.css";
 import { Team, TeamWeekInfo } from "@ff-mern/ff-types";
+import { ref, getDownloadURL } from "firebase/storage";
+import { useTeams } from "../../hooks/query/useTeams";
+import { useDeleteLeagueMutation } from "../../hooks/query/useDeleteLeagueMutation";
+import { useAuthUser } from "@react-query-firebase/auth";
 
 function LeagueHome() {
-  const { id } = useParams<{ id: string }>();
-  const { league, teams: initTeams } = useLeague(id);
+  const { id } = useParams() as { id: string };
+  const { league } = useLeague(id);
+  const { teams: initTeams } = useTeams(id);
+  const deleteLeagueQuery = useDeleteLeagueMutation(id);
   const [teams, setTeams] = useState<Team[]>([]);
   const [showDelete, setDelete] = useState(false);
   const [redirect, setRedirect] = useState(false);
   const [deleteName, setName] = useState("");
   const [imgUrl, setImgUrl] = useState("");
-  const user = auth.currentUser;
+  const user = useAuthUser("user", auth);
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (newUser) => {
       if (newUser && league) {
@@ -37,12 +43,9 @@ function LeagueHome() {
         });
         setTeams(sortedTeams);
         if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
-          storage
-            .ref(`logos/${league.logo}`)
-            .getDownloadURL()
-            .then((url) => {
-              setImgUrl(url);
-            });
+          getDownloadURL(ref(storage, `logos/${league.logo}`)).then((url) => {
+            setImgUrl(url);
+          });
         } else {
           setImgUrl(league.logo);
         }
@@ -52,31 +55,14 @@ function LeagueHome() {
   }, [id, user, league, initTeams]);
 
   const deleteLeague = () => {
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/delete/`;
-    const body = { user: user ? user.uid : 0 };
-    const reqDict = {
-      headers: { "content-type": "application/json" },
-      method: "POST",
-      body: JSON.stringify(body),
-    };
-    fetch(url, reqDict)
-      .then((resp) => {
-        if (!resp.ok) {
-          throw Error(resp.statusText);
-        }
-        return resp.json();
-      })
-      .then(() => {
-        setRedirect(true);
-      })
-      .catch((e) => {
-        console.log(e);
-      });
+    deleteLeagueQuery.mutate();
+    setRedirect(true);
   };
 
-  if (redirect) {
-    return <Redirect to="/" />;
+  if (redirect && deleteLeagueQuery.isSuccess) {
+    return <Navigate to="/" />;
   }
+  console.log(teams);
   return (
     <Container fluid>
       <Modal show={showDelete} onHide={() => setDelete(false)}>
@@ -120,7 +106,9 @@ function LeagueHome() {
         </Col>
       </Row>
       <Row className="mb-3 mt-3 justify-content-center">
-        {user && league && league.commissioners.includes(user.uid) ? (
+        {user.isSuccess &&
+        league &&
+        league.commissioners.includes(user.data?.uid || "") ? (
           <div>
             <a href={`/league/${id}/editTeams/`}>Edit Teams</a> |{" "}
             <a href={`/league/${id}/editScoringSettings/`}> Edit Scoring</a> |{" "}
@@ -146,7 +134,7 @@ function LeagueHome() {
           ""
         )}
       </Row>
-      <Row className="mb-3 mt-3 justify-content-center">
+      <Row className="mb-3 mt-3 table-wrapper">
         {league && (
           <Table striped hover className="hide-cells scrollable-table">
             <thead>
@@ -225,13 +213,13 @@ function LeagueHome() {
         )}
       </Row>
       <Row className="justify-content-center">
-        {user && league && (
+        {user.isSuccess && league && (
           <Button
             className="mt-3 mb-3"
             variant="primary"
             href={`/league/${id}/runScores/`}
           >
-            {league.commissioners.includes(user.uid)
+            {league.commissioners.includes(user.data?.uid || "")
               ? "Run Scores"
               : "View Weekly Scoring Breakdown"}
           </Button>

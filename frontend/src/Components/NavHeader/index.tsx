@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Navbar, Button } from "react-bootstrap";
-import { Redirect } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { selectStatus, logout } from "../../Redux/userSlice";
 import { auth } from "../../firebase-config";
@@ -62,7 +62,7 @@ function LogOutButtons() {
   }
 
   if (redirect) {
-    return <Redirect to="/login/" />;
+    return <Navigate to="/login/" />;
   }
   return (
     <Navbar.Collapse className="justify-content-end">

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Redirect, useParams } from "react-router-dom";
+import React, { useState } from "react";
+import { Navigate, useParams } from "react-router-dom";
 import {
   Table,
   Container,
@@ -11,31 +11,20 @@ import {
 } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
 import LeagueButton from "../shared/LeagueButton";
-import { usePlayers } from "../../hooks/usePlayers";
-import { auth } from "../../firebase-config";
+import { usePlayers } from "../../hooks/query/usePlayers";
 import "react-bootstrap-typeahead/css/Typeahead.css";
-import { Team, RosteredPlayer, AbbreviatedNflTeam } from "@ff-mern/ff-types";
+import { RosteredPlayer, AbbreviatedNflTeam } from "@ff-mern/ff-types";
 import { capitalizePlayerName } from "../utils/capitalizePlayerName";
-import { API } from "../../API";
+import { useTeams } from "../../hooks/query/useTeams";
+import { useUpdateTeamsMutation } from "../../hooks/query/useUpdateTeamsMutation";
 
 const EditRosters = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
   const [redirect, setRedirect] = useState(false);
-  const { id } = useParams<{ id: string }>();
-  const players = usePlayers();
-  useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const json = await API.fetchLeague(id);
-        const isComm = json.league.commissioners.includes(user.uid);
-        if (!isComm) {
-          setRedirect(true);
-        }
-        setTeams(json.teams);
-      }
-    });
-    return () => unsub();
-  }, [id]);
+  const { id } = useParams() as { id: string };
+  const { teams, setTeams, isSuccess } = useTeams(id);
+  const { mutate: validateTeams } = useUpdateTeamsMutation(id, teams, true);
+  const playersQuery = usePlayers();
+
   const handleAddPlayer = (idx: number) => {
     const tempTeams = [...teams];
     tempTeams[idx].rosteredPlayers.push(
@@ -93,17 +82,12 @@ const EditRosters = () => {
   };
 
   const sendUpdatedTeams = () => {
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams/`;
-    const body = { teams };
-    const reqdict = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    };
-    fetch(url, reqdict).then(() => setRedirect(true));
+    validateTeams();
+    setRedirect(true);
   };
+
   if (redirect) {
-    return <Redirect to={`/league/${id}/`} />;
+    return <Navigate to={`/league/${id}/`} />;
   }
   return (
     <Container fluid>
@@ -111,7 +95,7 @@ const EditRosters = () => {
         <LeagueButton id={id} />
       </Row>
       <Row className="justify-content-center">
-        {teams
+        {isSuccess
           ? teams.map((team, i) => (
               <Col md={4} key={i} className="bordered-row m-3 p-3">
                 <Form.Group as={Row} className="mt-3">
@@ -178,7 +162,11 @@ const EditRosters = () => {
                             <Typeahead
                               id="player-typeahead"
                               selected={[player]}
-                              options={players || []}
+                              options={
+                                (playersQuery.isSuccess &&
+                                  playersQuery.data.players) ||
+                                []
+                              }
                               placeholder="Select Player"
                               onInputChange={(input) =>
                                 handleInputChange(i, j, input)

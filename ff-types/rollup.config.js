@@ -10,7 +10,7 @@ export default [
     plugins: [typescript()]
   },
   {
-    input: 'dist/index.d.ts',
+    input: 'dist/src/index.d.ts',
     output: {
       file: 'index.d.ts'
     },

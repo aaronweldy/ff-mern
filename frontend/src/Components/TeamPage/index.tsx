@@ -1,107 +1,67 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Container, Button, Alert, Row } from "react-bootstrap";
+import { Container, Row } from "react-bootstrap";
 import { auth, storage } from "../../firebase-config";
 import { TeamTable } from "../shared/TeamTable";
 import LeagueButton from "../shared/LeagueButton";
 import ImageModal from "../shared/ImageModal";
 import EditWeek from "../shared/EditWeek";
-import { useLeague } from "../../hooks/useLeague";
+import { useLeague } from "../../hooks/query/useLeague";
 import "../../CSS/LeaguePages.css";
-import { Team, LineupSettings, FinalizedPlayer, Week } from "@ff-mern/ff-types";
+import { LineupSettings, FinalizedPlayer, Week } from "@ff-mern/ff-types";
 import { useTeamTable } from "../../hooks/useTeamTable";
 import { Header } from "./Header";
 import { getWeeklyLineup } from "../utils/getWeeklyLineup";
-import { useNflSchedule } from "../../hooks/useNflSchedule";
-import { useNflDefenseStats } from "../../hooks/useNflDefenseStats";
+import { useNflSchedule } from "../../hooks/query/useNflSchedule";
+import { useNflDefenseStats } from "../../hooks/query/useNflDefenseStats";
+import { DisplayLastUpdated } from "./DisplayLastUpdated";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { useAuthUser } from "@react-query-firebase/auth";
+import { useSingleTeam } from "../../hooks/query/useSingleTeam";
+import { useUpdateSingleTeamMutation } from "../../hooks/query/useUpdateSingleTeamMutation";
 
 const TeamPage = () => {
-  const { id, leagueId } = useParams<{ id: string; leagueId: string }>();
+  const { id, leagueId } = useParams() as { id: string; leagueId: string };
   const { league } = useLeague(leagueId);
-  const schedule = useNflSchedule();
-  const defenseStats = useNflDefenseStats();
-  const [team, setTeam] = useState<Team | undefined>();
-  const [success, setSuccess] = useState(false);
-  const [showImageModal, setShowModal] = useState(false);
+  const { team } = useSingleTeam(id);
+  const user = useAuthUser(["user"], auth);
+  const scheduleQuery = useNflSchedule();
+  const defenseStatsQuery = useNflDefenseStats();
+  const updateTeamMutation = useUpdateSingleTeamMutation(id);
   const [week, setWeek] = useState(1);
-  const [userIsOwner, setIsOwner] = useState(false);
+  const [showImageModal, setShowModal] = useState(false);
   const lineup = getWeeklyLineup(week, team, league?.lineupSettings);
-  console.log(lineup);
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
 
   useEffect(() => {
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${leagueId}/team/${id}/`;
-    const unsub = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const resp = await fetch(url);
-        const data = await resp.json();
-        setTeam(data.team);
-        setIsOwner(data.team.owner === user.uid);
-      }
-    });
-    return () => unsub();
-  }, [week, league, leagueId, id]);
-
-  useEffect(() => {
     if (league) {
-      setWeek(league.lastScoredWeek + 1 || 1);
+      setWeek(
+        league.lastScoredWeek + 1 < league.numWeeks
+          ? league.lastScoredWeek + 1
+          : league.lastScoredWeek
+      );
     }
   }, [league]);
 
   const handleInfoSubmission = (imageUrl: string, teamName?: string) => {
-    const sendUrl = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeamInfo/`;
-    const body = { id, url: imageUrl, name: teamName };
-    let reqdict = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    };
     if (
+      team &&
       imageUrl !== team!.logo &&
       imageUrl !== process.env.REACT_APP_DEFAULT_LOGO
     ) {
-      storage
-        .ref()
-        .child(`${team!.id}/logo`)
-        .putString(imageUrl, "data_url")
-        .then((snapshot) => {
-          snapshot.ref.getDownloadURL().then((url) => {
+      uploadString(ref(storage, `${team!.id}/logo`), imageUrl, "data_url").then(
+        (snapshot) => {
+          getDownloadURL(snapshot.ref).then((url) => {
             setShowModal(false);
-            body.url = url;
-            reqdict = { ...reqdict, body: JSON.stringify(body) };
-            fetch(sendUrl, reqdict)
-              .then((resp) => resp.json())
-              .then((data) => {
-                setTeam(data.team);
-              })
-              .catch((e) => console.log(e));
+            const tempTeam = { ...team };
+            tempTeam.logo = url;
+            updateTeamMutation.mutate(tempTeam);
           });
-        });
+        }
+      );
     } else {
       setShowModal(false);
-      fetch(sendUrl, reqdict)
-        .then((resp) => resp.json())
-        .then((data) => {
-          setTeam(data.team);
-        })
-        .catch((e) => console.log(e));
     }
-  };
-
-  const sendUpdatedTeams = () => {
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams/`;
-    const body = { teams: [team], week };
-    const reqdict = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    };
-    fetch(url, reqdict)
-      .then((data) => data.json())
-      .then(() => {
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 8000);
-      });
   };
 
   const onChange = (
@@ -118,14 +78,14 @@ const TeamPage = () => {
         selectedIndex,
         lineup
       );
-      setTeam({ ...team });
+      updateTeamMutation.mutate(team);
     }
   };
 
   const onBench = (selectedPlayer: FinalizedPlayer) => {
     if (team) {
       handleBenchPlayer(selectedPlayer, lineup);
-      setTeam({ ...team });
+      updateTeamMutation.mutate(team);
     }
   };
 
@@ -141,24 +101,34 @@ const TeamPage = () => {
       <Row>
         <LeagueButton id={leagueId} />
       </Row>
-      {team && league ? (
+      {team && league && user.isSuccess ? (
         <>
-          <Header team={team} isOwner={userIsOwner} showModal={setShowModal} />
+          <Header
+            team={team}
+            isOwner={user.data?.uid === team.owner}
+            showModal={setShowModal}
+          />
           <EditWeek
             week={week}
             maxWeeks={(league && league.numWeeks) || 18}
             onChange={(e) => setWeek(parseInt(e.target.value))}
           />
           <Row>
+            <DisplayLastUpdated lastUpdated={team.lastUpdated} />
+          </Row>
+          <Row>
             <h3>Starters</h3>
           </Row>
           <Row>
             <TeamTable
-              isOwner={userIsOwner && week > (league.lastScoredWeek || -1)}
+              isOwner={
+                user.data?.uid === team.owner &&
+                week > (league.lastScoredWeek || -1)
+              }
               players={lineup}
               positionsInTable={league.lineupSettings}
-              nflSchedule={schedule}
-              nflDefenseStats={defenseStats}
+              nflSchedule={scheduleQuery.data?.schedule}
+              nflDefenseStats={defenseStatsQuery.data?.data}
               name="starters"
               week={week.toString() as Week}
               handleBenchPlayer={onBench}
@@ -170,33 +140,17 @@ const TeamPage = () => {
           </Row>
           <Row>
             <TeamTable
-              isOwner={userIsOwner}
+              isOwner={user.data?.uid === team.owner}
               players={lineup}
               positionsInTable={{ bench: 1 } as LineupSettings}
-              nflSchedule={schedule}
-              nflDefenseStats={defenseStats}
+              nflSchedule={scheduleQuery.data?.schedule}
+              nflDefenseStats={defenseStatsQuery.data?.data}
               name="bench"
               week={week.toString() as Week}
               handleBenchPlayer={onBench}
               handlePlayerChange={onChange}
             />
           </Row>
-          <Row>
-            <Button
-              className="mb-3 mt-2"
-              variant="success"
-              onClick={sendUpdatedTeams}
-            >
-              Submit Lineup
-            </Button>
-          </Row>
-          {success ? (
-            <Row>
-              <Alert variant="success">Submitted lineup!</Alert>
-            </Row>
-          ) : (
-            ""
-          )}
         </>
       ) : (
         ""

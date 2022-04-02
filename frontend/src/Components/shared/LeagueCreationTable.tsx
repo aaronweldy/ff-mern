@@ -18,7 +18,6 @@ const LeagueCreationTable = ({
   handleChange,
   handleOverlay,
 }: LeagueCreationTableProps) => {
-  console.log(teams);
   return (
     <Row>
       <Col>

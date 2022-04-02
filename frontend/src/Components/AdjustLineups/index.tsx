@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Redirect, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Alert, Container, Col, Row, Button } from "react-bootstrap";
-import { auth } from "../../firebase-config";
 import LeagueButton from "../shared/LeagueButton";
 import { TeamTable } from "../shared/TeamTable";
 import EditWeek from "../shared/EditWeek";
-import { useLeague } from "../../hooks/useLeague";
 import "../../CSS/LeaguePages.css";
 import {
   Team,
@@ -16,27 +14,26 @@ import {
 } from "@ff-mern/ff-types";
 import { getWeeklyLineup } from "../utils/getWeeklyLineup";
 import { useTeamTable } from "../../hooks/useTeamTable";
-import { useNflSchedule } from "../../hooks/useNflSchedule";
-import { useNflDefenseStats } from "../../hooks/useNflDefenseStats";
+import { useNflSchedule } from "../../hooks/query/useNflSchedule";
+import { useNflDefenseStats } from "../../hooks/query/useNflDefenseStats";
+import { useLeagueScoringData } from "../../hooks/useLeagueScoringData";
+import { useUpdateTeamsMutation } from "../../hooks/query/useUpdateTeamsMutation";
 
 export default function AdjustLineups() {
-  const { id } = useParams<{ id: string }>();
-  const { league, teams: initTeams } = useLeague(id);
-  const schedule = useNflSchedule();
-  const defenseStats = useNflDefenseStats();
-  const [teams, setTeams] = useState<Team[]>([]);
+  const { id } = useParams() as { id: string };
+  const { league, teams, setTeams, week, setWeek } = useLeagueScoringData(id);
+  const scheduleQuery = useNflSchedule();
+  const defenseStatsQuery = useNflDefenseStats();
   const [success, setSuccess] = useState(false);
-  const [week, setWeek] = useState(1);
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
+  const { mutate: updateTeams } = useUpdateTeamsMutation(id, teams);
   const [lineupsPerTeam, setLineupsPerTeam] = useState(
     {} as Record<string, FinalizedLineup>
   );
-  const currUser = auth.currentUser;
   useEffect(() => {
     if (teams && league) {
       setLineupsPerTeam(
         teams.reduce((acc: Record<string, FinalizedLineup>, team: Team) => {
-          console.log(week);
           acc[team.id] = getWeeklyLineup(week, team, league.lineupSettings);
           return acc;
         }, {})
@@ -44,63 +41,37 @@ export default function AdjustLineups() {
     }
   }, [teams, league, week]);
 
-  useEffect(() => {
-    const unsub = auth.onAuthStateChanged(() => {
-      if (league) {
-        setWeek(league.lastScoredWeek + 1);
-        setTeams(initTeams);
-      }
-    });
-    return () => unsub();
-  }, [league, initTeams]);
-
   const onPlayerChange = (
     selectedPlayer: FinalizedPlayer,
     name: string,
     swapPlayer: FinalizedPlayer,
     selectedIndex: number,
-    teamId: string
+    teamId?: string
   ) => {
-    handlePlayerChange(
-      selectedPlayer,
-      name,
-      swapPlayer,
-      selectedIndex,
-      lineupsPerTeam[teamId]
-    );
-    setTeams([...teams]);
+    if (teamId) {
+      handlePlayerChange(
+        selectedPlayer,
+        name,
+        swapPlayer,
+        selectedIndex,
+        lineupsPerTeam[teamId]
+      );
+      setTeams([...teams]);
+    }
   };
 
-  const onBench = (selectedPlayer: FinalizedPlayer, teamId: string) => {
-    handleBenchPlayer(selectedPlayer, lineupsPerTeam[teamId]);
-    setTeams([...teams]);
+  const onBench = (selectedPlayer: FinalizedPlayer, teamId?: string) => {
+    if (teamId) {
+      handleBenchPlayer(selectedPlayer, lineupsPerTeam[teamId]);
+      setTeams([...teams]);
+    }
   };
 
   const submitLineups = () => {
-    const tempTeams = [...teams];
-    for (const team of tempTeams) {
-      team.rosteredPlayers = team.rosteredPlayers.filter(
-        (player) => player.name !== ""
-      );
-    }
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/updateTeams/`;
-    const body = { teams: tempTeams };
-    const reqdict = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    };
-    fetch(url, reqdict)
-      .then((data) => data.json())
-      .then(() => {
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 8000);
-      });
+    updateTeams();
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 8000);
   };
-
-  if (league && !league.commissioners.includes(currUser!.uid)) {
-    return <Redirect to={`/league/${id}/`} />;
-  }
 
   return (
     <Container id="small-left">
@@ -127,27 +98,13 @@ export default function AdjustLineups() {
                       players={lineupsPerTeam[team.id]}
                       positionsInTable={league.lineupSettings}
                       name="starters"
-                      nflDefenseStats={defenseStats}
-                      nflSchedule={schedule}
+                      nflDefenseStats={defenseStatsQuery.data?.data}
+                      nflSchedule={scheduleQuery.data?.schedule}
                       week={week.toString() as Week}
-                      handleBenchPlayer={(selectedPlayer: FinalizedPlayer) =>
-                        onBench(selectedPlayer, team.id)
-                      }
-                      handlePlayerChange={(
-                        selectedPlayer: FinalizedPlayer,
-                        name: string,
-                        swapPlayer: FinalizedPlayer,
-                        selectedIndex: number
-                      ) =>
-                        onPlayerChange(
-                          selectedPlayer,
-                          name,
-                          swapPlayer,
-                          selectedIndex,
-                          team.id
-                        )
-                      }
+                      handleBenchPlayer={onBench}
+                      handlePlayerChange={onPlayerChange}
                       isOwner
+                      teamId={team.id}
                     />
                     <div>
                       <h4>Bench</h4>
@@ -156,27 +113,13 @@ export default function AdjustLineups() {
                       players={lineupsPerTeam[team.id]}
                       positionsInTable={{ bench: 1 } as LineupSettings}
                       name="bench"
-                      nflDefenseStats={defenseStats}
-                      nflSchedule={schedule}
+                      nflDefenseStats={defenseStatsQuery.data?.data}
+                      nflSchedule={scheduleQuery.data?.schedule}
                       week={week.toString() as Week}
-                      handleBenchPlayer={(selectedPlayer: FinalizedPlayer) =>
-                        onBench(selectedPlayer, team.id)
-                      }
-                      handlePlayerChange={(
-                        selectedPlayer: FinalizedPlayer,
-                        name: string,
-                        swapPlayer: FinalizedPlayer,
-                        selectedIndex: number
-                      ) =>
-                        onPlayerChange(
-                          selectedPlayer,
-                          name,
-                          swapPlayer,
-                          selectedIndex,
-                          team.id
-                        )
-                      }
+                      handleBenchPlayer={onBench}
+                      handlePlayerChange={onPlayerChange}
                       isOwner
+                      teamId={team.id}
                     />
                   </Col>
                 </Row>

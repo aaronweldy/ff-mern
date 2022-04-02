@@ -29,7 +29,7 @@ export type FullNflTeam =
   | "los angeles chargers"
   | "san francisco 49ers"
   | "new york jets"
-  | "washington football team"
+  | "washington commanders"
   | "tennessee titans";
 
 export type AbbreviatedNflTeam =
@@ -99,8 +99,8 @@ export const AbbreviationToFullTeam: Record<AbbreviatedNflTeam, FullNflTeam> = {
   SF: "san francisco 49ers",
   TB: "tampa bay buccaneers",
   TEN: "tennessee titans",
-  WAS: "washington football team",
-  WSH: "washington football team",
+  WAS: "washington commanders",
+  WSH: "washington commanders",
 };
 
 export type Week =

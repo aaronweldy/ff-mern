@@ -10,6 +10,7 @@ import {
 import { useDropzone } from "react-dropzone";
 import React, { useState, useCallback, useEffect } from "react";
 import { storage } from "../../firebase-config";
+import { ref, getDownloadURL } from "firebase/storage";
 
 type ImageModalProps = {
   origName?: string;
@@ -29,11 +30,7 @@ const ImageModal = ({
   const [imageUrl, setImageUrl] = useState("");
   const [name, setName] = useState(origName);
   useEffect(() => {
-    storage
-      .ref()
-      .child(`${id}/logo`)
-      .getDownloadURL()
-      .then((url) => setImageUrl(url));
+    getDownloadURL(ref(storage, `${id}/logo`)).then((url) => setImageUrl(url));
   }, [name, id]);
   const onDrop = useCallback((acceptedFiles) => {
     const reader = new FileReader();

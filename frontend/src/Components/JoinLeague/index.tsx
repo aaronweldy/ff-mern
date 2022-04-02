@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Container,
   Row,
@@ -9,71 +9,31 @@ import {
   Card,
   CardDeck,
 } from "react-bootstrap";
-import { Redirect } from "react-router-dom";
-import { storage, auth } from "../../firebase-config";
-import { League } from "@ff-mern/ff-types";
+import { Navigate } from "react-router-dom";
+import { auth } from "../../firebase-config";
+import { useLeagueSearchMutations } from "../../hooks/query/useLeagueSearchMutations";
+import { useAuthUser } from "@react-query-firebase/auth";
 
 const JoinLeague = () => {
   const [leagueName, setLeagueName] = useState("");
   const [redirect, setRedirect] = useState(false);
-  const [newLeagueUrl, setNewLeagueUrl] = useState("");
-  const [searchResults, setSearchResults] = useState<Record<string, League>>(
-    {}
-  );
-  const [urlMap, setUrlMap] = useState<Record<string, string>>({});
-  const [userEmail, setUserEmail] = useState("");
-
-  useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (user) => {
-      setUserEmail(user!.email ?? "");
-    });
-    return () => unsub();
-  }, []);
-
+  const user = useAuthUser("user", auth);
+  const { findLeagueQuery, joinLeagueQuery, urlMap } =
+    useLeagueSearchMutations();
+  console.log(urlMap);
   const handleSearch = async () => {
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/find/${leagueName}/`;
-    const resp = await fetch(url);
-    const data = (await resp.json()) as Record<string, League>;
-    Promise.all(
-      Object.entries(data).map(async ([id, league]) => {
-        if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
-          const imgUrl = await storage
-            .ref(`logos/${league.logo}`)
-            .getDownloadURL();
-          setUrlMap({ ...urlMap, id: imgUrl });
-        }
-        return { id, league };
-      })
-    ).then((results) => {
-      const newMap: Record<string, League> = {};
-      results.forEach((league) => {
-        newMap[league.id] = league.league;
-      });
-      setSearchResults(newMap);
-    });
+    findLeagueQuery.mutate(leagueName);
   };
 
   const handleJoin = (id: string) => {
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/join/`;
-    const body = {
-      owner: userEmail,
-    };
-    const reqdict = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    };
-    fetch(url, reqdict)
-      .then((resp) => resp.json())
-      .then((data) => {
-        setNewLeagueUrl(data.url);
-        setRedirect(true);
-      })
-      .catch((e) => console.log(e));
+    if (user.isSuccess) {
+      joinLeagueQuery.mutate({ id, userEmail: user.data?.email || "" });
+      setRedirect(true);
+    }
   };
 
-  if (redirect) {
-    return <Redirect to={newLeagueUrl} />;
+  if (redirect && joinLeagueQuery.isSuccess) {
+    return <Navigate to={joinLeagueQuery.data.url} />;
   }
 
   return (
@@ -95,20 +55,26 @@ const JoinLeague = () => {
       <Row className="mt-5">
         <Col>
           <CardDeck>
-            {Object.entries(searchResults).map(([id, league]) => {
-              return (
-                <Card key={league.name}>
-                  <Card.Img
-                    variant="top"
-                    src={league.logo || process.env.REACT_APP_DEFAULT_LOGO}
-                  />
-                  <Card.Title>{league.name}</Card.Title>
-                  <Card.Body>
-                    <Button onClick={() => handleJoin(id)}>Join League</Button>
-                  </Card.Body>
-                </Card>
-              );
-            })}
+            {findLeagueQuery.isSuccess &&
+              Object.entries(findLeagueQuery.data).map(([id, league]) => {
+                return (
+                  <Card key={league.name + id} className="card-size">
+                    <Card.Img
+                      variant="bottom"
+                      className="mt-auto"
+                      src={urlMap[id] || process.env.REACT_APP_DEFAULT_LOGO}
+                    />
+                    <Card.Title className="d-flex justify-content-center">
+                      <div className="font-weight-bold">{league.name}</div>
+                    </Card.Title>
+                    <Card.Body className="d-flex flex-column align-content-end">
+                      <Button onClick={() => handleJoin(id)}>
+                        Join League
+                      </Button>
+                    </Card.Body>
+                  </Card>
+                );
+              })}
           </CardDeck>
         </Col>
       </Row>

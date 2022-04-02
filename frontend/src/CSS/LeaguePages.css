@@ -148,11 +148,13 @@
   z-index: 2;
 }
 
+.table-wrapper {
+  overflow-x: auto;
+}
+
 .scrollable-table {
-  display: block;
-  overflow: auto;
-  width: fit-content;
-  max-width: 90vw;
+  margin: 0 auto;
+  max-width: max-content;
 }
 
 .sticky-col {
@@ -167,4 +169,12 @@
 
 .gray-col {
   background-color: lightgray;
+}
+
+.time-display {
+  color: green;
+}
+
+.card-size {
+  max-width: 20%;
 }

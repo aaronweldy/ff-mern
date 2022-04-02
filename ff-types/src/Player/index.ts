@@ -1,16 +1,16 @@
-import { AbbreviatedNflTeam } from "../Constants";
+import { AbbreviatedNflTeam } from "..";
 
 export class FinalizedPlayer {
   name: string;
   position: SinglePosition;
-  team: AbbreviatedNflTeam;
+  team: AbbreviatedNflTeam | "";
   lineup: Position;
   backup: string;
 
   constructor(
     name: string,
     position: SinglePosition,
-    team: AbbreviatedNflTeam,
+    team: AbbreviatedNflTeam | "",
     lineup: Position
   ) {
     this.name = name;

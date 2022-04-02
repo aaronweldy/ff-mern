@@ -1,7 +1,7 @@
-import firebase from "firebase/app";
+import { initializeApp } from "firebase/app";
 import * as firebaseui from "firebaseui";
-import "firebase/storage";
-import "firebase/auth";
+import { getStorage } from "firebase/storage";
+import { EmailAuthProvider, GoogleAuthProvider, getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXG6J4qNGuYc4P2RZM_wKAEdECO7_qaog",
@@ -34,17 +34,17 @@ const uiConfig = {
   signInOptions: [
     // Leave the lines as is for the providers you want to offer your users.
     {
-      provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+      provider: EmailAuthProvider.PROVIDER_ID,
       fullLabel: "Email authentication",
     },
-    firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+    GoogleAuthProvider.PROVIDER_ID,
   ],
 };
 
-firebase.initializeApp(firebaseConfig);
+initializeApp(firebaseConfig);
 
-export const storage = firebase.storage();
-export const auth = firebase.auth();
-export const ui = new firebaseui.auth.AuthUI(firebase.auth());
+export const storage = getStorage();
+export const auth = getAuth();
+export const ui = new firebaseui.auth.AuthUI(auth);
 export { uiConfig };
-export default firebase;
+//export default firebase;

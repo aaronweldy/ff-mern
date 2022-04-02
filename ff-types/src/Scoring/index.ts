@@ -1,6 +1,6 @@
 import { FinalizedPlayer } from "..";
-import { Position } from "../Player";
-import { Team } from "../Team";
+import { Position } from "..";
+import { Team } from "..";
 
 export type ScoringCategory =
   | "ATT"

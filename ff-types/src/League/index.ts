@@ -1,5 +1,5 @@
-import { Position } from "../Player";
-import { ScoringSetting } from "../Scoring";
+import { Position } from "..";
+import { ScoringSetting } from "..";
 
 export type LineupSettings = Record<Position, number>;
 

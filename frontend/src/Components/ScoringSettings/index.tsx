@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Redirect, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import {
   Container,
   Col,
@@ -9,14 +9,15 @@ import {
   OverlayTrigger,
 } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
-import { auth } from "../../firebase-config";
 import {
   Position,
-  ScoringSetting,
   Qualifier,
   ScoringCategory,
   scoringTypes,
 } from "@ff-mern/ff-types";
+import { useLeagueSettingsMutation } from "../../hooks/query/useLeagueSettingsMutation";
+import { useLeague } from "../../hooks/query/useLeague";
+//import { useLeagueSettingsMutation } from "../../hooks/query/useLeagueSettingsMutation";
 
 const positionTypes = [
   "QB",
@@ -38,24 +39,48 @@ type CategoryChange =
 
 type MinimumChange = "threshold" | "statType";
 
+type ModifiableSetting = {
+  position: Position;
+  points: string;
+  category: {
+    qualifier: Qualifier;
+    threshold: string;
+    statType: ScoringCategory;
+    thresholdMin?: string;
+    thresholdMax?: string;
+  };
+  minimums: {
+    statType: ScoringCategory;
+    threshold: string;
+  }[];
+};
+
 const ScoringSettings = () => {
-  const [settings, setSettings] = useState<ScoringSetting[]>([]);
+  const [settings, setSettings] = useState<ModifiableSetting[]>([]);
   const [redirect, setRedirect] = useState(false);
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams() as { id: string };
+  const { mutate } = useLeagueSettingsMutation(id);
+  const { league } = useLeague(id);
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/`;
-        const data = await fetch(url);
-        const json = await data.json();
-        setSettings(json.league.scoringSettings);
-        if (!json.league.commissioners.includes(user.uid)) {
-          setRedirect(true);
-        }
-      }
-    });
-    return () => unsub();
-  }, [id]);
+    if (league) {
+      const newSettings: ModifiableSetting[] = league.scoringSettings.map(
+        (setting) => ({
+          position: setting.position,
+          points: setting.points.toString(),
+          category: {
+            qualifier: setting.category.qualifier,
+            threshold: setting.category.threshold.toString(),
+            statType: setting.category.statType,
+          },
+          minimums: setting.minimums.map((minimum) => ({
+            statType: minimum.statType,
+            threshold: minimum.threshold.toString(),
+          })),
+        })
+      );
+      setSettings(newSettings);
+    }
+  }, [league]);
   const handleSettingChange = (
     e:
       | React.ChangeEvent<HTMLInputElement>
@@ -66,7 +91,7 @@ const ScoringSettings = () => {
     const tempSettings = [...settings];
     switch (name) {
       case "points":
-        tempSettings[settingIdx].points = parseInt(e.target.value);
+        tempSettings[settingIdx].points = e.target.value;
         break;
       case "position":
         tempSettings[settingIdx].position = e.target.value as Position;
@@ -79,8 +104,8 @@ const ScoringSettings = () => {
     const tempSettings = [...settings];
     tempSettings.push({
       position: "QB",
-      points: 0,
-      category: { qualifier: "per", threshold: 0, statType: "PASS YD" },
+      points: "0",
+      category: { qualifier: "per", threshold: "0", statType: "PASS YD" },
       minimums: [],
     });
     setSettings(tempSettings);
@@ -99,17 +124,13 @@ const ScoringSettings = () => {
           .value as Qualifier;
         break;
       case "threshold":
-        tempSettings[settingIdx].category.threshold = parseInt(e.target.value);
+        tempSettings[settingIdx].category.threshold = e.target.value;
         break;
       case "thresholdMin":
-        tempSettings[settingIdx].category.thresholdMin = parseInt(
-          e.target.value
-        );
+        tempSettings[settingIdx].category.thresholdMin = e.target.value;
         break;
       case "thresholdMax":
-        tempSettings[settingIdx].category.thresholdMax = parseInt(
-          e.target.value
-        );
+        tempSettings[settingIdx].category.thresholdMax = e.target.value;
         break;
       case "statType":
         tempSettings[settingIdx].category.statType = e.target
@@ -135,7 +156,7 @@ const ScoringSettings = () => {
     const tempSettings = [...settings];
     tempSettings[settingIdx].minimums.push({
       statType: "ATT",
-      threshold: 0,
+      threshold: "0",
     });
     setSettings(tempSettings);
   };
@@ -148,9 +169,7 @@ const ScoringSettings = () => {
     const tempSettings = [...settings];
     switch (name) {
       case "threshold":
-        tempSettings[settingIdx].minimums[minIdx].threshold = parseInt(
-          e.target.value
-        );
+        tempSettings[settingIdx].minimums[minIdx].threshold = e.target.value;
         break;
       case "statType":
         tempSettings[settingIdx].minimums[minIdx].statType = e.target
@@ -161,22 +180,26 @@ const ScoringSettings = () => {
     setSettings(tempSettings);
   };
   const sendData = () => {
-    const body = { id, settings };
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/updateScoringSettings/`;
-    const reqDict = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    };
-    fetch(url, reqDict)
-      .then((data) => data.json())
-      .then((json) => {
-        console.log(json);
-        setRedirect(true);
-      });
+    const updatedSettings = settings.map((setting) => ({
+      position: setting.position,
+      points: parseFloat(setting.points) || 0,
+      category: {
+        qualifier: setting.category.qualifier,
+        threshold: parseFloat(setting.category.threshold) || 0,
+        statType: setting.category.statType,
+        thresholdMin: parseFloat(setting.category?.thresholdMin || "0"),
+        thresholdMax: parseFloat(setting.category?.thresholdMax || "0"),
+      },
+      minimums: setting.minimums.map((minimum) => ({
+        statType: minimum.statType,
+        threshold: parseFloat(minimum.threshold) || 0,
+      })),
+    }));
+    mutate(updatedSettings);
+    setRedirect(true);
   };
   if (redirect) {
-    return <Redirect to={`/league/${id}/`} />;
+    return <Navigate to={`/league/${id}/`} />;
   }
   return (
     <Container fluid>
@@ -231,7 +254,7 @@ const ScoringSettings = () => {
                     }
                     type="text"
                   />{" "}
-                  {setting.points === 1 ? "point" : "points"}
+                  {setting.points === "1" ? "point" : "points"}
                 </Col>
                 <Col md={2}>
                   <Row>

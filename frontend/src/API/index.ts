@@ -60,9 +60,10 @@ export class API {
     );
   }
 
+  static validateAndUpdateTeams(teams: Team[]) {}
+
   static updateTeams(teams: Team[]) {
-    const url =
-      process.env.REACT_APP_PUBLIC_URL + `/api/v1/league/updateTeams/`;
+    const url = process.env.REACT_APP_PUBLIC_URL + `/api/v1/team/updateTeams/`;
     const req = generatePostRequest({ teams });
     return new Promise<Team[]>((resolve, _) =>
       fetch(url, req)

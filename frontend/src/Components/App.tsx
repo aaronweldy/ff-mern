@@ -1,6 +1,6 @@
 import "../CSS/App.css";
 import * as React from "react";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import TeamHub from "./TeamHub";
 import TeamPage from "./TeamPage";
 import NavHeader from "./NavHeader";
@@ -18,37 +18,54 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import JoinLeague from "./JoinLeague";
 import CreateLeague from "./CreateLeague";
 import { CumulativePlayers } from "./CumulativePlayers";
+import { QueryClient, QueryClientProvider } from "react-query";
+import { CommissionerRoute } from "./utils/CommissionerRoute";
+import { ReactQueryDevtools } from "react-query/devtools";
+
+const queryClient = new QueryClient();
 
 const App = () => {
   return (
-    <Router>
-      <NavHeader />
-      <Switch>
-        <Route path="/league/create/" component={CreateLeague} />
-        <Route path="/league/join/" component={JoinLeague} />
-        <SecureRoute path="/league/:leagueId/team/:id/" component={TeamPage} />
-        <Route path="/league/:id/editTeams/" component={EditRosters} />
-        <Route
-          path="/league/:id/editScoringSettings/"
-          component={ScoringSettings}
-        />
-        <SecureRoute
-          path="/league/:id/updateSettings/"
-          component={EditLeagueSettings}
-        />
-        <Route path="/league/:id/runScores/" component={RunScores} />
-        <Route path="/league/:id/addPoints/" component={AddPoints} />
-        <Route path="/league/:id/adjustLineups/" component={AdjustLineups} />
-        <Route
-          path="/league/:id/cumulativePlayerScores/"
-          component={CumulativePlayers}
-        />
-        <SecureRoute path="/league/:id/" component={LeagueHome} />
-        <SecureRoute path="/user/:userid/" component={User} />
-        <Route path="/login/" component={Login} />
-        <SecureRoute path="/" component={TeamHub} />
-      </Switch>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools initialIsOpen={true} />
+      <Router>
+        <NavHeader />
+        <Routes>
+          <Route path="/league/create/" element={<CreateLeague />} />
+          <Route path="/league/join/" element={<JoinLeague />} />
+          <Route path="/league" element={<SecureRoute />}>
+            <Route path="/league/:leagueId/team/:id/" element={<TeamPage />} />
+            <Route path="/league/:id/editTeams/" element={<EditRosters />} />
+            <Route
+              path="/league/:id/editScoringSettings/"
+              element={
+                <CommissionerRoute>
+                  <ScoringSettings />
+                </CommissionerRoute>
+              }
+            />
+            <Route
+              path="/league/:id/updateSettings/"
+              element={<EditLeagueSettings />}
+            />
+            <Route path="/league/:id/runScores/" element={<RunScores />} />
+            <Route path="/league/:id/addPoints/" element={<AddPoints />} />
+            <Route
+              path="/league/:id/adjustLineups/"
+              element={<AdjustLineups />}
+            />
+            <Route
+              path="/league/:id/cumulativePlayerScores/"
+              element={<CumulativePlayers />}
+            />
+            <Route path="/league/:id/" element={<LeagueHome />} />
+          </Route>
+          <Route path="/user/:userid/" element={<User />} />
+          <Route path="/login/" element={<Login />} />
+          <Route path="/" element={<TeamHub />} />
+        </Routes>
+      </Router>
+    </QueryClientProvider>
   );
 };
 export default App;

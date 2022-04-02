@@ -18,8 +18,6 @@ export const useTeamTable = () => {
         switch (name) {
           case "starters":
           case "bench":
-            console.log(selectedIndex);
-            console.log(swapIndex);
             selectedPlayer.lineup = swapPlayer.lineup;
             lineup[swapPlayer.lineup].splice(swapIndex, 1, selectedPlayer);
             lineup.bench.splice(selectedIndex, 1);
@@ -68,6 +66,7 @@ export const useTeamTable = () => {
         )
       );
       selectedPlayer.name = "";
+      selectedPlayer.team = "";
     },
     []
   );

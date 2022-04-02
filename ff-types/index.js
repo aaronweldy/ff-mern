@@ -49,11 +49,12 @@ const emptyDefaultPositions = positionTypes.reduce((map, pos) => {
 }, {});
 
 class Team {
-    constructor(name, league, ownerName, isCommissioner, numWeeks) {
-        this.ownerName = ownerName;
+    constructor(name, leagueName, ownerName, isCommissioner, numWeeks) {
         this.name = name;
-        this.leagueName = league;
+        this.leagueName = leagueName;
+        this.ownerName = ownerName;
         this.isCommissioner = isCommissioner;
+        this.lastUpdated = new Date();
         this.rosteredPlayers = [];
         this.logo = "/football.jfif";
         this.weekInfo = [
@@ -219,8 +220,8 @@ const AbbreviationToFullTeam = {
     SF: "san francisco 49ers",
     TB: "tampa bay buccaneers",
     TEN: "tennessee titans",
-    WAS: "washington football team",
-    WSH: "washington football team",
+    WAS: "washington commanders",
+    WSH: "washington commanders",
 };
 
 export { AbbreviationToFullTeam, FinalizedPlayer, League, RosteredPlayer, ScoringError, Team, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes };

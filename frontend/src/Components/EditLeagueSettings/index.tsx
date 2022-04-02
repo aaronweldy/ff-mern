@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Container, Form, Button, Row, Image, Col } from "react-bootstrap";
-import { Redirect, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { useDropzone } from "react-dropzone";
 import { v4 } from "uuid";
-import { storage, auth } from "../../firebase-config";
+import { storage } from "../../firebase-config";
 
 import EditLineupSettingsForm from "../shared/EditLineupSettingsForm";
-import { useLeague } from "../../hooks/useLeague";
+import { useLeague } from "../../hooks/query/useLeague";
 import LeagueCreationTable from "../shared/LeagueCreationTable";
 import LeagueCreationHeader from "../shared/LeagueCreationHeader";
 import {
@@ -14,12 +14,15 @@ import {
   PositionInfo,
   emptyDefaultPositions,
   Position,
-  League,
 } from "@ff-mern/ff-types";
+import { ref, getDownloadURL, uploadString } from "firebase/storage";
+import { useTeams } from "../../hooks/query/useTeams";
+import { useUpdateLeagueMutation } from "../../hooks/query/useUpdateLeagueMutation";
 
 function EditLeagueSettings() {
-  const { id } = useParams<{ id: string }>();
-  const { league, teams: initTeams } = useLeague(id);
+  const { id } = useParams() as { id: string };
+  const { league } = useLeague(id);
+  const { teams: initTeams } = useTeams(id);
   const [numTeams, setNumTeams] = useState(0);
   const [teams, setTeams] = useState<Team[]>([]);
   const [deletedTeams, setDeletedTeams] = useState<Team[]>([]);
@@ -32,28 +35,28 @@ function EditLeagueSettings() {
   const [imageUrl, setImageUrl] = useState(
     `${process.env.REACT_APP_DEFAULT_LOGO}`
   );
+  const updateLeagueQuery = useUpdateLeagueMutation(id, {
+    league,
+    teams,
+    deletedTeams,
+    leagueName,
+    posInfo,
+  });
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged((user) => {
-      if (league && user) {
-        setRedirect(!league.commissioners.includes(user.uid));
-        if (!teams.length) {
-          setTeams(initTeams);
-          setNumTeams(initTeams.length);
-        }
-        if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
-          storage
-            .ref(`logos/${league.logo}`)
-            .getDownloadURL()
-            .then((url) => {
-              setImageUrl(url);
-            });
-        }
-        setLeagueName(league.name);
-        setNumWeeks(league.numWeeks);
-        setPosInfo(league.lineupSettings);
+    if (league) {
+      if (!teams.length) {
+        setTeams(initTeams);
+        setNumTeams(initTeams.length);
       }
-    });
-    return () => unsub();
+      if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
+        getDownloadURL(ref(storage, `logos/${league.logo}`)).then((url) => {
+          setImageUrl(url);
+        });
+      }
+      setLeagueName(league.name);
+      setNumWeeks(league.numWeeks);
+      setPosInfo(league.lineupSettings);
+    }
   }, [league, initTeams, teams.length]);
 
   const onDrop = useCallback((acceptedFiles) => {
@@ -115,36 +118,11 @@ function EditLeagueSettings() {
   async function handleLeagueSubmission() {
     setLoading(true);
     const imageId = v4();
-    const leagueRef = storage.ref().child(`logos/${imageId}`);
+    const leagueRef = ref(storage, `logos/${imageId}`);
     if (imageUrl !== process.env.REACT_APP_DEFAULT_LOGO && changedLogo) {
-      leagueRef
-        .putString(imageUrl, "data_url")
+      uploadString(leagueRef, imageUrl, "data_url")
         .then(async () => {
-          const reqBody: {
-            league: League;
-            teams: Team[];
-            deletedTeams: Team[];
-          } = {
-            league: {
-              ...(league as League),
-              lineupSettings: posInfo,
-              numWeeks,
-              name: leagueName,
-              logo: imageId,
-            },
-            teams: teams.map((team) => {
-              return { ...team, leagueLogo: imageUrl } as Team;
-            }),
-            deletedTeams,
-          };
-          await fetch(
-            `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/update/`,
-            {
-              method: "POST",
-              body: JSON.stringify(reqBody),
-              headers: { "content-type": "application/json" },
-            }
-          );
+          updateLeagueQuery.mutate({ imageId: imageId, changed: true });
           setRedirect(true);
           setLoading(false);
         })
@@ -152,35 +130,14 @@ function EditLeagueSettings() {
           console.log(e);
         });
     } else {
-      const reqBody = {
-        league: {
-          ...league,
-          lineupSettings: posInfo,
-          numWeeks,
-          name: leagueName,
-          logo: league?.logo || process.env.REACT_APP_DEFAULT_LOGO,
-          commissioners: teams
-            .filter((team) => team.owner !== "default" && team.isCommissioner)
-            .map((team) => team.owner),
-        },
-        teams,
-        deletedTeams,
-      };
-      await fetch(
-        `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/update/`,
-        {
-          method: "POST",
-          body: JSON.stringify(reqBody),
-          headers: { "content-type": "application/json" },
-        }
-      );
+      updateLeagueQuery.mutate({ imageId: "", changed: false });
       setRedirect(true);
       setLoading(false);
     }
   }
 
   if (redirect) {
-    return <Redirect to={`/league/${id}/`} />;
+    return <Navigate to={`/league/${id}/`} />;
   }
   return (
     <Container>

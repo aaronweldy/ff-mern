@@ -39,9 +39,19 @@ router.get("/find/:query/", async (req, res) => {
 router.get("/:id/", async (req, res) => {
   const leagueId = req.params["id"];
   try {
-    const teams = await getTeamsInLeague(leagueId);
     const league = (await db.collection("leagues").doc(leagueId).get()).data();
-    res.status(200).json({ league, teams });
+    res.status(200).json({ league });
+  } catch (e) {
+    console.log(e);
+    res.status(500).send();
+  }
+});
+
+router.get("/:id/teams/", async (req, res) => {
+  const leagueId = req.params["id"];
+  try {
+    const teams = await getTeamsInLeague(leagueId);
+    res.status(200).json({ teams });
   } catch (e) {
     console.log(e);
     res.status(500).send();
@@ -174,13 +184,6 @@ router.post("/:id/delete/", async (req, res) => {
     );
 });
 
-router.get("/:leagueId/team/:id/", async (req, res) => {
-  const team = await db.collection("teams").doc(req.params.id).get();
-  res.status(200).json({
-    team: team.data(),
-  });
-});
-
 router.get("/:leagueId/teams/", async (req, res) => {
   const league = req.params["leagueId"];
   db.collection("teams")
@@ -195,68 +198,21 @@ router.get("/:leagueId/teams/", async (req, res) => {
     });
 });
 
-router.post("/updateTeams/", (req, res) => {
-  const { teams } = req.body;
-  teams.forEach((team: Team) => {
-    admin
-      .auth()
-      .getUserByEmail(team.ownerName)
-      .then(async (user) => {
-        db.collection("teams")
-          .doc(team.id)
-          .update({
-            ...team,
-            owner: user.uid,
-          });
-      })
-      .catch(async () => {
-        db.collection("teams")
-          .doc(team.id)
-          .update({
-            owner: "default",
-            ...team,
-          });
-      });
-  });
-  res.status(200).send({ teams });
-});
-
-router.post("/updateTeamInfo/", (req, res) => {
-  const { id, url, name } = req.body;
-  try {
-    const doc = db.collection("teams").doc(id);
-    doc.update({ logo: url, name }).then(async () => {
-      const teamData = (await doc.get()).data();
-      res.status(200).send({ team: teamData });
-    });
-  } catch (e) {
-    console.log(e);
-    res.status(500).send();
-  }
-});
-
-router.post("/adjustTeamSettings/", (req, res) => {
-  const { teams } = req.body;
-  for (const team of teams) {
-    db.collection("teams")
-      .doc(team.id)
-      .update({ ...team });
-  }
-  res.status(200).send({ message: "updated teams successfully" });
-});
-
-router.post("/:leagueId/updateScoringSettings/", async (req, res) => {
+router.patch("/:leagueId/updateScoringSettings/", async (req, res) => {
   const { settings } = req.body;
   const { leagueId } = req.params;
-  db.collection("leagues")
-    .doc(leagueId)
+  const leagueRef = db.collection("leagues").doc(leagueId);
+  leagueRef
     .update({ scoringSettings: settings })
     .then(() => {
-      res.status(200).send({ message: "updated settings successfully" });
+      return leagueRef.get();
+    })
+    .then((updatedLeague) => {
+      res.status(200).send({ league: updatedLeague.data() as League });
     });
 });
 
-router.post("/:leagueId/update/", async (req, res) => {
+router.patch("/:leagueId/update/", async (req, res) => {
   const { leagueId } = req.params;
   const {
     league,
@@ -457,6 +413,25 @@ router.get("/:id/cumulativePlayerScores/", async (req, res) => {
       return acc;
     }, {});
   res.status(200).send(sortedData);
+});
+
+router.get("/:leagueId/:userId/isCommissioner", (req, res) => {
+  const { leagueId, userId } = req.params;
+  db.collection("leagues")
+    .doc(leagueId)
+    .get()
+    .then((league) => {
+      if (!league.exists) {
+        res.status(200).send({ isCommissioner: false });
+        return;
+      }
+      const { commissioners } = league.data();
+      if (!commissioners.includes(userId)) {
+        res.status(200).send({ isCommissioner: false });
+        return;
+      }
+      res.status(200).send({ isCommissioner: true });
+    });
 });
 
 export default router;

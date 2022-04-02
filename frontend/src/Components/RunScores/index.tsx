@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, Redirect } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { Container, Button, Row, Toast, Col } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
 import ScorePlacementTable from "./ScorePlacementTable";
@@ -13,37 +13,23 @@ import {
   ScoringToggleType,
   StatTypeToggleButton,
 } from "../shared/StatTypeToggleButton";
-import { API } from "../../API";
+import { useRunScoresMutation } from "../../hooks/query/useRunScoresMutation";
+import { useUpdateTeamsMutation } from "../../hooks/query/useUpdateTeamsMutation";
 
 const RunScores = () => {
-  const { id } = useParams<{ id: string }>();
-  const {
-    league,
-    teams,
-    setTeams,
-    week,
-    setWeek,
-    playerData,
-    setPlayerData,
-    isCommissioner,
-  } = useLeagueScoringData(id);
+  const { id } = useParams() as { id: string };
+  const { league, teams, week, setWeek, playerData } = useLeagueScoringData(id);
   const [errors, setErrors] = useState<ScoringError[]>([]);
-  const [loading, setLoading] = useState(false);
   const [redirect, setRedirect] = useState(false);
   const [show, setShow] = useState(false);
   const [popupText, setText] = useState("");
   const [selectedDisplay, setDisplay] = useState<ScoringToggleType>("scoring");
-
-  const sendData = () => {
-    setLoading(true);
-    const sendWeek = week || 1;
-    API.runScores(id, sendWeek, teams).then((data) => {
-      setTeams(data.teams);
-      setErrors(data.errors);
-      setPlayerData(data.data);
-      setLoading(false);
-    });
-  };
+  const { mutate: runScores, isLoading } = useRunScoresMutation(
+    id,
+    week || 1,
+    teams
+  );
+  const { mutate: updateTeams } = useUpdateTeamsMutation(id, teams);
   const handleFix = async (error: ScoringError, ind: number) => {
     if (!teams) {
       return;
@@ -74,17 +60,15 @@ const RunScores = () => {
         );
         error.player.lineup = "bench";
         info.finalizedLineup.bench.splice(backupInd, 1, error.player);
-        API.updateTeams([...teams]).then((data) => {
-          setTeams(data);
-          setErrors((oldErrors) => {
-            oldErrors.splice(ind, 1);
-            return oldErrors;
-          });
-          setText(
-            `Replaced ${error.player.name} with ${error.player.backup}. Rerun scores to finalize.`
-          );
-          setShow(true);
+        updateTeams();
+        setErrors((oldErrors) => {
+          oldErrors.splice(ind, 1);
+          return oldErrors;
         });
+        setText(
+          `Replaced ${error.player.name} with ${error.player.backup}. Rerun scores to finalize.`
+        );
+        setShow(true);
         break;
       }
       default:
@@ -97,7 +81,7 @@ const RunScores = () => {
   };
 
   if (redirect) {
-    return <Redirect to={`/league/${id}/editTeams/`} />;
+    return <Navigate to={`/league/${id}/editTeams/`} />;
   }
   return (
     <Container fluid className="pl-5">
@@ -129,7 +113,7 @@ const RunScores = () => {
             leagueScoringCategories={league.scoringSettings}
             team={team}
             week={week || 1}
-            playerData={playerData}
+            playerData={playerData.players}
             dataDisplay={selectedDisplay}
           />
         ))}
@@ -138,21 +122,17 @@ const RunScores = () => {
           <ScorePlacementTable teams={teams} week={week || 1} />
         </Row>
       )}
-      {isCommissioner ? (
-        <>
-          <Row>
-            <ErrorTable errors={errors} handleFix={handleFix} />
-          </Row>
-          <Row className="mb-3">
-            <Button variant="success" onClick={sendData}>
-              Calculate Scores
-            </Button>
-          </Row>
-        </>
-      ) : (
-        ""
-      )}
-      {loading ? <div className="spinning-loader" /> : ""}
+      <>
+        <Row>
+          <ErrorTable errors={errors} handleFix={handleFix} />
+        </Row>
+        <Row className="mb-3">
+          <Button variant="success" onClick={() => runScores()}>
+            Calculate Scores
+          </Button>
+        </Row>
+      </>
+      {isLoading ? <div className="spinning-loader" /> : ""}
       <Toast
         show={show}
         onClose={() => setShow(false)}

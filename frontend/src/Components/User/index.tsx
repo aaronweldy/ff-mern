@@ -11,10 +11,20 @@ import {
 } from "react-bootstrap";
 import PasswordModal from "./PasswordModal";
 import ImageModal from "../shared/ImageModal";
-import firebase, { auth, storage } from "../../firebase-config";
+import { auth, storage } from "../../firebase-config";
+import { getDownloadURL, uploadString, ref } from "firebase/storage";
+import {
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
+  updateProfile,
+} from "firebase/auth";
 
 import "../../CSS/LeaguePages.css";
 import { Team } from "@ff-mern/ff-types";
+import { useAuthUser } from "@react-query-firebase/auth";
+import { useUploadPhotoMutation } from "../../hooks/query/useUploadPhotoMutation";
+import { useTeamsByUser } from "../../hooks/query/useTeamsByUser";
 
 type PasswordReducerState = {
   oldPassword: string;
@@ -91,45 +101,28 @@ const User = () => {
     changePassword: false,
   };
   const [state, dispatch] = useReducer(passwordReducer, initialState);
-  const [teams, setTeams] = useState<Team[]>([]);
   const [showImageModal, setShowModal] = useState(false);
-  const [imageUrl, setImageUrl] = useState(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [teamLogos, setTeamLogos] = useState<Record<string, string>>({});
-  const currUser = auth.currentUser;
+  const user = useAuthUser("user", auth);
+  const updateUserQuery = useUploadPhotoMutation();
+  const userTeamsQuery = useTeamsByUser(user?.data?.uid);
+
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged((user) => {
-      if (user) {
-        const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/user/${userId}/leagues/`;
-        fetch(url)
-          .then((resp) => {
-            if (!resp.ok) {
-              throw Error(resp.statusText);
+    if (userTeamsQuery.isSuccess) {
+      userTeamsQuery.data.teams.forEach((team: Team) => {
+        if (team.leagueLogo) {
+          getDownloadURL(ref(storage, `logos/${team.leagueLogo}`)).then(
+            (newUrl) => {
+              setTeamLogos((teamLogos) => {
+                return { ...teamLogos, [team.id]: newUrl };
+              });
             }
-            return resp.json();
-          })
-          .then((data) => {
-            setTeams(data.teams);
-            if (data.url && !imageUrl) {
-              setImageUrl(data.url);
-            }
-            data.teams.entries.forEach((team: Team) => {
-              if (team.leagueLogo) {
-                storage
-                  .ref(`logos/${team.leagueLogo}`)
-                  .getDownloadURL()
-                  .then((newUrl) => {
-                    setTeamLogos({ ...teamLogos, [team.id]: newUrl });
-                  });
-              }
-            });
-          })
-          .catch((e) => {
-            console.log(e);
-          });
-      }
-    });
-    return () => unsub();
-  }, [userId, imageUrl, teamLogos]);
+          );
+        }
+      });
+    }
+  }, [userId, imageUrl, userTeamsQuery.isSuccess, userTeamsQuery.data]);
 
   const handlePasswordChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -150,9 +143,9 @@ const User = () => {
   };
 
   const handlePasswordSubmission = () => {
-    if (currUser && currUser.email) {
-      const providedCredential = firebase.auth.EmailAuthProvider.credential(
-        currUser.email,
+    if (user.isSuccess && user.data && user.data?.email) {
+      const providedCredential = EmailAuthProvider.credential(
+        user.data.email,
         state.oldPassword
       );
       const errAction: PasswordReducerAction = {
@@ -162,32 +155,34 @@ const User = () => {
         changePassword: true,
         unmatched: false,
       };
-      currUser
-        .reauthenticateWithCredential(providedCredential)
+      reauthenticateWithCredential(user.data, providedCredential)
         .then(() => {
-          currUser
-            .updatePassword(state.firstNewPassword)
-            .then(() => {
-              const action: PasswordReducerAction = {
-                type: "setFlags",
-                success: true,
-                incorrectPassword: false,
-                changePassword: true,
-                unmatched: false,
-              };
-              dispatch(action);
-              setTimeout(() => {
-                const resetAction: PasswordReducerAction = {
-                  type: "reset",
-                  initState: initialState,
+          if (user.data) {
+            updatePassword(user.data, state.firstNewPassword)
+              .then(() => {
+                const action: PasswordReducerAction = {
+                  type: "setFlags",
+                  success: true,
+                  incorrectPassword: false,
+                  changePassword: true,
+                  unmatched: false,
                 };
-                dispatch(resetAction);
-              }, 2500);
-            })
-            .catch((e) => {
-              console.log(e);
-              dispatch(errAction);
-            });
+                dispatch(action);
+                setTimeout(() => {
+                  const resetAction: PasswordReducerAction = {
+                    type: "reset",
+                    initState: initialState,
+                  };
+                  dispatch(resetAction);
+                }, 2500);
+              })
+              .catch((e) => {
+                console.log(e);
+                dispatch(errAction);
+              });
+          } else {
+            throw new Error("User data is undefined");
+          }
         })
         .catch((e) => {
           console.log(e);
@@ -201,31 +196,23 @@ const User = () => {
     if (!subUser) {
       return;
     }
-    storage
-      .ref()
-      .child(`${subUser.email}/logo`)
-      .putString(url, "data_url")
-      .then((snapshot) => {
-        snapshot.ref.getDownloadURL().then((newUrl) => {
-          subUser.updateProfile({ photoURL: newUrl }).then(() => {
+    uploadString(ref(storage, `${subUser.email}/logo`), url, "data_url").then(
+      (snapshot) => {
+        getDownloadURL(snapshot.ref).then((newUrl) => {
+          updateProfile(subUser, { photoURL: newUrl }).then(() => {
             setShowModal(false);
-            const sendUrl = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/user/${userId}/updatePhoto/`;
-            const body = { newUrl };
-            const reqdict = {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify(body),
-            };
-            fetch(sendUrl, reqdict).then(() => {
+            if (userId) {
+              updateUserQuery.mutate({ id: userId, newUrl });
               setImageUrl(newUrl);
-            });
+            }
           });
         });
-      });
+      }
+    );
   };
   return (
     <Container fluid>
-      {currUser ? (
+      {user.isSuccess ? (
         <>
           <Row className="justify-content-center mb-3 mt-3">
             <Col sm="auto">
@@ -240,10 +227,10 @@ const User = () => {
             </Col>
             <Col sm="auto">
               <Row>
-                <h1 className="mt-3">{currUser.displayName}</h1>
+                <h1 className="mt-3">{user.data?.displayName}</h1>
               </Row>
               <Row>
-                <div className="subtitle">{currUser.email}</div>
+                <div className="subtitle">{user.data?.email}</div>
               </Row>
             </Col>
           </Row>
@@ -251,7 +238,7 @@ const User = () => {
       ) : (
         ""
       )}
-      {currUser && userId === currUser.uid ? (
+      {user.data && userId === user.data.uid ? (
         <>
           <Row className="justify-content-center mb-3">
             <Button onClick={() => dispatch({ type: "changePassword" })}>
@@ -267,7 +254,7 @@ const User = () => {
       ) : (
         ""
       )}
-      {currUser ? (
+      {user.data ? (
         <>
           <PasswordModal
             changePassword={state.changePassword}
@@ -293,31 +280,35 @@ const User = () => {
       )}
       <Row className="justify-content-center">
         <CardDeck id="teamCards">
-          {teams.map((team, index) => (
-            <Card key={index} className="m-2">
-              <Card.Body className="d-flex flex-column align-content-end">
-                <a href={`/league/${team.league}/team/${team.id}/`}>
-                  <Card.Img
-                    variant="bottom"
-                    className="mt-auto"
-                    src={teamLogos[team.id] || team.logo}
-                  />
-                </a>
-                <div className="mt-auto">
-                  <Card.Title>{team.name}</Card.Title>
-                  <Card.Text>{team.leagueName}</Card.Text>
-                  <Button className="mt-auto" href={`/league/${team.league}/`}>
-                    Go to league
-                  </Button>
-                </div>
-              </Card.Body>
-              {team.isCommissioner ? (
-                <Card.Footer>Commissioner</Card.Footer>
-              ) : (
-                ""
-              )}
-            </Card>
-          ))}
+          {userTeamsQuery.isSuccess &&
+            userTeamsQuery.data.teams.map((team, index) => (
+              <Card key={index} className="m-2">
+                <Card.Body className="d-flex flex-column align-content-end">
+                  <a href={`/league/${team.league}/team/${team.id}/`}>
+                    <Card.Img
+                      variant="bottom"
+                      className="mt-auto"
+                      src={teamLogos[team.id] || team.logo}
+                    />
+                  </a>
+                  <div className="mt-auto">
+                    <Card.Title>{team.name}</Card.Title>
+                    <Card.Text>{team.leagueName}</Card.Text>
+                    <Button
+                      className="mt-auto"
+                      href={`/league/${team.league}/`}
+                    >
+                      Go to league
+                    </Button>
+                  </div>
+                </Card.Body>
+                {team.isCommissioner ? (
+                  <Card.Footer>Commissioner</Card.Footer>
+                ) : (
+                  ""
+                )}
+              </Card>
+            ))}
         </CardDeck>
       </Row>
     </Container>

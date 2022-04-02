@@ -1,25 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { Redirect, useParams } from "react-router-dom";
+import React, { useState } from "react";
+import { Navigate, useParams } from "react-router-dom";
 import { Table, Form, Container, Col, Row, Button } from "react-bootstrap";
-import { auth } from "../../firebase-config";
-import { useLeague } from "../../hooks/useLeague";
 import LeagueButton from "../shared/LeagueButton";
 import "../../CSS/LeaguePages.css";
-import { Team } from "@ff-mern/ff-types";
+import { useUpdateTeamsMutation } from "../../hooks/query/useUpdateTeamsMutation";
+import { useLeagueScoringData } from "../../hooks/useLeagueScoringData";
 
 export default function AddPoints() {
-  const { id } = useParams<{ id: string }>();
-  const { league, teams: initTeams } = useLeague(id);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [week, setWeek] = useState(1);
+  const { id } = useParams() as { id: string };
+  const { league, week, setWeek, teams, setTeams } = useLeagueScoringData(id);
   const [redirect, setRedirect] = useState(false);
+  const { mutate: sendUpdate } = useUpdateTeamsMutation(id, teams);
 
-  const user = auth.currentUser;
-  useEffect(() => {
-    if (initTeams.length) {
-      setTeams(initTeams);
-    }
-  }, [initTeams]);
   const handleAddedPoints = (
     e: React.ChangeEvent<HTMLSelectElement>,
     index: number
@@ -29,28 +21,12 @@ export default function AddPoints() {
     setTeams(tempTeams);
   };
   const updateTeams = () => {
-    const body = { teams };
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/adjustTeamSettings/`;
-    const reqDict = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    };
-    fetch(url, reqDict);
+    sendUpdate();
     setRedirect(true);
   };
 
-  useEffect(() => {
-    if (league) {
-      setWeek(league.lastScoredWeek + 1 || 1);
-    }
-  }, [league]);
-
-  if (
-    (teams.length > 0 && !league!.commissioners.includes(user!.uid)) ||
-    redirect
-  ) {
-    return <Redirect to={`/league/${id}/`} />;
+  if (redirect) {
+    return <Navigate to={`/league/${id}/`} />;
   }
   return (
     <Container id="small-left">
@@ -64,7 +40,7 @@ export default function AddPoints() {
         <Col md={1}>
           <Form.Control
             as="select"
-            defaultValue={week}
+            value={week}
             onChange={(e) => setWeek(parseInt(e.target.value))}
           >
             {[...Array((league && league.numWeeks) || 18)].map((_, i) => (
@@ -102,7 +78,7 @@ export default function AddPoints() {
                   </tr>
                 );
               })
-            : ""}
+            : null}
         </tbody>
       </Table>
       <Button variant="success" className="mt-5 mb-5" onClick={updateTeams}>
