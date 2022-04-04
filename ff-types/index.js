@@ -204,6 +204,7 @@ const AbbreviationToFullTeam = {
     HOU: "houston texans",
     IND: "indianapolis colts",
     JAC: "jacksonville jaguars",
+    JAX: "jacksonville jaguars",
     KC: "kansas city chiefs",
     LAC: "los angeles chargers",
     LAR: "los angeles rams",

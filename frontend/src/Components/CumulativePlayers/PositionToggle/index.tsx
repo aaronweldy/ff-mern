@@ -26,6 +26,7 @@ export const PositionToggle = ({
               value={filterValue}
               checked={filterValue === selectedFilter}
               onChange={(e) => onChange(e)}
+              key={filterValue}
             >
               {filterValue}
             </ToggleButton>

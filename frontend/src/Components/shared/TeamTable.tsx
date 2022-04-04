@@ -76,7 +76,7 @@ export const TeamTable = ({
 
   return (
     <div className="table-wrapper">
-      <Table striped bordered hover className="w-auto scrollable-table">
+      <Table striped bordered hover className="w-auto left-scrollable-table">
         <thead>
           <tr>
             {isOwner ? <th>Move</th> : null}

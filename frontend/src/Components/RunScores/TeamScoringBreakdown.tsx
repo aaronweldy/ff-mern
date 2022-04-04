@@ -116,7 +116,7 @@ const TeamScoringBreakdown = ({
           striped
           bordered
           hover
-          className="scrollable-table"
+          className="centered-scrollable-table"
           style={{ maxHeight: "90vh" }}
         >
           <thead>
@@ -171,6 +171,8 @@ const TeamScoringBreakdown = ({
               }, [])}
           </tbody>
         </Table>
+      </Row>
+      <Row>
         <Table striped bordered className="w-auto">
           <tbody>
             <tr>

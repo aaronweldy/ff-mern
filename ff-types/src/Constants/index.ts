@@ -48,6 +48,7 @@ export type AbbreviatedNflTeam =
   | "HOU"
   | "IND"
   | "JAC"
+  | "JAX"
   | "KC"
   | "LAC"
   | "LAR"
@@ -83,6 +84,7 @@ export const AbbreviationToFullTeam: Record<AbbreviatedNflTeam, FullNflTeam> = {
   HOU: "houston texans",
   IND: "indianapolis colts",
   JAC: "jacksonville jaguars",
+  JAX: "jacksonville jaguars",
   KC: "kansas city chiefs",
   LAC: "los angeles chargers",
   LAR: "los angeles rams",

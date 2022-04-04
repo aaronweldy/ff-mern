@@ -136,7 +136,7 @@ function LeagueHome() {
       </Row>
       <Row className="mb-3 mt-3 table-wrapper">
         {league && (
-          <Table striped hover className="hide-cells scrollable-table">
+          <Table striped hover className="hide-cells centered-scrollable-table">
             <thead>
               <tr>
                 <th />

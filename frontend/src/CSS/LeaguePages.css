@@ -152,8 +152,13 @@
   overflow-x: auto;
 }
 
-.scrollable-table {
+.centered-scrollable-table {
   margin: 0 auto;
+  max-width: max-content;
+}
+
+.left-scrollable-table {
+  margin: 0;
   max-width: max-content;
 }
 
@@ -177,4 +182,10 @@
 
 .card-size {
   max-width: 20%;
+}
+
+.max-height-table {
+  display: inline-block;
+  max-height: 70vh;
+  overflow-y: scroll;
 }

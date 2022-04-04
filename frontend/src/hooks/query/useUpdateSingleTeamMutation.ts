@@ -2,7 +2,7 @@ import { Team } from "@ff-mern/ff-types";
 import { useMutation, useQueryClient } from "react-query";
 import { UpdateTeamsResponse } from "./useUpdateTeamsMutation";
 
-export const useUpdateSingleTeamMutation = (teamId: string) => {
+export const useUpdateSingleTeamMutation = (teamId?: string) => {
   const queryClient = useQueryClient();
   return useMutation<UpdateTeamsResponse, Error, Team>(
     async (team: Team) => {
@@ -21,7 +21,6 @@ export const useUpdateSingleTeamMutation = (teamId: string) => {
     },
     {
       onSuccess: (data) => {
-        console.log(data);
         queryClient.setQueryData(["team", teamId], { team: data.teams[0] });
       },
     }
