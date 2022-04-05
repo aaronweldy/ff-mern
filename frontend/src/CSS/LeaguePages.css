@@ -152,6 +152,15 @@
   overflow-x: auto;
 }
 
+.overflow-y-wrapper {
+  overflow-y: visible;
+}
+
+.left-table-wrapper {
+  overflow-x: auto;
+  max-width: 90vw;
+}
+
 .centered-scrollable-table {
   margin: 0 auto;
   max-width: max-content;
@@ -159,7 +168,6 @@
 
 .left-scrollable-table {
   margin: 0;
-  max-width: max-content;
 }
 
 .sticky-col {

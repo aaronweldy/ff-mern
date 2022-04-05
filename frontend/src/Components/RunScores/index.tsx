@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { Container, Button, Row, Toast, Col } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
@@ -15,21 +15,45 @@ import {
 } from "../shared/StatTypeToggleButton";
 import { useRunScoresMutation } from "../../hooks/query/useRunScoresMutation";
 import { useUpdateTeamsMutation } from "../../hooks/query/useUpdateTeamsMutation";
+import { useSingleTeam } from "../../hooks/query/useSingleTeam";
+import { TeamSelectionDropdown } from "../shared/TeamSelectionDropdown";
 
 const RunScores = () => {
   const { id } = useParams() as { id: string };
-  const { league, teams, week, setWeek, playerData } = useLeagueScoringData(id);
+  const {
+    league,
+    teams,
+    week,
+    setWeek,
+    playerData,
+    isLoading: leagueDataLoading,
+  } = useLeagueScoringData(id);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>();
+  const { team: selectedTeam, isLoading: teamLoading } =
+    useSingleTeam(selectedTeamId);
   const [errors, setErrors] = useState<ScoringError[]>([]);
   const [redirect, setRedirect] = useState(false);
   const [show, setShow] = useState(false);
   const [popupText, setText] = useState("");
   const [selectedDisplay, setDisplay] = useState<ScoringToggleType>("scoring");
-  const { mutate: runScores, isLoading } = useRunScoresMutation(
+  const { mutate: runScores, isLoading: scoresLoading } = useRunScoresMutation(
     id,
     week || 1,
     teams
   );
   const { mutate: updateTeams } = useUpdateTeamsMutation(id, teams);
+  const dataLoading = leagueDataLoading || teamLoading || scoresLoading;
+
+  useEffect(() => {
+    if (teams.length > 0 && !selectedTeamId) {
+      setSelectedTeamId(() => teams[0].id);
+    }
+  }, [teams, selectedTeamId]);
+
+  const updateSelectedTeam = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedTeamId(e.target.value);
+  };
+
   const handleFix = async (error: ScoringError, ind: number) => {
     if (!teams) {
       return;
@@ -97,26 +121,27 @@ const RunScores = () => {
           />
         </Col>
       </Row>
-      {league && teams && (
-        <EditWeek
-          week={week || 1}
-          maxWeeks={league?.numWeeks}
-          onChange={(e) => setWeek(parseInt(e.target.value))}
-        />
-      )}
-      {league &&
-        teams &&
-        playerData &&
-        teams.map((team, i) => (
+      <EditWeek
+        week={week || 1}
+        maxWeeks={league?.numWeeks}
+        onChange={(e) => setWeek(parseInt(e.target.value))}
+      />
+      {league && teams && playerData && selectedTeam && (
+        <>
+          <TeamSelectionDropdown
+            teams={teams}
+            selectedTeam={selectedTeamId}
+            updateTeam={updateSelectedTeam}
+          />
           <TeamScoringBreakdown
-            key={i}
             leagueScoringCategories={league.scoringSettings}
-            team={team}
+            team={selectedTeam}
             week={week || 1}
             playerData={playerData.players}
             dataDisplay={selectedDisplay}
           />
-        ))}
+        </>
+      )}
       {teams && (
         <Row>
           <ScorePlacementTable teams={teams} week={week || 1} />
@@ -132,7 +157,7 @@ const RunScores = () => {
           </Button>
         </Row>
       </>
-      {isLoading ? <div className="spinning-loader" /> : ""}
+      {dataLoading ? <div className="spinning-loader" /> : ""}
       <Toast
         show={show}
         onClose={() => setShow(false)}

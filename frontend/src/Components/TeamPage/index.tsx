@@ -140,7 +140,10 @@ const TeamPage = () => {
           </Row>
           <Row>
             <TeamTable
-              isOwner={user.data?.uid === team.owner}
+              isOwner={
+                user.data?.uid === team.owner &&
+                week > (league.lastScoredWeek || -1)
+              }
               players={lineup}
               positionsInTable={{ bench: 1 } as LineupSettings}
               nflSchedule={scheduleQuery.data?.schedule}

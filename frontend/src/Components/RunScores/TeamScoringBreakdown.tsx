@@ -111,12 +111,12 @@ const TeamScoringBreakdown = ({
           <div className="subtitle">{team.ownerName}</div>
         </Col>
       </Row>
-      <Row className="table-wrapper">
+      <Row className="left-table-wrapper">
         <Table
           striped
           bordered
           hover
-          className="centered-scrollable-table"
+          className="left-scrollable-table"
           style={{ maxHeight: "90vh" }}
         >
           <thead>

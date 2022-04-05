@@ -75,7 +75,7 @@ export const TeamTable = ({
     .sort(lineupSorter);
 
   return (
-    <div className="table-wrapper">
+    <div className="team-table-wrapper">
       <Table striped bordered hover className="w-auto left-scrollable-table">
         <thead>
           <tr>

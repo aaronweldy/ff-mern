@@ -18,10 +18,14 @@ const getLeagueData = async (id: string) => {
 
 export const useLeague = (id: string) => {
   const [league, setLeague] = useState<League>();
-  useQuery(["league", id], () => getLeagueData(id), {
-    onSuccess: (data) => {
-      setLeague(data.league);
-    },
-  });
-  return { league, setLeague };
+  const { isLoading, isSuccess } = useQuery(
+    ["league", id],
+    () => getLeagueData(id),
+    {
+      onSuccess: (data) => {
+        setLeague(data.league);
+      },
+    }
+  );
+  return { league, setLeague, isLoading, isSuccess };
 };

@@ -17,7 +17,7 @@ type SingleTeamResponse = {
 
 export const useSingleTeam = (teamId?: string) => {
   const [team, setTeam] = useState<Team>();
-  const { isSuccess } = useQuery<SingleTeamResponse, Error>(
+  const { isLoading, isSuccess } = useQuery<SingleTeamResponse, Error>(
     ["team", teamId],
     () => fetchSingleTeam(teamId),
     {
@@ -27,5 +27,5 @@ export const useSingleTeam = (teamId?: string) => {
       enabled: !!teamId,
     }
   );
-  return { team, setTeam, isSuccess };
+  return { team, setTeam, isLoading, isSuccess };
 };
