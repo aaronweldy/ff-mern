@@ -11,10 +11,15 @@ import {
   AbbreviatedNflTeam,
 } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
+import puppeteer from "puppeteer";
 // @ts-ignore
 import scraper from "table-scraper";
 
 export type ScrapedPlayer = Record<string, string>;
+export type TableScraperStatsResponse = Omit<
+  DatabasePlayer,
+  "CP%" | "Y/A" | "Y/CMP"
+>;
 export const positions = ["qb", "rb", "wr", "te", "k"];
 
 export const fetchPlayers = () => {
@@ -39,35 +44,60 @@ export const fetchPlayers = () => {
   });
 };
 
+export const fetchLatestFantasyProsScoredWeek = async (targetWeek: string) => {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(
+    `https://www.fantasypros.com/nfl/stats/qb.php?week=${targetWeek}&range=week`
+  );
+  await page.waitForSelector("#single-week");
+  const week = await page.$eval("#single-week", (el) =>
+    el.getAttribute("value")
+  );
+  await browser.close();
+  return parseInt(week);
+};
+
 export const fetchWeeklyStats = async (week: number) => {
   const year = new Date().getFullYear();
+  const latestScoredWeek = await fetchLatestFantasyProsScoredWeek(
+    week.toString()
+  );
+  let usableStats: Record<string, DatabasePlayer> = {};
+  if (latestScoredWeek < week) {
+    console.log("No stats for week " + week + " available");
+    return usableStats;
+  }
   let statsAtt = await db
     .collection("weekStats")
     .doc(year + "week" + week)
     .get();
-  let usableStats: Record<string, DatabasePlayer> = {};
+
   if (!statsAtt.exists) {
     for await (const pos of positions) {
       const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${year}&week=${week}&range=week`;
-      const table = await scraper.get(url);
+      const table: TableScraperStatsResponse[][] = await scraper.get(url);
       for (const player of table[0]) {
-        const hashedName = player["Player"].replace(/\./g, "").toLowerCase();
+        const hashedName = sanitizePlayerName(player["Player"]);
         if (hashedName) {
           usableStats[hashedName.slice(0, hashedName.indexOf("(") - 1)] =
             pos === "QB"
               ? {
                   ...player,
-                  "CP%":
+                  PCT: (
                     Number.parseFloat(player["CMP"]) /
-                    Number.parseFloat(player["ATT"]),
-                  "Y/A":
+                    Number.parseFloat(player["ATT"])
+                  ).toString(),
+                  "Y/A": (
                     Number.parseFloat(player["YDS"]) /
-                    Number.parseFloat(player["ATT"]),
-                  "Y/CMP":
+                    Number.parseFloat(player["ATT"])
+                  ).toString(),
+                  "Y/CMP": (
                     Number.parseFloat(player["YDS"]) /
-                    Number.parseFloat(player["CMP"]),
+                    Number.parseFloat(player["CMP"])
+                  ).toString(),
                 }
-              : player;
+              : { ...player, PCT: "0", "Y/A": "0", "Y/CMP": "0" };
         }
       }
     }
@@ -112,11 +142,11 @@ export const scoreAllPlayers = async (
             if (isNaN(statNumber)) return { hashVal: 0 };
             switch (cat.qualifier) {
               case "per":
-                console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
+                //console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
                 points = (statNumber / cat.threshold) * category.points;
                 break;
               case "greater than":
-                console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
+                //console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
                 if (statNumber >= cat.threshold) points = category.points;
                 break;
               case "between":

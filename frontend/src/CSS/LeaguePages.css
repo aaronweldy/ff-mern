@@ -156,6 +156,10 @@
   overflow-y: visible;
 }
 
+.team-table-wrapper {
+  max-width: 90vw;
+}
+
 .left-table-wrapper {
   overflow-x: auto;
   max-width: 90vw;

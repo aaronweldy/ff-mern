@@ -9,6 +9,8 @@ import {
   TeamToSchedule,
   Week,
 } from "@ff-mern/ff-types";
+import puppeteer from "puppeteer";
+import fetch from "node-fetch";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -33,7 +35,7 @@ type ScrapedTeamData = {
 
 export const fetchRankings = functions.pubsub
   .schedule("every day 00:00")
-  .onRun(async (context) => {
+  .onRun(async () => {
     const url = "https://www.fantasypros.com/nfl/points-allowed.php?year=2021";
     const data = await scraper.get(url);
     let updateData: TeamFantasyPositionPerformance =
@@ -52,7 +54,7 @@ export const fetchRankings = functions.pubsub
 
 export const fetchNflSchedule = functions.pubsub
   .schedule("1st thursday of month 00:00")
-  .onRun(async (context) => {
+  .onRun(async () => {
     const url = "http://www.espn.com/nfl/schedulegrid";
     const data: Record<Week | "0", AbbreviatedNflTeam | "WSH">[] = (
       await scraper.get(url)
@@ -64,4 +66,58 @@ export const fetchNflSchedule = functions.pubsub
       ] = data[i] as Record<Week | "0", AbbreviatedNflTeam>;
     }
     db.collection("nflTeamSchedules").doc("dist").set(dbUpdate);
+  });
+
+export const runScoresForAllLeagues = functions.pubsub
+  .schedule("every 12 hours")
+  .onRun(async () => {
+    const allLeagues = await db.collection("leagues").get();
+    const latestWeek = parseInt((await getWeekFromPuppeteer()) || "1");
+    allLeagues.forEach((league) => {
+      const leagueId = league.id;
+      const url = `${process.env.SERVER_URL}/api/v1/league/${leagueId}/runScores/`;
+      console.log("fetching league at url: ", url);
+      const body = { week: latestWeek };
+      const request = {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(body),
+      };
+      fetch(url, request).catch((err) => console.log(err));
+    });
+  });
+
+const getWeekFromPuppeteer = async () => {
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox"],
+  });
+  const page = await browser.newPage();
+  await page.setRequestInterception(true);
+  page.on("request", (req) => {
+    if (req.resourceType() === "image") {
+      req.abort();
+    } else {
+      req.continue();
+    }
+  });
+  await page.goto(`https://www.fantasypros.com/nfl/stats/qb.php?range=week`, {
+    waitUntil: "domcontentloaded",
+    timeout: 60 * 1000,
+  });
+  await page.waitForSelector("#single-week");
+  const week = await page.$eval("#single-week", (el) =>
+    el.getAttribute("value")
+  );
+  await browser.close();
+  return week;
+};
+
+export const fetchLatestFantasyProsScoredWeek = functions
+  .runWith({ timeoutSeconds: 60 })
+  .https.onCall(async () => {
+    const week = await getWeekFromPuppeteer();
+    return { week: parseInt(week || "1") };
   });

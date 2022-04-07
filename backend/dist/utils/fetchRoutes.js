@@ -16,6 +16,7 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
 };
 import { convertedScoringTypes, RosteredPlayer, sanitizePlayerName, } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
+import puppeteer from "puppeteer";
 // @ts-ignore
 import scraper from "table-scraper";
 export const positions = ["qb", "rb", "wr", "te", "k"];
@@ -34,14 +35,28 @@ export const fetchPlayers = () => {
         resolve(players);
     }));
 };
+export const fetchLatestFantasyProsScoredWeek = (targetWeek) => __awaiter(void 0, void 0, void 0, function* () {
+    const browser = yield puppeteer.launch();
+    const page = yield browser.newPage();
+    yield page.goto(`https://www.fantasypros.com/nfl/stats/qb.php?week=${targetWeek}&range=week`);
+    yield page.waitForSelector("#single-week");
+    const week = yield page.$eval("#single-week", (el) => el.getAttribute("value"));
+    yield browser.close();
+    return parseInt(week);
+});
 export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, function* () {
     var e_1, _a;
     const year = new Date().getFullYear();
+    const latestScoredWeek = yield fetchLatestFantasyProsScoredWeek(week.toString());
+    let usableStats = {};
+    if (latestScoredWeek < week) {
+        console.log("No stats for week " + week + " available");
+        return usableStats;
+    }
     let statsAtt = yield db
         .collection("weekStats")
         .doc(year + "week" + week)
         .get();
-    let usableStats = {};
     if (!statsAtt.exists) {
         try {
             for (var positions_1 = __asyncValues(positions), positions_1_1; positions_1_1 = yield positions_1.next(), !positions_1_1.done;) {
@@ -49,14 +64,14 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
                 const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${year}&week=${week}&range=week`;
                 const table = yield scraper.get(url);
                 for (const player of table[0]) {
-                    const hashedName = player["Player"].replace(/\./g, "").toLowerCase();
+                    const hashedName = sanitizePlayerName(player["Player"]);
                     if (hashedName) {
                         usableStats[hashedName.slice(0, hashedName.indexOf("(") - 1)] =
                             pos === "QB"
-                                ? Object.assign(Object.assign({}, player), { "CP%": Number.parseFloat(player["CMP"]) /
-                                        Number.parseFloat(player["ATT"]), "Y/A": Number.parseFloat(player["YDS"]) /
-                                        Number.parseFloat(player["ATT"]), "Y/CMP": Number.parseFloat(player["YDS"]) /
-                                        Number.parseFloat(player["CMP"]) }) : player;
+                                ? Object.assign(Object.assign({}, player), { PCT: (Number.parseFloat(player["CMP"]) /
+                                        Number.parseFloat(player["ATT"])).toString(), "Y/A": (Number.parseFloat(player["YDS"]) /
+                                        Number.parseFloat(player["ATT"])).toString(), "Y/CMP": (Number.parseFloat(player["YDS"]) /
+                                        Number.parseFloat(player["CMP"])).toString() }) : Object.assign(Object.assign({}, player), { PCT: "0", "Y/A": "0", "Y/CMP": "0" });
                     }
                 }
             }
@@ -99,11 +114,11 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
                     return { hashVal: 0 };
                 switch (cat.qualifier) {
                     case "per":
-                        console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
+                        //console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
                         points = (statNumber / cat.threshold) * category.points;
                         break;
                     case "greater than":
-                        console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
+                        //console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
                         if (statNumber >= cat.threshold)
                             points = category.points;
                         break;

@@ -29,7 +29,6 @@ export const updateCumulativeStats = (leagueId, week, data) => __awaiter(void 0,
             curStats[player].totalPointsInSeason = curStats[player].pointsByWeek.reduce((acc, score) => acc + score, 0);
         }
     });
-    console.log(curStats);
     yield db.collection("cumulativePlayerScores").doc(leagueId).set(curStats);
 });
 //# sourceMappingURL=updateCumulativeStats.js.map

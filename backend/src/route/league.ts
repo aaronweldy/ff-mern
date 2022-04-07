@@ -74,7 +74,6 @@ router.post("/create/", async (req, res) => {
       let comms: string[] = [];
       for await (const team of teams) {
         const teamId = v4();
-        console.log(team);
         await admin
           .auth()
           .getUserByEmail(team.ownerName)
@@ -283,14 +282,18 @@ router.patch("/:leagueId/update/", async (req, res) => {
 });
 
 router.post("/:leagueId/runScores/", async (req, res) => {
-  const { week, teams }: { week: number; teams: Team[] } = req.body;
+  const { week }: { week: number; teams: Team[] } = req.body;
   const { leagueId } = req.params;
+  const teams = await getTeamsInLeague(leagueId);
   const league = (
     await db.collection("leagues").doc(leagueId).get()
   ).data() as League;
+  if (week > league.numWeeks) {
+    res.status(400).send("Week is out of range");
+    return;
+  }
   const errors: ScoringError[] = [];
   const data = await scoreAllPlayers(league, leagueId, week);
-  console.log(data);
   teams.forEach(async (team) => {
     team.weekInfo[week].weekScore = 0;
     Object.values(team.weekInfo[week].finalizedLineup).forEach((players) => {
@@ -332,6 +335,7 @@ router.post("/:leagueId/runScores/", async (req, res) => {
   });
   await db.collection("leagues").doc(leagueId).update({ lastScoredWeek: week });
   res.status(200).json({ teams, errors, data });
+  console.log(`successful runScores for league ${leagueId}`);
   updateCumulativeStats(leagueId, week, data);
 });
 

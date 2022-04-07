@@ -76,7 +76,6 @@ router.post("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function
             for (var teams_1 = __asyncValues(teams), teams_1_1; teams_1_1 = yield teams_1.next(), !teams_1_1.done;) {
                 const team = teams_1_1.value;
                 const teamId = v4();
-                console.log(team);
                 yield admin
                     .auth()
                     .getUserByEmail(team.ownerName)
@@ -260,12 +259,17 @@ router.patch("/:leagueId/update/", (req, res) => __awaiter(void 0, void 0, void 
     res.status(200).send("Updated all league settings");
 }));
 router.post("/:leagueId/runScores/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { week, teams } = req.body;
+    console.log("got request to runscores");
+    const { week } = req.body;
     const { leagueId } = req.params;
+    const teams = yield getTeamsInLeague(leagueId);
     const league = (yield db.collection("leagues").doc(leagueId).get()).data();
+    if (week > league.numWeeks) {
+        res.status(400).send("Week is out of range");
+        return;
+    }
     const errors = [];
     const data = yield scoreAllPlayers(league, leagueId, week);
-    console.log(data);
     teams.forEach((team) => __awaiter(void 0, void 0, void 0, function* () {
         team.weekInfo[week].weekScore = 0;
         Object.values(team.weekInfo[week].finalizedLineup).forEach((players) => {
@@ -303,6 +307,7 @@ router.post("/:leagueId/runScores/", (req, res) => __awaiter(void 0, void 0, voi
     }));
     yield db.collection("leagues").doc(leagueId).update({ lastScoredWeek: week });
     res.status(200).json({ teams, errors, data });
+    console.log(`successful runScores for league ${leagueId}`);
     updateCumulativeStats(leagueId, week, data);
 }));
 router.post("/:leagueId/playerScores/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

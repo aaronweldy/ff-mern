@@ -29,6 +29,5 @@ export const updateCumulativeStats = async (
       ].pointsByWeek.reduce((acc: number, score: number) => acc + score, 0);
     }
   });
-  console.log(curStats);
   await db.collection("cumulativePlayerScores").doc(leagueId).set(curStats);
 };
