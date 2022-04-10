@@ -62,7 +62,7 @@ export const useTeamTable = () => {
           selectedPlayer.name,
           selectedPlayer.position,
           selectedPlayer.team,
-          selectedPlayer.lineup
+          'bench'
         )
       );
       selectedPlayer.name = "";

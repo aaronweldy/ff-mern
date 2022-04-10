@@ -4,10 +4,16 @@ import { Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { selectStatus, logout } from "../../Redux/userSlice";
 import { auth } from "../../firebase-config";
+import { useAuthUser } from "@react-query-firebase/auth";
 
 const NavHeader = () => {
-  const loggedIn = useSelector(selectStatus);
-  const buttons = loggedIn ? <LogOutButtons /> : <LoginButtons />;
+  const userQuery = useAuthUser("user", auth);
+  const buttons =
+    userQuery.isSuccess && userQuery.data ? (
+      <LogOutButtons />
+    ) : (
+      <LoginButtons />
+    );
   return (
     <Navbar bg="dark" expand="lg" variant="dark">
       <Navbar.Brand href="/">
@@ -36,7 +42,6 @@ function LoginButtons() {
 }
 
 function LogOutButtons() {
-  const dispatch = useDispatch();
   const [username, setUsername] = useState("");
   const [redirect, setRedirect] = useState(false);
   const user = auth.currentUser;
@@ -55,7 +60,6 @@ function LogOutButtons() {
     auth
       .signOut()
       .then(() => {
-        dispatch(logout());
         setRedirect(true);
       })
       .catch((e) => console.log(e));

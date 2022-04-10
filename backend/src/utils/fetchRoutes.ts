@@ -9,17 +9,43 @@ import {
   StatKey,
   Team,
   AbbreviatedNflTeam,
+  Week,
 } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
 import puppeteer from "puppeteer";
 // @ts-ignore
 import scraper from "table-scraper";
+import { getCurrentSeason } from "./dates.js";
 
 export type ScrapedPlayer = Record<string, string>;
 export type TableScraperStatsResponse = Omit<
   DatabasePlayer,
   "CP%" | "Y/A" | "Y/CMP"
 >;
+export type PlayerSnapCountsResponse = {
+  1: Week;
+  2: Week;
+  3: Week;
+  4: Week;
+  5: Week;
+  6: Week;
+  7: Week;
+  8: Week;
+  9: Week;
+  10: Week;
+  11: Week;
+  12: Week;
+  13: Week;
+  14: Week;
+  15: Week;
+  16: Week;
+  17: Week;
+  18: Week;
+  Player: string;
+  Team: AbbreviatedNflTeam;
+  TTL: string;
+  AVG: string;
+};
 export const positions = ["qb", "rb", "wr", "te", "k"];
 
 export const fetchPlayers = () => {
@@ -58,8 +84,36 @@ export const fetchLatestFantasyProsScoredWeek = async (targetWeek: string) => {
   return parseInt(week);
 };
 
+export const fetchWeeklySnapCount = async (week: Week) => {
+  const year = getCurrentSeason();
+  let curStats = (
+    await db
+      .collection("weekStats")
+      .doc(year + "week" + week)
+      .get()
+  ).data().playerMap as Record<string, DatabasePlayer>;
+  for (const pos of positions.slice(0, 4)) {
+    const url = `https://www.fantasypros.com/nfl/reports/snap-counts/${pos}.php`;
+    const tableData = await scraper.get(url);
+    const players = tableData[0] as PlayerSnapCountsResponse[];
+    for (const player of players) {
+      if (player.Player !== "") {
+        const playerName = sanitizePlayerName(player.Player);
+        const playerStats = curStats[playerName];
+        if (playerStats) {
+          playerStats["SNAPS"] = player[week];
+        }
+      }
+    }
+  }
+  db.collection("weekStats")
+    .doc(year + "week" + week)
+    .update({ playerMap: curStats });
+  return curStats;
+};
+
 export const fetchWeeklyStats = async (week: number) => {
-  const year = new Date().getFullYear();
+  const year = getCurrentSeason();
   const latestScoredWeek = await fetchLatestFantasyProsScoredWeek(
     week.toString()
   );
@@ -83,20 +137,20 @@ export const fetchWeeklyStats = async (week: number) => {
           usableStats[hashedName.slice(0, hashedName.indexOf("(") - 1)] =
             pos === "QB"
               ? {
-                  ...player,
-                  PCT: (
-                    Number.parseFloat(player["CMP"]) /
-                    Number.parseFloat(player["ATT"])
-                  ).toString(),
-                  "Y/A": (
-                    Number.parseFloat(player["YDS"]) /
-                    Number.parseFloat(player["ATT"])
-                  ).toString(),
-                  "Y/CMP": (
-                    Number.parseFloat(player["YDS"]) /
-                    Number.parseFloat(player["CMP"])
-                  ).toString(),
-                }
+                ...player,
+                PCT: (
+                  Number.parseFloat(player["CMP"]) /
+                  Number.parseFloat(player["ATT"])
+                ).toString(),
+                "Y/A": (
+                  Number.parseFloat(player["YDS"]) /
+                  Number.parseFloat(player["ATT"])
+                ).toString(),
+                "Y/CMP": (
+                  Number.parseFloat(player["YDS"]) /
+                  Number.parseFloat(player["CMP"])
+                ).toString(),
+              }
               : { ...player, PCT: "0", "Y/A": "0", "Y/CMP": "0" };
         }
       }
@@ -119,7 +173,8 @@ export const scoreAllPlayers = async (
   week: number
 ) => {
   const players = await fetchPlayers();
-  const stats = await fetchWeeklyStats(week);
+  await fetchWeeklyStats(week);
+  const stats = await fetchWeeklySnapCount(week.toString() as Week);
   const data: PlayerScoreData = {};
   players
     .filter((player) => player.name in stats)
@@ -136,7 +191,7 @@ export const scoreAllPlayers = async (
           try {
             const statNumber = Number.parseFloat(
               stats[player.name][
-                convertedScoringTypes[player.position][cat.statType] as StatKey
+              convertedScoringTypes[player.position][cat.statType] as StatKey
               ]
             );
             if (isNaN(statNumber)) return { hashVal: 0 };
@@ -160,9 +215,9 @@ export const scoreAllPlayers = async (
             const successMins = category.minimums.filter((min) => {
               const statNumber = Number.parseFloat(
                 stats[player.name][
-                  convertedScoringTypes[player.position][
-                    min.statType
-                  ] as StatKey
+                convertedScoringTypes[player.position][
+                min.statType
+                ] as StatKey
                 ]
               );
               return statNumber > min.threshold;
@@ -191,7 +246,7 @@ export const scoreAllPlayers = async (
         statistics: stats[player.name],
       };
     });
-  const yearWeek = new Date().getFullYear() + week.toString();
+  const yearWeek = getCurrentSeason() + week.toString();
   await db
     .collection("leagueScoringData")
     .doc(yearWeek + leagueId)

@@ -19,6 +19,7 @@ import { db } from "../config/firebase-config.js";
 import puppeteer from "puppeteer";
 // @ts-ignore
 import scraper from "table-scraper";
+import { getCurrentSeason } from "./dates.js";
 export const positions = ["qb", "rb", "wr", "te", "k"];
 export const fetchPlayers = () => {
     return new Promise((resolve, _) => __awaiter(void 0, void 0, void 0, function* () {
@@ -44,9 +45,34 @@ export const fetchLatestFantasyProsScoredWeek = (targetWeek) => __awaiter(void 0
     yield browser.close();
     return parseInt(week);
 });
+export const fetchWeeklySnapCount = (week) => __awaiter(void 0, void 0, void 0, function* () {
+    const year = getCurrentSeason();
+    let curStats = (yield db
+        .collection("weekStats")
+        .doc(year + "week" + week)
+        .get()).data().playerMap;
+    for (const pos of positions.slice(0, 4)) {
+        const url = `https://www.fantasypros.com/nfl/reports/snap-counts/${pos}.php`;
+        const tableData = yield scraper.get(url);
+        const players = tableData[0];
+        for (const player of players) {
+            if (player.Player !== "") {
+                const playerName = sanitizePlayerName(player.Player);
+                const playerStats = curStats[playerName];
+                if (playerStats) {
+                    playerStats["SNAPS"] = player[week];
+                }
+            }
+        }
+    }
+    db.collection("weekStats")
+        .doc(year + "week" + week)
+        .update({ playerMap: curStats });
+    return curStats;
+});
 export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, function* () {
     var e_1, _a;
-    const year = new Date().getFullYear();
+    const year = getCurrentSeason();
     const latestScoredWeek = yield fetchLatestFantasyProsScoredWeek(week.toString());
     let usableStats = {};
     if (latestScoredWeek < week) {
@@ -95,7 +121,8 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
 });
 export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, void 0, void 0, function* () {
     const players = yield fetchPlayers();
-    const stats = yield fetchWeeklyStats(week);
+    yield fetchWeeklyStats(week);
+    const stats = yield fetchWeeklySnapCount(week.toString());
     const data = {};
     players
         .filter((player) => player.name in stats)
@@ -153,7 +180,7 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
             statistics: stats[player.name],
         };
     });
-    const yearWeek = new Date().getFullYear() + week.toString();
+    const yearWeek = getCurrentSeason() + week.toString();
     yield db
         .collection("leagueScoringData")
         .doc(yearWeek + leagueId)

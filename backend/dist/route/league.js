@@ -22,6 +22,7 @@ import admin, { db } from "../config/firebase-config.js";
 import { sanitizePlayerName, } from "@ff-mern/ff-types";
 import { fetchPlayers, getTeamsInLeague, scoreAllPlayers, } from "../utils/fetchRoutes.js";
 import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
+import { getCurrentSeason } from "../utils/dates.js";
 const router = Router();
 router.get("/find/:query/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const query = req.params["query"];
@@ -259,7 +260,6 @@ router.patch("/:leagueId/update/", (req, res) => __awaiter(void 0, void 0, void 
     res.status(200).send("Updated all league settings");
 }));
 router.post("/:leagueId/runScores/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("got request to runscores");
     const { week } = req.body;
     const { leagueId } = req.params;
     const teams = yield getTeamsInLeague(leagueId);
@@ -276,30 +276,29 @@ router.post("/:leagueId/runScores/", (req, res) => __awaiter(void 0, void 0, voi
             players
                 .filter((player) => player.name !== "")
                 .forEach((player) => {
-                const playerName = sanitizePlayerName(player.name);
+                let playerName = sanitizePlayerName(player.name);
                 if (!(playerName in data)) {
-                    errors.push({
-                        type: "NOT FOUND",
-                        desc: "Player not found in database",
-                        player,
-                        team,
-                    });
                     return;
                 }
-                if (data[playerName].scoring.totalPoints === 0 &&
+                const curDay = new Date().getDay();
+                if (
+                /*curDay > 1 &&
+                curDay < 4 &&*/
+                player.backup &&
                     player.backup !== "None" &&
-                    player.backup !== "" &&
                     player.lineup !== "bench") {
-                    errors.push({
-                        type: "POSSIBLE BACKUP",
-                        desc: "Player scored 0 points & may be eligible for a backup",
-                        player,
-                        team,
-                    });
+                    const curInd = team.weekInfo[week].finalizedLineup[player.lineup].findIndex((p) => p.name === player.name);
+                    let curPlayerRef = team.weekInfo[week].finalizedLineup[player.lineup][curInd];
+                    const backupInd = team.weekInfo[week].finalizedLineup.bench.findIndex((p) => p.name === player.backup);
+                    let backupPlayer = team.weekInfo[week].finalizedLineup.bench[backupInd];
+                    const tmpLineup = curPlayerRef.lineup;
+                    team.weekInfo[week].finalizedLineup[curPlayerRef.lineup][curInd] = Object.assign(Object.assign({}, backupPlayer), { lineup: tmpLineup });
+                    team.weekInfo[week].finalizedLineup.bench[backupInd] = Object.assign(Object.assign({}, curPlayerRef), { lineup: "bench" });
+                    playerName = player.name;
                 }
+                const playerData = data[playerName];
                 if (player.lineup !== "bench") {
-                    team.weekInfo[week].weekScore +=
-                        data[playerName].scoring.totalPoints;
+                    team.weekInfo[week].weekScore += playerData.scoring.totalPoints;
                 }
             });
         });
@@ -320,7 +319,7 @@ router.post("/:leagueId/playerScores/", (req, res) => __awaiter(void 0, void 0, 
         res.status(200).send(resp);
         return;
     }
-    const yearWeek = new Date().getFullYear() + week.toString();
+    const yearWeek = getCurrentSeason() + week.toString();
     let data = (yield db
         .collection("leagueScoringData")
         .doc(yearWeek + leagueId)

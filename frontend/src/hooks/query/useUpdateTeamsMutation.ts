@@ -13,10 +13,12 @@ export const useUpdateTeamsMutation = (
   const queryClient = useQueryClient();
   return useMutation<UpdateTeamsResponse, Error>(
     async () => {
-      const url =
-        `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/` + validate
-          ? "validateTeams/"
-          : "updateTeams/";
+      let url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/`;
+      if (validate) {
+        url += "validateTeams/";
+      } else {
+        url += "updateTeams/";
+      }
       const body = JSON.stringify({ teams });
       const req = {
         method: "POST",

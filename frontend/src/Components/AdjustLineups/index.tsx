@@ -127,18 +127,20 @@ export default function AdjustLineups() {
             <Col xs={12}>
               <h4>Bench</h4>
             </Col>
-            <TeamTable
-              players={lineupsPerTeam[selectedTeam.id]}
-              positionsInTable={{ bench: 1 } as LineupSettings}
-              name="bench"
-              nflDefenseStats={defenseStatsQuery.data?.data}
-              nflSchedule={scheduleQuery.data?.schedule}
-              week={week.toString() as Week}
-              handleBenchPlayer={onBench}
-              handlePlayerChange={onPlayerChange}
-              isOwner
-              teamId={selectedTeam.id}
-            />
+            <Col xs={12}>
+              <TeamTable
+                players={lineupsPerTeam[selectedTeam.id]}
+                positionsInTable={{ bench: 1 } as LineupSettings}
+                name="bench"
+                nflDefenseStats={defenseStatsQuery.data?.data}
+                nflSchedule={scheduleQuery.data?.schedule}
+                week={week.toString() as Week}
+                handleBenchPlayer={onBench}
+                handlePlayerChange={onPlayerChange}
+                isOwner
+                teamId={selectedTeam.id}
+              />
+            </Col>
           </Row>
         )}
     </Container>

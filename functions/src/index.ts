@@ -36,7 +36,7 @@ type ScrapedTeamData = {
 export const fetchRankings = functions.pubsub
   .schedule("every day 00:00")
   .onRun(async () => {
-    const url = "https://www.fantasypros.com/nfl/points-allowed.php?year=2021";
+    const url = "https://www.fantasypros.com/nfl/points-allowed.php";
     const data = await scraper.get(url);
     let updateData: TeamFantasyPositionPerformance =
       {} as TeamFantasyPositionPerformance;

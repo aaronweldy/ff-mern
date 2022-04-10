@@ -29,6 +29,7 @@ export const useRunScoresMutation = (
           teams: data.teams,
           players: data.data,
         });
+        queryClient.invalidateQueries(["team"]);
       },
     }
   );
