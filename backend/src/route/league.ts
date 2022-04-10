@@ -312,7 +312,8 @@ router.post("/:leagueId/runScores/", async (req, res) => {
             curDay < 4 &&
             player.backup &&
             player.backup !== "None" &&
-            player.lineup !== "bench"
+            player.lineup !== "bench" &&
+            data[playerName].statistics.SNAPS === "0"
           ) {
             const curInd = team.weekInfo[week].finalizedLineup[
               player.lineup
