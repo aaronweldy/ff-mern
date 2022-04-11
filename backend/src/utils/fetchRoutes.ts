@@ -101,7 +101,7 @@ export const fetchWeeklySnapCount = async (week: Week) => {
         const playerName = sanitizePlayerName(player.Player);
         const playerStats = curStats[playerName];
         if (playerStats) {
-          playerStats["SNAPS"] = player[week];
+          playerStats.snaps = player[week];
         }
       }
     }
@@ -134,24 +134,36 @@ export const fetchWeeklyStats = async (week: number) => {
       for (const player of table[0]) {
         const hashedName = sanitizePlayerName(player["Player"]);
         if (hashedName) {
+          const team = hashedName
+            .slice(hashedName.indexOf("(") + 1, hashedName.indexOf(")"))
+            .toUpperCase() as AbbreviatedNflTeam;
           usableStats[hashedName.slice(0, hashedName.indexOf("(") - 1)] =
             pos === "QB"
               ? {
-                ...player,
-                PCT: (
-                  Number.parseFloat(player["CMP"]) /
-                  Number.parseFloat(player["ATT"])
-                ).toString(),
-                "Y/A": (
-                  Number.parseFloat(player["YDS"]) /
-                  Number.parseFloat(player["ATT"])
-                ).toString(),
-                "Y/CMP": (
-                  Number.parseFloat(player["YDS"]) /
-                  Number.parseFloat(player["CMP"])
-                ).toString(),
-              }
-              : { ...player, PCT: "0", "Y/A": "0", "Y/CMP": "0" };
+                  ...player,
+                  team,
+                  position: pos,
+                  PCT: (
+                    Number.parseFloat(player["CMP"]) /
+                    Number.parseFloat(player["ATT"])
+                  ).toString(),
+                  "Y/A": (
+                    Number.parseFloat(player["YDS"]) /
+                    Number.parseFloat(player["ATT"])
+                  ).toString(),
+                  "Y/CMP": (
+                    Number.parseFloat(player["YDS"]) /
+                    Number.parseFloat(player["CMP"])
+                  ).toString(),
+                }
+              : {
+                  ...player,
+                  team,
+                  position: pos,
+                  PCT: "0",
+                  "Y/A": "0",
+                  "Y/CMP": "0",
+                };
         }
       }
     }
@@ -191,7 +203,7 @@ export const scoreAllPlayers = async (
           try {
             const statNumber = Number.parseFloat(
               stats[player.name][
-              convertedScoringTypes[player.position][cat.statType] as StatKey
+                convertedScoringTypes[player.position][cat.statType] as StatKey
               ]
             );
             if (isNaN(statNumber)) return { hashVal: 0 };
@@ -215,9 +227,9 @@ export const scoreAllPlayers = async (
             const successMins = category.minimums.filter((min) => {
               const statNumber = Number.parseFloat(
                 stats[player.name][
-                convertedScoringTypes[player.position][
-                min.statType
-                ] as StatKey
+                  convertedScoringTypes[player.position][
+                    min.statType
+                  ] as StatKey
                 ]
               );
               return statNumber > min.threshold;
@@ -234,6 +246,7 @@ export const scoreAllPlayers = async (
           }
         });
       data[player.name] = {
+        team: stats[player.name].team as AbbreviatedNflTeam,
         position: player.position,
         scoring: {
           totalPoints: Number.parseFloat(

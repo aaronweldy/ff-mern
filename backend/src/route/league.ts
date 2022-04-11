@@ -19,6 +19,10 @@ import {
 } from "../utils/fetchRoutes.js";
 import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
 import { getCurrentSeason } from "../utils/dates.js";
+import {
+  handleKickerBackupResolution,
+  handleNonKickerBackupResolution,
+} from "../utils/backupResolution.js";
 
 const router = Router();
 
@@ -306,35 +310,15 @@ router.post("/:leagueId/runScores/", async (req, res) => {
           if (!(playerName in data)) {
             return;
           }
-          const curDay = new Date().getDay();
-          if (
-            curDay > 1 &&
-            curDay < 4 &&
-            player.backup &&
-            player.backup !== "None" &&
-            player.lineup !== "bench" &&
-            data[playerName].statistics.SNAPS === "0"
-          ) {
-            const curInd = team.weekInfo[week].finalizedLineup[
-              player.lineup
-            ].findIndex((p) => p.name === player.name);
-            let curPlayerRef =
-              team.weekInfo[week].finalizedLineup[player.lineup][curInd];
-            const backupInd = team.weekInfo[
-              week
-            ].finalizedLineup.bench.findIndex((p) => p.name === player.backup);
-            let backupPlayer =
-              team.weekInfo[week].finalizedLineup.bench[backupInd];
-            const tmpLineup = curPlayerRef.lineup;
-            team.weekInfo[week].finalizedLineup[curPlayerRef.lineup][curInd] = {
-              ...backupPlayer,
-              lineup: tmpLineup,
-            };
-            team.weekInfo[week].finalizedLineup.bench[backupInd] = {
-              ...curPlayerRef,
-              lineup: "bench",
-            };
-            playerName = player.name;
+          if (player.position !== "K") {
+            playerName = handleNonKickerBackupResolution(
+              team,
+              player,
+              week,
+              parseInt(data[playerName].statistics.snaps || "0")
+            );
+          } else {
+            playerName = handleKickerBackupResolution(team, player, week, data);
           }
           const playerData = data[playerName];
           if (player.lineup !== "bench") {

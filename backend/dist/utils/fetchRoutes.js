@@ -60,7 +60,7 @@ export const fetchWeeklySnapCount = (week) => __awaiter(void 0, void 0, void 0, 
                 const playerName = sanitizePlayerName(player.Player);
                 const playerStats = curStats[playerName];
                 if (playerStats) {
-                    playerStats["SNAPS"] = player[week];
+                    playerStats.snaps = player[week];
                 }
             }
         }
@@ -92,12 +92,15 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
                 for (const player of table[0]) {
                     const hashedName = sanitizePlayerName(player["Player"]);
                     if (hashedName) {
+                        const team = hashedName
+                            .slice(hashedName.indexOf("(") + 1, hashedName.indexOf(")"))
+                            .toUpperCase();
                         usableStats[hashedName.slice(0, hashedName.indexOf("(") - 1)] =
                             pos === "QB"
-                                ? Object.assign(Object.assign({}, player), { PCT: (Number.parseFloat(player["CMP"]) /
+                                ? Object.assign(Object.assign({}, player), { team, position: pos, PCT: (Number.parseFloat(player["CMP"]) /
                                         Number.parseFloat(player["ATT"])).toString(), "Y/A": (Number.parseFloat(player["YDS"]) /
                                         Number.parseFloat(player["ATT"])).toString(), "Y/CMP": (Number.parseFloat(player["YDS"]) /
-                                        Number.parseFloat(player["CMP"])).toString() }) : Object.assign(Object.assign({}, player), { PCT: "0", "Y/A": "0", "Y/CMP": "0" });
+                                        Number.parseFloat(player["CMP"])).toString() }) : Object.assign(Object.assign({}, player), { team, position: pos, PCT: "0", "Y/A": "0", "Y/CMP": "0" });
                     }
                 }
             }
@@ -170,6 +173,7 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
             }
         });
         data[player.name] = {
+            team: stats[player.name].team,
             position: player.position,
             scoring: {
                 totalPoints: Number.parseFloat(catPoints

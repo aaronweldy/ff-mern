@@ -23,6 +23,7 @@ import { sanitizePlayerName, } from "@ff-mern/ff-types";
 import { fetchPlayers, getTeamsInLeague, scoreAllPlayers, } from "../utils/fetchRoutes.js";
 import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
 import { getCurrentSeason } from "../utils/dates.js";
+import { handleKickerBackupResolution, handleNonKickerBackupResolution, } from "../utils/backupResolution.js";
 const router = Router();
 router.get("/find/:query/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const query = req.params["query"];
@@ -280,21 +281,11 @@ router.post("/:leagueId/runScores/", (req, res) => __awaiter(void 0, void 0, voi
                 if (!(playerName in data)) {
                     return;
                 }
-                const curDay = new Date().getDay();
-                if (
-                /*curDay > 1 &&
-                curDay < 4 &&*/
-                player.backup &&
-                    player.backup !== "None" &&
-                    player.lineup !== "bench") {
-                    const curInd = team.weekInfo[week].finalizedLineup[player.lineup].findIndex((p) => p.name === player.name);
-                    let curPlayerRef = team.weekInfo[week].finalizedLineup[player.lineup][curInd];
-                    const backupInd = team.weekInfo[week].finalizedLineup.bench.findIndex((p) => p.name === player.backup);
-                    let backupPlayer = team.weekInfo[week].finalizedLineup.bench[backupInd];
-                    const tmpLineup = curPlayerRef.lineup;
-                    team.weekInfo[week].finalizedLineup[curPlayerRef.lineup][curInd] = Object.assign(Object.assign({}, backupPlayer), { lineup: tmpLineup });
-                    team.weekInfo[week].finalizedLineup.bench[backupInd] = Object.assign(Object.assign({}, curPlayerRef), { lineup: "bench" });
-                    playerName = player.name;
+                if (player.position !== "K") {
+                    playerName = handleNonKickerBackupResolution(team, player, week, parseInt(data[playerName].statistics.snaps || "0"));
+                }
+                else {
+                    playerName = handleKickerBackupResolution(team, player, week, data);
                 }
                 const playerData = data[playerName];
                 if (player.lineup !== "bench") {

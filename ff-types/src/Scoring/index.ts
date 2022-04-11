@@ -102,6 +102,8 @@ export type StatKey =
   | "40-49"
   | "50+"
   | "XPT"
-  | "SNAPS";
+  | "team"
+  | "position"
+  | "snaps";
 
 export type DatabasePlayer = Record<StatKey, string>;

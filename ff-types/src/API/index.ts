@@ -16,6 +16,7 @@ export type LeagueAPIResponse = {
 };
 
 export type StoredPlayerInformation = {
+  team: AbbreviatedNflTeam;
   position: SinglePosition;
   statistics: DatabasePlayer;
   scoring: {
