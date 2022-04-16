@@ -9,6 +9,30 @@ import {
 } from "@ff-mern/ff-types";
 import { lineupSorter } from "../../constants";
 
+const getBench = (team: Team, notBenched: Set<string>) =>
+  team.rosteredPlayers.reduce((acc, player) => {
+    if (!notBenched.has(player.name)) {
+      acc.push(
+        new FinalizedPlayer(player.name, player.position, player.team, "bench")
+      );
+    }
+    return acc;
+  }, [] as FinalizedPlayer[]);
+
+const getPlayersInLineup = (lineup: FinalizedLineup) => {
+  return Object.keys(lineup).reduce((acc, pos) => {
+    if (pos === "bench") {
+      return acc;
+    }
+    lineup[pos as Position].forEach((player) => {
+      if (player.name !== "") {
+        acc.add(player.name);
+      }
+    });
+    return acc;
+  }, new Set<string>());
+};
+
 export const getWeeklyLineup = (
   week: number = 1,
   team?: Team,
@@ -16,6 +40,12 @@ export const getWeeklyLineup = (
 ) => {
   if (!lineupSettings || !team) {
     return {} as FinalizedLineup;
+  } else if (team.weekInfo[week].isSuperflex) {
+    team.weekInfo[week].finalizedLineup["bench"] = getBench(
+      team,
+      getPlayersInLineup(team.weekInfo[week].finalizedLineup)
+    );
+    return team.weekInfo[week].finalizedLineup;
   }
   const notBenched = new Set<string>();
   const teamLatestLineup = team.weekInfo[week].finalizedLineup;
@@ -23,8 +53,8 @@ export const getWeeklyLineup = (
     .sort(lineupSorter)
     .reduce((currLineup, pos) => {
       for (let i = 0; i < lineupSettings[pos]; i++) {
-        if (pos in teamLatestLineup && i < teamLatestLineup[pos].length) {
-          notBenched.add(teamLatestLineup[pos][i].name);
+        if (pos in currLineup && i < currLineup[pos].length) {
+          notBenched.add(currLineup[pos][i].name);
           continue;
         } else {
           if (!currLineup[pos]) {
@@ -40,23 +70,13 @@ export const getWeeklyLineup = (
           );
         }
       }
+      if (pos in currLineup && currLineup[pos].length > lineupSettings[pos]) {
+        while (currLineup[pos].length > lineupSettings[pos]) {
+          currLineup[pos].pop();
+        }
+      }
       return currLineup;
     }, teamLatestLineup);
-  currentFinalizedLineup["bench"] = team.rosteredPlayers.reduce(
-    (acc, player) => {
-      if (!notBenched.has(player.name)) {
-        acc.push(
-          new FinalizedPlayer(
-            player.name,
-            player.position,
-            player.team,
-            "bench"
-          )
-        );
-      }
-      return acc;
-    },
-    [] as FinalizedPlayer[]
-  );
+  currentFinalizedLineup["bench"] = getBench(team, notBenched);
   return currentFinalizedLineup;
 };

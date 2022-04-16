@@ -7,6 +7,7 @@ type UpdateLeagueRequest = {
   deletedTeams: Team[];
   leagueName: string;
   posInfo: LineupSettings;
+  numSuperflex: number;
 };
 
 type MutationSettings = {
@@ -28,6 +29,7 @@ export const useUpdateLeagueMutation = (
           logo: settings.changed ? settings.imageId : info?.league?.logo,
           name: info.leagueName,
           lineupSettings: info.posInfo,
+          numSuperflex: info.numSuperflex,
           commissioners: info.teams
             .filter((team) => team.owner !== "default" && team.isCommissioner)
             .map((team) => team.owner),
@@ -43,7 +45,7 @@ export const useUpdateLeagueMutation = (
         deletedTeams: info.deletedTeams,
       };
       const resp = await fetch(url, {
-        method: "POST",
+        method: "PATCH",
         headers: {
           "content-type": "application/json",
         },

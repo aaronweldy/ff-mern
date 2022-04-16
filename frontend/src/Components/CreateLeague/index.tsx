@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Container, Form, Button, Row, Image } from "react-bootstrap";
+import { Container, Form, Button, Row, Image, Col } from "react-bootstrap";
 import { Navigate } from "react-router-dom";
 import { useDropzone } from "react-dropzone";
 import { v4 } from "uuid";
@@ -18,6 +18,7 @@ import {
 } from "@ff-mern/ff-types";
 import { ref, uploadString } from "firebase/storage";
 import { useCreateLeagueMutation } from "../../hooks/query/useCreateLeagueMutation";
+import { IncDecInput } from "./IncDecInput";
 
 function CreateLeague() {
   const [numTeams, setNumTeams] = useState(0);
@@ -29,6 +30,7 @@ function CreateLeague() {
   const [leagueName, setLeagueName] = useState("");
   const [posInfo, setPosInfo] = useState<PositionInfo>(emptyDefaultPositions);
   const [numWeeks, setNumWeeks] = useState(0);
+  const [superflexLineups, setSuperflexLineups] = useState("0");
   const [scoring, setScoring] = useState("Standard");
   const [imageUrl, setImageUrl] = useState(
     `${process.env.REACT_APP_DEFAULT_LOGO}`
@@ -39,6 +41,7 @@ function CreateLeague() {
     posInfo,
     scoring,
     numWeeks,
+    numSuperflex: parseInt(superflexLineups),
   });
 
   const onDrop = useCallback((acceptedFiles) => {
@@ -89,6 +92,9 @@ function CreateLeague() {
         teams.forEach((team) => {
           Team.updateNumWeeks(team, parseInt(evtKey));
         });
+        break;
+      case "superflex":
+        setSuperflexLineups(evtKey);
         break;
     }
   }
@@ -176,6 +182,15 @@ function CreateLeague() {
             handleClick={setScoring}
             scoring={scoring as ScoringType}
           />
+          <Row>
+            <Form.Label>Number of superflex lineups:</Form.Label>
+            <Col sm={2}>
+              <IncDecInput
+                value={superflexLineups}
+                onChange={(val) => handleSizeChange(val, "superflex")}
+              />
+            </Col>
+          </Row>
           <h4>League Logo</h4>
           <Row className="mb-3">
             <div {...getRootProps({ className: "dropzone" })}>

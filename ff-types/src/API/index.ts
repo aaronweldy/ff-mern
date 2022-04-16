@@ -53,6 +53,6 @@ export type TeamFantasyPositionPerformance = Record<
 >;
 
 export type TeamToSchedule = Record<
-  AbbreviatedNflTeam,
+  FullNflTeam,
   Record<Week, AbbreviatedNflTeam | "BYE">
 >;

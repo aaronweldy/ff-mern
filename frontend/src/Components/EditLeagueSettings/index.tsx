@@ -18,6 +18,7 @@ import {
 import { ref, getDownloadURL, uploadString } from "firebase/storage";
 import { useTeams } from "../../hooks/query/useTeams";
 import { useUpdateLeagueMutation } from "../../hooks/query/useUpdateLeagueMutation";
+import { IncDecInput } from "../CreateLeague/IncDecInput";
 
 function EditLeagueSettings() {
   const { id } = useParams() as { id: string };
@@ -31,6 +32,7 @@ function EditLeagueSettings() {
   const [leagueName, setLeagueName] = useState("");
   const [posInfo, setPosInfo] = useState<PositionInfo>(emptyDefaultPositions);
   const [numWeeks, setNumWeeks] = useState(0);
+  const [numSuperflex, setNumSuperflex] = useState("0");
   const [changedLogo, setChangedLogo] = useState(false);
   const [imageUrl, setImageUrl] = useState(
     `${process.env.REACT_APP_DEFAULT_LOGO}`
@@ -41,6 +43,7 @@ function EditLeagueSettings() {
     deletedTeams,
     leagueName,
     posInfo,
+    numSuperflex: parseInt(numSuperflex),
   });
   useEffect(() => {
     if (league) {
@@ -56,6 +59,7 @@ function EditLeagueSettings() {
       setLeagueName(league.name);
       setNumWeeks(league.numWeeks);
       setPosInfo(league.lineupSettings);
+      setNumSuperflex(league.numSuperflex.toString());
     }
   }, [league, initTeams, teams.length]);
 
@@ -94,6 +98,10 @@ function EditLeagueSettings() {
   function handleSizeChange(evtKey: string) {
     setNumWeeks(parseInt(evtKey, 10));
     teams.forEach((team) => Team.updateNumWeeks(team, parseInt(evtKey, 10)));
+  }
+
+  function handleSuperflexChange(newNum: string) {
+    setNumSuperflex(newNum);
   }
 
   function handleOverlay(ind: number) {
@@ -179,6 +187,17 @@ function EditLeagueSettings() {
           handleChange={handleInfoChange}
           positionSettings={posInfo}
         />
+        <Row>
+          <Col sm={2}>
+            <Form.Label className="mt-1">Superflex Lineups:</Form.Label>
+          </Col>
+          <Col sm={1}>
+            <IncDecInput
+              value={numSuperflex}
+              onChange={handleSuperflexChange}
+            />
+          </Col>
+        </Row>
         <hr />
         <h4>League Logo</h4>
         <Row className="mb-3">

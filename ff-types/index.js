@@ -4,6 +4,7 @@ class League {
         this.commissioners = commissioners;
         this.numWeeks = numWeeks;
         this.lastScoredWeek = 0;
+        this.numSuperflex = 0;
         this.lineupSettings = lineupSettings;
         this.logo = logo;
     }
@@ -98,7 +99,10 @@ const lineupToIterable = (lineup) => {
 
 const sanitizePlayerName = (name) => name.replace(/\./g, "").toLowerCase();
 const sanitizeNflScheduleTeamName = (name) => {
-    return name.replace(/\@/g, "");
+    return name
+        .replace(/\@/g, "")
+        .replace("JAC", "JAX")
+        .replace("WAS", "WSH");
 };
 const convertedScoringTypes = {
     QB: {

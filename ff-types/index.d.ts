@@ -7,6 +7,7 @@ declare class League {
     lineupSettings: LineupSettings;
     lastScoredWeek: number;
     numWeeks: number;
+    numSuperflex: number;
     constructor(name: string, commissioners: string[], numWeeks: number, lineupSettings: LineupSettings, logo: string);
 }
 
@@ -87,6 +88,7 @@ declare type TeamWeekInfo = {
     weekScore: number;
     addedPoints: number;
     finalizedLineup: FinalizedLineup;
+    isSuperflex: boolean;
 };
 declare type FinalizedLineup = Record<Position, FinalizedPlayer[]>;
 declare const lineupToIterable: (lineup: FinalizedLineup) => FinalizedPlayer[];
@@ -125,16 +127,16 @@ declare type RunScoresResponse = {
 };
 declare type FantasyPerformanceByPosition = Record<SinglePosition, number>;
 declare type TeamFantasyPositionPerformance = Record<FullNflTeam, FantasyPerformanceByPosition>;
-declare type TeamToSchedule = Record<AbbreviatedNflTeam, Record<Week, AbbreviatedNflTeam | "BYE">>;
-
-declare const sanitizePlayerName: (name: string) => string;
-declare const sanitizeNflScheduleTeamName: (name: string) => string;
-declare const convertedScoringTypes: Record<SinglePosition, Partial<Record<ScoringCategory, StatKey>>>;
-declare const scoringTypes: string[];
+declare type TeamToSchedule = Record<FullNflTeam, Record<Week, AbbreviatedNflTeam | "BYE">>;
 
 declare type FullNflTeam = "green bay packers" | "pittsburgh steelers" | "kansas city chiefs" | "new england patriots" | "buffalo bills" | "carolina panthers" | "seattle seahawks" | "indianapolis colts" | "arizona cardinals" | "baltimore ravens" | "houston texans" | "new orleans saints" | "philadelphia eagles" | "denver broncos" | "detroit lions" | "minnesota vikings" | "atlanta falcons" | "new york giants" | "dallas cowboys" | "jacksonville jaguars" | "miami dolphins" | "cincinnati bengals" | "las vegas raiders" | "tampa bay buccaneers" | "los angeles rams" | "chicago bears" | "cleveland browns" | "los angeles chargers" | "san francisco 49ers" | "new york jets" | "washington commanders" | "tennessee titans";
 declare type AbbreviatedNflTeam = "ARI" | "ATL" | "BAL" | "BUF" | "CAR" | "CHI" | "CIN" | "CLE" | "DAL" | "DEN" | "DET" | "GB" | "HOU" | "IND" | "JAC" | "JAX" | "KC" | "LAC" | "LAR" | "LV" | "MIA" | "MIN" | "NE" | "NO" | "NYG" | "NYJ" | "PHI" | "PIT" | "SEA" | "SF" | "TB" | "TEN" | "WAS" | "WSH";
 declare const AbbreviationToFullTeam: Record<AbbreviatedNflTeam, FullNflTeam>;
 declare type Week = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "18";
+
+declare const sanitizePlayerName: (name: string) => string;
+declare const sanitizeNflScheduleTeamName: (name: string) => AbbreviatedNflTeam;
+declare const convertedScoringTypes: Record<SinglePosition, Partial<Record<ScoringCategory, StatKey>>>;
+declare const scoringTypes: string[];
 
 export { AbbreviatedNflTeam, AbbreviationToFullTeam, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, League, LeagueAPIResponse, LineupSettings, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, Qualifier, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, SinglePosition, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Week, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes };

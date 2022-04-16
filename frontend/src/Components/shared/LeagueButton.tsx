@@ -1,5 +1,6 @@
 import React from "react";
 import { Button, Col, Row } from "react-bootstrap";
+import { FaArrowLeft } from "react-icons/fa";
 import "../../CSS/LeaguePages.css";
 
 type LeagueButtonProps = {
@@ -13,9 +14,9 @@ export default function LeagueButton({ id }: LeagueButtonProps) {
         <Button
           className="left-corner"
           href={`/league/${id}/`}
-          variant="primary"
+          variant="outline-dark"
         >
-          Back to league home
+          <FaArrowLeft />
         </Button>
       </Col>
     </Row>

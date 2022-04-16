@@ -73,7 +73,7 @@ export const TeamTable = ({
       return acc;
     }, [])
     .sort(lineupSorter);
-
+  console.log(name, players);
   return (
     <div className="team-table-wrapper">
       <Table striped bordered hover className="w-auto left-scrollable-table">
@@ -163,18 +163,25 @@ export const TeamTable = ({
                       <>
                         <td className="centered-td align-middle">
                           <div>
-                            {player.team ? nflSchedule[player.team][week] : ""}
+                            {player.team &&
+                              nflSchedule[AbbreviationToFullTeam[player.team]][
+                                week
+                              ]}
                           </div>
                         </td>
                         <td className="centered-td align-middle">
                           {player.team &&
-                          nflSchedule[player.team][week] !== "BYE" ? (
+                          nflSchedule[AbbreviationToFullTeam[player.team]][
+                            week
+                          ] !== "BYE" ? (
                             <NflRankedText
                               rank={
                                 nflDefenseStats[
                                   AbbreviationToFullTeam[
                                     sanitizeNflScheduleTeamName(
-                                      nflSchedule[player.team][week]
+                                      nflSchedule[
+                                        AbbreviationToFullTeam[player.team]
+                                      ][week]
                                     ) as AbbreviatedNflTeam
                                   ]
                                 ][player.position]

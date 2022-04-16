@@ -33,7 +33,7 @@ const getCategoryHeaders = (
       return leagueCategories.map((stat, i) => {
         const cat = stat.category;
         return (
-          <th key={i}>
+          <th className="sticky-th" key={i}>
             {cat.qualifier}{" "}
             {cat.qualifier === "between"
               ? `${cat.thresholdMin}/${cat.thresholdMax}`
@@ -43,7 +43,11 @@ const getCategoryHeaders = (
         );
       });
     case "statistics":
-      return scoringTypes.map((type, i) => <th key={i}>{type}</th>);
+      return scoringTypes.map((type, i) => (
+        <th className="sticky-th" key={i}>
+          {type}
+        </th>
+      ));
   }
 };
 
@@ -112,19 +116,13 @@ const TeamScoringBreakdown = ({
         </Col>
       </Row>
       <Row className="left-table-wrapper">
-        <Table
-          striped
-          bordered
-          hover
-          className="left-scrollable-table"
-          style={{ maxHeight: "90vh" }}
-        >
+        <Table striped bordered hover className="left-scrollable-table">
           <thead>
             <tr>
-              <th>Lineup</th>
-              <th>Position</th>
-              <th>Player Name</th>
-              <th>Points</th>
+              <th className="sticky-th">Lineup</th>
+              <th className="sticky-th">Position</th>
+              <th className="sticky-th">Player Name</th>
+              <th className="sticky-th">Points</th>
               {scoringHeaders}
             </tr>
           </thead>

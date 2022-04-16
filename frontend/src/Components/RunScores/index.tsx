@@ -114,7 +114,7 @@ const RunScores = () => {
       </Row>
       <Row>
         <Col className="mt-3">
-          Display:{" "}
+          <span className="mr-3">Display:</span>
           <StatTypeToggleButton
             selected={selectedDisplay}
             onChange={handleToggle}

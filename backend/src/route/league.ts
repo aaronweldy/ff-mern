@@ -64,7 +64,8 @@ router.get("/:id/teams/", async (req, res) => {
 });
 
 router.post("/create/", async (req, res) => {
-  const { league, teams, logo, posInfo, scoring, numWeeks } = req.body;
+  const { league, teams, logo, posInfo, scoring, numWeeks, numSuperflex } =
+    req.body;
   const leagueId = v4();
   db.collection("leagues")
     .doc(leagueId)
@@ -73,6 +74,7 @@ router.post("/create/", async (req, res) => {
       lineupSettings: posInfo,
       logo,
       numWeeks,
+      numSuperflex,
       lastScoredWeek: 0,
     })
     .then(async () => {

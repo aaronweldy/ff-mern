@@ -146,6 +146,7 @@
   top: 0;
   background-color: white;
   z-index: 2;
+  font-size: 0.75em;
 }
 
 .table-wrapper {
@@ -163,6 +164,7 @@
 .left-table-wrapper {
   overflow-x: auto;
   max-width: 90vw;
+  max-height: 85vh;
 }
 
 .centered-scrollable-table {

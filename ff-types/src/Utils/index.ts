@@ -1,10 +1,16 @@
 import { SinglePosition, ScoringCategory, StatKey } from "..";
+import { AbbreviatedNflTeam } from "../Constants";
 
 export const sanitizePlayerName = (name: string) =>
   name.replace(/\./g, "").toLowerCase();
 
-export const sanitizeNflScheduleTeamName = (name: string) => {
-  return name.replace(/\@/g, "");
+export const sanitizeNflScheduleTeamName = (
+  name: string
+): AbbreviatedNflTeam => {
+  return name
+    .replace(/\@/g, "")
+    .replace("JAC", "JAX")
+    .replace("WAS", "WSH") as AbbreviatedNflTeam;
 };
 
 export const convertedScoringTypes: Record<

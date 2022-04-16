@@ -57,6 +57,7 @@ export type TeamWeekInfo = {
   weekScore: number;
   addedPoints: number;
   finalizedLineup: FinalizedLineup;
+  isSuperflex: boolean;
 };
 
 export type FinalizedLineup = Record<Position, FinalizedPlayer[]>;

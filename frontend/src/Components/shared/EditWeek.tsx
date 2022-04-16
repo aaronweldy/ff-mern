@@ -10,7 +10,7 @@ type EditWeekProps = {
 const EditWeek = ({ week, onChange, maxWeeks = 18 }: EditWeekProps) => {
   return (
     <Row className="mt-3 mb-3 align-items-center">
-      <Col sm="auto">
+      <Col sm="auto" className="mt-1">
         <Form.Label>Week:</Form.Label>
       </Col>
       <Col sm="auto">

@@ -1,17 +1,14 @@
 {
   "compilerOptions": {
-      "esModuleInterop": true,
-      "target": "es6",
-      "noImplicitAny": true,
-      "moduleResolution": "node",
-      "sourceMap": true,
-      "outDir": "dist",
-      "declaration": true,
-      "composite": true,
-      "skipLibCheck": true
+    "esModuleInterop": true,
+    "target": "es6",
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "declaration": true,
+    "composite": true,
+    "skipLibCheck": true
   },
-  "include": [
-      "src/**/*",
-      "src/*"
-  ]
+  "include": ["src/**/*", "src/*"]
 }

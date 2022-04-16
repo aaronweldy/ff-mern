@@ -60,7 +60,7 @@ router.get("/:id/teams/", (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 }));
 router.post("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { league, teams, logo, posInfo, scoring, numWeeks } = req.body;
+    const { league, teams, logo, posInfo, scoring, numWeeks, numSuperflex } = req.body;
     const leagueId = v4();
     db.collection("leagues")
         .doc(leagueId)
@@ -69,6 +69,7 @@ router.post("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function
         lineupSettings: posInfo,
         logo,
         numWeeks,
+        numSuperflex,
         lastScoredWeek: 0,
     })
         .then(() => __awaiter(void 0, void 0, void 0, function* () {

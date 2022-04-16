@@ -4,6 +4,7 @@ import admin from "firebase-admin";
 import scraper from "table-scraper";
 import {
   AbbreviatedNflTeam,
+  AbbreviationToFullTeam,
   FullNflTeam,
   TeamFantasyPositionPerformance,
   TeamToSchedule,
@@ -14,8 +15,6 @@ import fetch from "node-fetch";
 
 admin.initializeApp();
 const db = admin.firestore();
-
-//const positions = ["qb", "wr", "rb", "te", "k"];
 
 type ScrapedTeamData = {
   Team: string;
@@ -61,9 +60,10 @@ export const fetchNflSchedule = functions.pubsub
     )[0];
     const dbUpdate: TeamToSchedule = {} as TeamToSchedule;
     for (let i = 2; i < data.length; i++) {
-      dbUpdate[
-        data[i]["0"] === "WSH" ? "WAS" : (data[i]["0"] as AbbreviatedNflTeam)
-      ] = data[i] as Record<Week | "0", AbbreviatedNflTeam>;
+      dbUpdate[AbbreviationToFullTeam[data[i]["0"]]] = data[i] as Record<
+        Week | "0",
+        AbbreviatedNflTeam
+      >;
     }
     db.collection("nflTeamSchedules").doc("dist").set(dbUpdate);
   });

@@ -13,11 +13,7 @@ export const useLeagueScoringData = (id: string) => {
   );
   useEffect(() => {
     if (league) {
-      setWeek(
-        league.lastScoredWeek + 1 < league.numWeeks
-          ? league.lastScoredWeek + 1
-          : league.lastScoredWeek
-      );
+      setWeek(league.lastScoredWeek);
     }
   }, [league]);
 

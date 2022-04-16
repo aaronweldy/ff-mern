@@ -7,6 +7,7 @@ type CreateLeagueType = {
   posInfo: PositionInfo;
   scoring: string;
   numWeeks: number;
+  numSuperflex: number;
 };
 
 type CreateLeagueResponse = {

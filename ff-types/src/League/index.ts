@@ -11,6 +11,7 @@ export class League {
   public lineupSettings: LineupSettings;
   public lastScoredWeek: number;
   public numWeeks: number;
+  public numSuperflex: number;
 
   constructor(
     name: string,
@@ -23,6 +24,7 @@ export class League {
     this.commissioners = commissioners;
     this.numWeeks = numWeeks;
     this.lastScoredWeek = 0;
+    this.numSuperflex = 0;
     this.lineupSettings = lineupSettings;
     this.logo = logo;
   }
