@@ -1,6 +1,7 @@
 import { Team } from "@ff-mern/ff-types";
 import { useState } from "react";
-import { useQuery } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { UpdateTeamsResponse } from "./useUpdateTeamsMutation";
 
 const fetchSingleTeam = async (teamId?: string) => {
   const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/${teamId}/`;
@@ -17,6 +18,7 @@ type SingleTeamResponse = {
 
 export const useSingleTeam = (teamId?: string) => {
   const [team, setTeam] = useState<Team>();
+  const queryClient = useQueryClient();
   const { isLoading, isSuccess } = useQuery<SingleTeamResponse, Error>(
     ["team", teamId],
     () => fetchSingleTeam(teamId),
@@ -27,5 +29,26 @@ export const useSingleTeam = (teamId?: string) => {
       enabled: !!teamId,
     }
   );
-  return { team, setTeam, isLoading, isSuccess };
+  const updateTeamMutation = useMutation<UpdateTeamsResponse, Error, Team>(
+    async (team: Team) => {
+      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/updateTeams/`;
+      const body = JSON.stringify({ teams: [team] });
+      const req = {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body,
+      };
+      const resp = await fetch(url, req);
+      if (!resp.ok) {
+        throw new Error(resp.statusText);
+      }
+      return resp.json();
+    },
+    {
+      onSuccess: (data) => {
+        queryClient.setQueryData(["team", teamId], { team: data.teams[0] });
+      },
+    }
+  );
+  return { team, setTeam, isLoading, isSuccess, updateTeamMutation };
 };

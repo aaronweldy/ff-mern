@@ -1,0 +1,26 @@
+div .dropdown-box {
+  display: flex;
+}
+
+.dropdown-text {
+  color: lightgray;
+}
+
+#teamsDropdown::after {
+  color: lightgray;
+}
+
+.team-name {
+  font-weight: bold;
+}
+
+.league-name {
+  color: darkgray;
+  padding: 0.1em;
+}
+
+.league-name:hover {
+  background-color: darkgray;
+  color: white;
+  border-radius: 10%;
+}

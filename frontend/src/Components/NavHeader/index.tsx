@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { Navbar, Button } from "react-bootstrap";
-import { Navigate } from "react-router-dom";
+import React from "react";
+import { Navbar } from "react-bootstrap";
 import { auth } from "../../firebase-config";
 import { useAuthUser } from "@react-query-firebase/auth";
+import { LogOutButtons } from "./LogOutButtons";
+import { LoginButtons } from "./LoginButtons";
 
 const NavHeader = () => {
   const userQuery = useAuthUser("user", auth);
@@ -28,66 +29,5 @@ const NavHeader = () => {
     </Navbar>
   );
 };
-
-function LoginButtons() {
-  return (
-    <Navbar.Collapse className="justify-content-end">
-      <Button variant="primary" href="/login/">
-        Login or Create Account
-      </Button>
-    </Navbar.Collapse>
-  );
-}
-
-function LogOutButtons() {
-  const [username, setUsername] = useState("");
-  const [redirect, setRedirect] = useState(false);
-  const user = auth.currentUser;
-  useEffect(() => {
-    const authFunc = auth.onAuthStateChanged((newUser) => {
-      if (newUser) {
-        setUsername(newUser.email ?? "");
-      } else {
-        setRedirect(true);
-      }
-    });
-    return () => authFunc();
-  }, [user]);
-
-  function handleClick() {
-    auth
-      .signOut()
-      .then(() => {
-        setRedirect(true);
-      })
-      .catch((e) => console.log(e));
-  }
-
-  if (redirect) {
-    return <Navigate to="/login/" />;
-  }
-  return (
-    <Navbar.Collapse className="justify-content-end">
-      <Navbar.Text className="mr-3">
-        Welcome
-        {user ? <a href={`/user/${user.uid}/`}> {username}!</a> : "!"}
-      </Navbar.Text>
-      {user && user.photoURL ? (
-        <img
-          src={user.photoURL}
-          className="d-inline-block align-top mr-3"
-          width="auto"
-          height="35"
-          alt="User logo"
-        />
-      ) : (
-        ""
-      )}
-      <Button variant="primary" onClick={handleClick} type="submit">
-        Logout
-      </Button>
-    </Navbar.Collapse>
-  );
-}
 
 export default NavHeader;

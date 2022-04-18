@@ -33,7 +33,7 @@ const App = () => {
         <Routes>
           <Route path="/league/create/" element={<CreateLeague />} />
           <Route path="/league/join/" element={<JoinLeague />} />
-          <Route path="/league" element={<SecureRoute />}>
+          <Route element={<SecureRoute />}>
             <Route path="/league/:leagueId/team/:id/" element={<TeamPage />} />
             <Route path="/league/:id/editTeams/" element={<EditRosters />} />
             <Route

@@ -18,18 +18,17 @@ import { useNflSchedule } from "../../hooks/query/useNflSchedule";
 import { useNflDefenseStats } from "../../hooks/query/useNflDefenseStats";
 import { useLeagueScoringData } from "../../hooks/useLeagueScoringData";
 import { useSingleTeam } from "../../hooks/query/useSingleTeam";
-import { useUpdateSingleTeamMutation } from "../../hooks/query/useUpdateSingleTeamMutation";
 import { TeamSelectionDropdown } from "../shared/TeamSelectionDropdown";
 
 export default function AdjustLineups() {
   const { id } = useParams() as { id: string };
   const [selectedTeamId, setSelectedTeamId] = useState<string>();
   const { league, teams, week, setWeek } = useLeagueScoringData(id);
-  const { team: selectedTeam } = useSingleTeam(selectedTeamId);
+  const { team: selectedTeam, updateTeamMutation } =
+    useSingleTeam(selectedTeamId);
   const scheduleQuery = useNflSchedule();
   const defenseStatsQuery = useNflDefenseStats();
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
-  const { mutate: updateTeam } = useUpdateSingleTeamMutation(selectedTeamId);
   const [lineupsPerTeam, setLineupsPerTeam] = useState(
     {} as Record<string, FinalizedLineup>
   );
@@ -68,7 +67,7 @@ export default function AdjustLineups() {
         lineupsPerTeam[teamId]
       );
       selectedTeam.weekInfo[week].finalizedLineup = lineupsPerTeam[teamId];
-      updateTeam(selectedTeam);
+      updateTeamMutation.mutate(selectedTeam);
     }
   };
 
@@ -76,15 +75,9 @@ export default function AdjustLineups() {
     if (teamId && selectedTeam) {
       handleBenchPlayer(selectedPlayer, lineupsPerTeam[teamId]);
       selectedTeam.weekInfo[week].finalizedLineup = lineupsPerTeam[teamId];
-      updateTeam(selectedTeam);
+      updateTeamMutation.mutate(selectedTeam);
     }
   };
-
-  /* const submitLineups = () => {
-    updateTeams();
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 8000);
-  };*/
 
   return (
     <Container id="small-left">

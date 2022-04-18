@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLeague } from "./query/useLeague";
+import { useNflDefenseStats } from "./query/useNflDefenseStats";
+import { useNflSchedule } from "./query/useNflSchedule";
 import { usePlayerScores } from "./query/usePlayerScores";
 import { useTeams } from "./query/useTeams";
 
@@ -11,6 +13,8 @@ export const useLeagueScoringData = (id: string) => {
     id,
     week
   );
+  const nflScheduleQuery = useNflSchedule();
+  const defenseStatsQuery = useNflDefenseStats();
   useEffect(() => {
     if (league) {
       setWeek(league.lastScoredWeek);
@@ -18,8 +22,20 @@ export const useLeagueScoringData = (id: string) => {
   }, [league]);
 
   const isLoading = useMemo(() => {
-    return leagueLoading || teamsLoading || scoresLoading;
-  }, [leagueLoading, teamsLoading, scoresLoading]);
+    return (
+      leagueLoading ||
+      teamsLoading ||
+      scoresLoading ||
+      nflScheduleQuery.isLoading ||
+      defenseStatsQuery.isLoading
+    );
+  }, [
+    leagueLoading,
+    teamsLoading,
+    scoresLoading,
+    nflScheduleQuery,
+    defenseStatsQuery,
+  ]);
 
   return {
     league,
@@ -29,5 +45,9 @@ export const useLeagueScoringData = (id: string) => {
     week,
     setWeek,
     isLoading,
+    nflScheduleQuery,
+    defenseStatsQuery,
+    teamsLoading,
+    leagueLoading,
   };
 };

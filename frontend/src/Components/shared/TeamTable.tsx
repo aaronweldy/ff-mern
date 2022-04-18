@@ -73,7 +73,7 @@ export const TeamTable = ({
       return acc;
     }, [])
     .sort(lineupSorter);
-  console.log(name, players);
+
   return (
     <div className="team-table-wrapper">
       <Table striped bordered hover className="w-auto left-scrollable-table">

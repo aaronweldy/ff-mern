@@ -6,10 +6,11 @@ import { Spinner } from "react-bootstrap";
 
 const SecureRoute = () => {
   const user = useAuthUser(["user"], auth);
+  console.log(user);
   if (user.isLoading) {
     return <Spinner animation="grow" />;
   }
-  if (user.isSuccess) {
+  if (user.isSuccess && user.data) {
     return <Outlet />;
   }
   return <Navigate to="/login/" />;
