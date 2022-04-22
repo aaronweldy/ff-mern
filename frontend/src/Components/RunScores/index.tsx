@@ -70,10 +70,10 @@ const RunScores = () => {
         const teamInd = teams.findIndex((check) => check.id === error.team.id);
         const info = teams[teamInd].weekInfo[week || 1];
         const playerInd = info.finalizedLineup[error.player.position].findIndex(
-          (check) => check.name === error.player.name
+          (check) => check.fullName === error.player.fullName
         );
         const backupInd = info.finalizedLineup.bench.findIndex(
-          (check) => check.name === error.player.backup
+          (check) => check.fullName === error.player.backup
         );
         const backupPlayer = info.finalizedLineup.bench[backupInd];
         backupPlayer.lineup = error.player.lineup;
@@ -90,7 +90,7 @@ const RunScores = () => {
           return oldErrors;
         });
         setText(
-          `Replaced ${error.player.name} with ${error.player.backup}. Rerun scores to finalize.`
+          `Replaced ${error.player.fullName} with ${error.player.backup}. Rerun scores to finalize.`
         );
         setShow(true);
         break;

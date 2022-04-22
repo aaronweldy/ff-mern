@@ -13,6 +13,47 @@ export const sanitizeNflScheduleTeamName = (
     .replace("WAS", "WSH") as AbbreviatedNflTeam;
 };
 
+export const playerTeamIsNflAbbreviation = (
+  team: string
+): team is AbbreviatedNflTeam => {
+  return (
+    team === "ARI" ||
+    team === "ATL" ||
+    team === "BAL" ||
+    team === "BUF" ||
+    team === "CAR" ||
+    team === "CHI" ||
+    team === "CIN" ||
+    team === "CLE" ||
+    team === "DAL" ||
+    team === "DEN" ||
+    team === "DET" ||
+    team === "GB" ||
+    team === "HOU" ||
+    team === "IND" ||
+    team === "JAX" ||
+    team === "JAC" ||
+    team === "KC" ||
+    team === "LAC" ||
+    team === "LAR" ||
+    team === "MIA" ||
+    team === "MIN" ||
+    team === "NE" ||
+    team === "NO" ||
+    team === "NYG" ||
+    team === "NYJ" ||
+    team === "OAK" ||
+    team === "PHI" ||
+    team === "PIT" ||
+    team === "SEA" ||
+    team === "SF" ||
+    team === "TB" ||
+    team === "TEN" ||
+    team === "WAS" ||
+    team === "WSH"
+  );
+};
+
 export const convertedScoringTypes: Record<
   SinglePosition,
   Partial<Record<ScoringCategory, StatKey>>

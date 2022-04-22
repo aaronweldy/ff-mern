@@ -4,7 +4,6 @@ import {
   convertedScoringTypes,
   PlayerScoreData,
   Position,
-  sanitizePlayerName,
   ScoringCategory,
   ScoringSetting,
   scoringTypes,
@@ -14,7 +13,6 @@ import { Team, StoredPlayerInformation } from "@ff-mern/ff-types";
 import { lineupSorter } from "../../constants";
 import "../../CSS/LeaguePages.css";
 import { ScoringToggleType } from "../shared/StatTypeToggleButton";
-import { capitalizePlayerName } from "../utils/capitalizePlayerName";
 
 type TeamScoringBreakdownProps = {
   leagueScoringCategories: ScoringSetting[];
@@ -133,13 +131,13 @@ const TeamScoringBreakdown = ({
                 const players =
                   team.weekInfo[week].finalizedLineup[pos as Position];
                 players.forEach((player, i) => {
-                  const data = playerData[sanitizePlayerName(player.name)];
+                  const data = playerData[player.sanitizedName];
                   acc.push(
                     <tr
                       className={
                         pos === "bench" && i === 0 ? "top-bordered-row" : ""
                       }
-                      key={player.name + pos + i.toString()}
+                      key={player.fullName + pos + i.toString()}
                     >
                       <td className="gray-col">
                         <span>{player.lineup}</span>
@@ -148,7 +146,7 @@ const TeamScoringBreakdown = ({
                         <span>{player.position}</span>
                       </td>
                       <td className="sticky-td sticky-col gray-col">
-                        {capitalizePlayerName(player.name)}
+                        {player.fullName}
                       </td>
                       <td>
                         <span>

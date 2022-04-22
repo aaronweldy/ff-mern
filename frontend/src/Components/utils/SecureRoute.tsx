@@ -6,7 +6,6 @@ import { Spinner } from "react-bootstrap";
 
 const SecureRoute = () => {
   const user = useAuthUser(["user"], auth);
-  console.log(user);
   if (user.isLoading) {
     return <Spinner animation="grow" />;
   }

@@ -7,13 +7,7 @@ import LeagueButton from "../shared/LeagueButton";
 import ImageModal from "../shared/ImageModal";
 import EditWeek from "../shared/EditWeek";
 import "../../CSS/LeaguePages.css";
-import {
-  LineupSettings,
-  FinalizedPlayer,
-  Week,
-  Position,
-  TeamWeekInfo,
-} from "@ff-mern/ff-types";
+import { LineupSettings, FinalizedPlayer, Week } from "@ff-mern/ff-types";
 import { useTeamTable } from "../../hooks/useTeamTable";
 import { Header } from "./Header";
 import { getWeeklyLineup } from "../utils/getWeeklyLineup";

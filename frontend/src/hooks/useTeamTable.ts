@@ -12,9 +12,9 @@ export const useTeamTable = () => {
     ) => {
       console.log(lineup);
       const swapIndex = lineup[swapPlayer.lineup].findIndex(
-        (v) => v.name === swapPlayer.name
+        (v) => v.fullName === swapPlayer.fullName
       );
-      if (swapPlayer.name === "") {
+      if (swapPlayer.fullName === "") {
         switch (name) {
           case "starters":
           case "bench":
@@ -25,7 +25,7 @@ export const useTeamTable = () => {
           case "backup":
             break;
         }
-      } else if (selectedPlayer.name === "") {
+      } else if (selectedPlayer.fullName === "") {
         switch (name) {
           case "starters":
           case "bench":
@@ -47,7 +47,7 @@ export const useTeamTable = () => {
             selectedPlayer.lineup = temp;
             break;
           case "backup":
-            selectedPlayer.backup = swapPlayer.name;
+            selectedPlayer.backup = swapPlayer.fullName;
             break;
         }
       }
@@ -59,13 +59,13 @@ export const useTeamTable = () => {
     (selectedPlayer: FinalizedPlayer, lineup: FinalizedLineup) => {
       lineup.bench.push(
         new FinalizedPlayer(
-          selectedPlayer.name,
+          selectedPlayer.fullName,
           selectedPlayer.position,
           selectedPlayer.team,
-          'bench'
+          "bench"
         )
       );
-      selectedPlayer.name = "";
+      selectedPlayer.fullName = "";
       selectedPlayer.team = "";
     },
     []

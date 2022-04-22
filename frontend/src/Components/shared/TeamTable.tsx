@@ -6,6 +6,7 @@ import {
   FinalizedLineup,
   FinalizedPlayer,
   LineupSettings,
+  playerTeamIsNflAbbreviation,
   Position,
   sanitizeNflScheduleTeamName,
   TeamFantasyPositionPerformance,
@@ -14,7 +15,6 @@ import {
 } from "@ff-mern/ff-types";
 import { lineupSorter } from "../../constants";
 import { NflRankedText } from "./NflRankedText";
-import { capitalizePlayerName } from "../utils/capitalizePlayerName";
 
 type TableType = "starters" | "bench" | "backup";
 
@@ -96,12 +96,13 @@ export const TeamTable = ({
             const newRows = players[pos];
             acc = acc.concat(
               newRows.map((player, i) => {
+                console.log(player);
                 return (
                   <tr
                     key={
                       player.position +
                       player.lineup +
-                      player.name +
+                      player.fullName +
                       i.toString()
                     }
                   >
@@ -118,7 +119,7 @@ export const TeamTable = ({
                                 key={
                                   oppPlayer.position +
                                   oppPlayer.lineup +
-                                  oppPlayer.name +
+                                  oppPlayer.fullName +
                                   j.toString()
                                 }
                                 onClick={() =>
@@ -131,12 +132,11 @@ export const TeamTable = ({
                                   )
                                 }
                               >
-                                {oppPlayer.lineup}:{" "}
-                                {capitalizePlayerName(oppPlayer.name)}
+                                {oppPlayer.lineup}: {oppPlayer.fullName}
                               </Dropdown.Item>
                             );
                           })}
-                          {name === "starters" && player.name !== "" ? (
+                          {name === "starters" && player.fullName !== "" ? (
                             <Dropdown.Item
                               onClick={() => handleBenchPlayer(player, teamId)}
                             >
@@ -152,9 +152,7 @@ export const TeamTable = ({
                       </span>
                     </td>
                     <td className="centered-td align-middle">
-                      <span className="flex-nowrap">
-                        {capitalizePlayerName(player.name)}
-                      </span>
+                      <span className="flex-nowrap">{player.fullName}</span>
                     </td>
                     <td className="centered-td align-middle">
                       <span>{player.team}</span>
@@ -164,6 +162,7 @@ export const TeamTable = ({
                         <td className="centered-td align-middle">
                           <div>
                             {player.team &&
+                              playerTeamIsNflAbbreviation(player.team) &&
                               nflSchedule[AbbreviationToFullTeam[player.team]][
                                 week
                               ]}
@@ -171,6 +170,7 @@ export const TeamTable = ({
                         </td>
                         <td className="centered-td align-middle">
                           {player.team &&
+                          playerTeamIsNflAbbreviation(player.team) &&
                           nflSchedule[AbbreviationToFullTeam[player.team]][
                             week
                           ] !== "BYE" ? (
@@ -197,11 +197,7 @@ export const TeamTable = ({
                       <td>
                         <SplitButton
                           id="backup"
-                          title={
-                            !player.backup
-                              ? "None"
-                              : capitalizePlayerName(player.backup)
-                          }
+                          title={!player.backup ? "None" : player.backup}
                           variant="secondary"
                         >
                           {findOppositePlayers(player, true, players).map(
@@ -219,7 +215,7 @@ export const TeamTable = ({
                                     )
                                   }
                                 >
-                                  {capitalizePlayerName(oppPlayer.name)}
+                                  {oppPlayer.fullName}
                                 </Dropdown.Item>
                               );
                             }

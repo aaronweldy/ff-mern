@@ -1,7 +1,6 @@
 import React from "react";
 import { Table, Button } from "react-bootstrap";
 import { ScoringError } from "@ff-mern/ff-types";
-import { capitalizePlayerName } from "../utils/capitalizePlayerName";
 
 type ErrorTableProps = {
   errors: ScoringError[];
@@ -21,7 +20,7 @@ const ErrorTable = ({ errors, handleFix }: ErrorTableProps) => {
       <tbody>
         {errors.map((error, i) => (
           <tr key={i}>
-            <td>{capitalizePlayerName(error.player.name)}</td>
+            <td>{error.player.fullName}</td>
             <td>{error.desc}</td>
             <td>
               <Button onClick={() => handleFix(error, i)}>Fix Error</Button>

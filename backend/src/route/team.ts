@@ -15,6 +15,7 @@ router.post("/validateTeams/", (req, res) => {
           .doc(team.id)
           .update({
             ...team,
+            lastUpdated: new Date().toLocaleString(),
             owner: user.uid,
           });
       })
@@ -23,6 +24,7 @@ router.post("/validateTeams/", (req, res) => {
           .doc(team.id)
           .update({
             owner: "default",
+            lastUpdated: new Date().toLocaleString(),
             ...team,
           });
       });
@@ -35,19 +37,21 @@ router.post("/updateTeams/", (req, res) => {
   for (const team of teams) {
     db.collection("teams")
       .doc(team.id)
-      .update({ ...team });
+      .update({ ...team, lastUpdated: new Date().toLocaleString() });
   }
   res.status(200).send({ teams });
 });
 
-router.post("/:id/updateSingleTeamInfo/", (req, res) => {
-  const { url, name } = req.body;
+router.put("/updateSingleTeam/", (req, res) => {
+  const { team } = req.body;
   try {
-    const doc = db.collection("teams").doc(req.params.id);
-    doc.update({ logo: url, name }).then(async () => {
-      const teamData = (await doc.get()).data();
-      res.status(200).send({ team: teamData });
-    });
+    const doc = db.collection("teams").doc(team.id);
+    doc
+      .set({ ...team, lastUpdated: new Date().toLocaleString() })
+      .then(async () => {
+        const teamData = (await doc.get()).data();
+        res.status(200).send({ team: teamData });
+      });
   } catch (e) {
     console.log(e);
     res.status(500).send();

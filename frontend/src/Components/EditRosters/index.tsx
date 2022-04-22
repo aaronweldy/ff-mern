@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import {
   Table,
@@ -13,8 +13,11 @@ import { Typeahead } from "react-bootstrap-typeahead";
 import LeagueButton from "../shared/LeagueButton";
 import { usePlayers } from "../../hooks/query/usePlayers";
 import "react-bootstrap-typeahead/css/Typeahead.css";
-import { RosteredPlayer, AbbreviatedNflTeam } from "@ff-mern/ff-types";
-import { capitalizePlayerName } from "../utils/capitalizePlayerName";
+import {
+  RosteredPlayer,
+  AbbreviatedNflTeam,
+  setPlayerName,
+} from "@ff-mern/ff-types";
 import { useTeams } from "../../hooks/query/useTeams";
 import { useUpdateTeamsMutation } from "../../hooks/query/useUpdateTeamsMutation";
 
@@ -65,7 +68,7 @@ const EditRosters = () => {
 
   const handleInputChange = (team: number, player: number, input: string) => {
     const tempTeams = [...teams];
-    tempTeams[team].rosteredPlayers[player].name = input;
+    setPlayerName(tempTeams[team].rosteredPlayers[player], input);
     setTeams(tempTeams);
   };
 
@@ -174,11 +177,7 @@ const EditRosters = () => {
                               onChange={(selected) =>
                                 handleSelectPlayer(i, j, selected)
                               }
-                              labelKey={(player) =>
-                                player.name
-                                  ? capitalizePlayerName(player.name)
-                                  : ""
-                              }
+                              labelKey={(player) => player.fullName ?? ""}
                             />
                           </td>
                           <td className="centered-td align-middle">

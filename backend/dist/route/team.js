@@ -19,12 +19,12 @@ router.post("/validateTeams/", (req, res) => {
             .then((user) => __awaiter(void 0, void 0, void 0, function* () {
             db.collection("teams")
                 .doc(team.id)
-                .update(Object.assign(Object.assign({}, team), { owner: user.uid }));
+                .update(Object.assign(Object.assign({}, team), { lastUpdated: new Date().toLocaleString(), owner: user.uid }));
         }))
             .catch(() => __awaiter(void 0, void 0, void 0, function* () {
             db.collection("teams")
                 .doc(team.id)
-                .update(Object.assign({ owner: "default" }, team));
+                .update(Object.assign({ owner: "default", lastUpdated: new Date().toLocaleString() }, team));
         }));
     });
     res.status(200).send({ teams });
@@ -34,15 +34,17 @@ router.post("/updateTeams/", (req, res) => {
     for (const team of teams) {
         db.collection("teams")
             .doc(team.id)
-            .update(Object.assign({}, team));
+            .update(Object.assign(Object.assign({}, team), { lastUpdated: new Date().toLocaleString() }));
     }
     res.status(200).send({ teams });
 });
-router.post("/:id/updateSingleTeamInfo/", (req, res) => {
-    const { url, name } = req.body;
+router.put("/updateSingleTeam/", (req, res) => {
+    const { team } = req.body;
     try {
-        const doc = db.collection("teams").doc(req.params.id);
-        doc.update({ logo: url, name }).then(() => __awaiter(void 0, void 0, void 0, function* () {
+        const doc = db.collection("teams").doc(team.id);
+        doc
+            .set(Object.assign(Object.assign({}, team), { lastUpdated: new Date().toLocaleString() }))
+            .then(() => __awaiter(void 0, void 0, void 0, function* () {
             const teamData = (yield doc.get()).data();
             res.status(200).send({ team: teamData });
         }));

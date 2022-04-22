@@ -41,8 +41,10 @@ declare class ScoringError {
 declare type StatKey = "20+" | "ATT" | "CMP" | "Y/CMP" | "FL" | "FPTS" | "FPTS/G" | "G" | "LG" | "Player" | "REC" | "ROST" | "Rank" | "TD" | "TD_2" | "TGT" | "Y/R" | "YDS" | "YDS_2" | "ATT_2" | "Y/A" | "PCT" | "INT" | "1-19" | "20-29" | "30-39" | "40-49" | "50+" | "XPT" | "team" | "position" | "snaps";
 declare type DatabasePlayer = Record<StatKey, string>;
 
+declare const setPlayerName: (player: FinalizedPlayer | RosteredPlayer, name: string) => void;
 declare class FinalizedPlayer {
-    name: string;
+    fullName: string;
+    sanitizedName: string;
     position: SinglePosition;
     team: AbbreviatedNflTeam | "";
     lineup: Position;
@@ -50,7 +52,8 @@ declare class FinalizedPlayer {
     constructor(name: string, position: SinglePosition, team: AbbreviatedNflTeam | "", lineup: Position);
 }
 declare class RosteredPlayer {
-    name: string;
+    fullName: string;
+    sanitizedName: string;
     position: SinglePosition;
     team: AbbreviatedNflTeam;
     constructor(name: string, team: AbbreviatedNflTeam, pos: SinglePosition);
@@ -79,7 +82,7 @@ declare class Team {
     owner: string;
     rosteredPlayers: RosteredPlayer[];
     weekInfo: TeamWeekInfo[];
-    lastUpdated: Date;
+    lastUpdated: string;
     constructor(name: string, leagueName: string, ownerName: string, isCommissioner: boolean, numWeeks: number);
     static updateNumWeeks(team: Team, numWeeks: number): void;
     static sumWeekScore(team: Team, week: number): number;
@@ -136,7 +139,8 @@ declare type Week = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" |
 
 declare const sanitizePlayerName: (name: string) => string;
 declare const sanitizeNflScheduleTeamName: (name: string) => AbbreviatedNflTeam;
+declare const playerTeamIsNflAbbreviation: (team: string) => team is AbbreviatedNflTeam;
 declare const convertedScoringTypes: Record<SinglePosition, Partial<Record<ScoringCategory, StatKey>>>;
 declare const scoringTypes: string[];
 
-export { AbbreviatedNflTeam, AbbreviationToFullTeam, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, League, LeagueAPIResponse, LineupSettings, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, Qualifier, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, SinglePosition, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Week, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes };
+export { AbbreviatedNflTeam, AbbreviationToFullTeam, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, League, LeagueAPIResponse, LineupSettings, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, Qualifier, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, SinglePosition, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Week, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName };

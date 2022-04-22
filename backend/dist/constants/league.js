@@ -27,6 +27,12 @@ export const defaultScoringSettings = {
         {
             position: "QB/WR/RB/TE",
             points: 4,
+            category: { qualifier: "per", threshold: 1, statType: "REC TD" },
+            minimums: [],
+        },
+        {
+            position: "QB/WR/RB/TE",
+            points: 4,
             category: { qualifier: "per", threshold: 1, statType: "PASS TD" },
             minimums: [],
         },
@@ -96,6 +102,12 @@ export const defaultScoringSettings = {
             position: "QB/WR/RB/TE",
             points: 6,
             category: { qualifier: "per", threshold: 1, statType: "RUSH TD" },
+            minimums: [],
+        },
+        {
+            position: "QB/WR/RB/TE",
+            points: 4,
+            category: { qualifier: "per", threshold: 1, statType: "REC TD" },
             minimums: [],
         },
         {

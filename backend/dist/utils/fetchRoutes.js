@@ -29,7 +29,7 @@ export const fetchPlayers = () => {
             const tableData = yield scraper.get(url);
             for (const player of tableData[0]) {
                 if (player.Player !== "") {
-                    players.push(new RosteredPlayer(sanitizePlayerName(player.Player), player.Team, pos.toUpperCase()));
+                    players.push(new RosteredPlayer(player.Player, player.Team, pos.toUpperCase()));
                 }
             }
         }
@@ -95,7 +95,7 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
                         const team = hashedName
                             .slice(hashedName.indexOf("(") + 1, hashedName.indexOf(")"))
                             .toUpperCase();
-                        usableStats[hashedName.slice(0, hashedName.indexOf("(") - 1)] =
+                        usableStats[sanitizePlayerName(hashedName.slice(0, hashedName.indexOf("(") - 1))] =
                             pos === "QB"
                                 ? Object.assign(Object.assign({}, player), { team, position: pos, PCT: (Number.parseFloat(player["CMP"]) /
                                         Number.parseFloat(player["ATT"])).toString(), "Y/A": (Number.parseFloat(player["YDS"]) /
@@ -128,7 +128,7 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
     const stats = yield fetchWeeklySnapCount(week.toString());
     const data = {};
     players
-        .filter((player) => player.name in stats)
+        .filter((player) => player.sanitizedName in stats)
         .forEach((player) => {
         const catPoints = league.scoringSettings
             .filter((set) => set.position.indexOf(player.position) >= 0)
@@ -139,7 +139,7 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
                 : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
             let points = 0;
             try {
-                const statNumber = Number.parseFloat(stats[player.name][convertedScoringTypes[player.position][cat.statType]]);
+                const statNumber = Number.parseFloat(stats[player.sanitizedName][convertedScoringTypes[player.position][cat.statType]]);
                 if (isNaN(statNumber))
                     return { hashVal: 0 };
                 switch (cat.qualifier) {
@@ -159,7 +159,7 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
                         break;
                 }
                 const successMins = category.minimums.filter((min) => {
-                    const statNumber = Number.parseFloat(stats[player.name][convertedScoringTypes[player.position][min.statType]]);
+                    const statNumber = Number.parseFloat(stats[player.sanitizedName][convertedScoringTypes[player.position][min.statType]]);
                     return statNumber > min.threshold;
                 });
                 let retObj = {};
@@ -168,12 +168,12 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
                 return retObj;
             }
             catch (error) {
-                console.log(`Error finding stats for player ${player.name}, ${player.position}`);
+                console.log(`Error finding stats for player ${player.fullName}, ${player.position}`);
                 return { hashVal: 0 };
             }
         });
-        data[player.name] = {
-            team: stats[player.name].team,
+        data[player.sanitizedName] = {
+            team: stats[player.sanitizedName].team,
             position: player.position,
             scoring: {
                 totalPoints: Number.parseFloat(catPoints
@@ -181,7 +181,7 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
                     .toPrecision(4)),
                 categories: Object.assign({}, ...catPoints),
             },
-            statistics: stats[player.name],
+            statistics: stats[player.sanitizedName],
         };
     });
     const yearWeek = getCurrentSeason() + week.toString();

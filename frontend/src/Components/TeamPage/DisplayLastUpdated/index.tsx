@@ -1,5 +1,5 @@
 type DisplayLastUpdatedProps = {
-  lastUpdated: Date;
+  lastUpdated: string;
 };
 
 export const DisplayLastUpdated = ({
@@ -7,7 +7,7 @@ export const DisplayLastUpdated = ({
 }: DisplayLastUpdatedProps) => {
   return (
     <div className="timeDisplay">
-      Last roster update: {lastUpdated?.toLocaleDateString() || "never"}
+      Last roster update: {new Date(lastUpdated).toLocaleString() || "never"}
     </div>
   );
 };

@@ -11,9 +11,14 @@ import { lineupSorter } from "../../constants";
 
 const getBench = (team: Team, notBenched: Set<string>) =>
   team.rosteredPlayers.reduce((acc, player) => {
-    if (!notBenched.has(player.name)) {
+    if (!notBenched.has(player.fullName)) {
       acc.push(
-        new FinalizedPlayer(player.name, player.position, player.team, "bench")
+        new FinalizedPlayer(
+          player.fullName,
+          player.position,
+          player.team,
+          "bench"
+        )
       );
     }
     return acc;
@@ -25,8 +30,8 @@ const getPlayersInLineup = (lineup: FinalizedLineup) => {
       return acc;
     }
     lineup[pos as Position].forEach((player) => {
-      if (player.name !== "") {
-        acc.add(player.name);
+      if (player.fullName !== "") {
+        acc.add(player.fullName);
       }
     });
     return acc;
@@ -54,7 +59,7 @@ export const getWeeklyLineup = (
     .reduce((currLineup, pos) => {
       for (let i = 0; i < lineupSettings[pos]; i++) {
         if (pos in currLineup && i < currLineup[pos].length) {
-          notBenched.add(currLineup[pos][i].name);
+          notBenched.add(currLineup[pos][i].fullName);
           continue;
         } else {
           if (!currLineup[pos]) {

@@ -19,90 +19,48 @@ class ScoringError {
     }
 }
 
-class FinalizedPlayer {
-    constructor(name, position, team, lineup) {
-        this.name = name;
-        this.position = position;
-        this.lineup = lineup;
-        this.team = team;
-    }
-}
-class RosteredPlayer {
-    constructor(name, team, pos) {
-        this.name = name;
-        this.position = pos;
-        this.team = team;
-    }
-}
-const positionTypes = [
-    "QB",
-    "RB",
-    "WR",
-    "TE",
-    "K",
-    "WR/RB",
-    "WR/RB/TE",
-    "QB/WR/RB/TE",
-];
-const emptyDefaultPositions = positionTypes.reduce((map, pos) => {
-    map[pos] = 0;
-    return map;
-}, {});
-
-class Team {
-    constructor(name, leagueName, ownerName, isCommissioner, numWeeks) {
-        this.name = name;
-        this.leagueName = leagueName;
-        this.ownerName = ownerName;
-        this.isCommissioner = isCommissioner;
-        this.lastUpdated = new Date();
-        this.rosteredPlayers = [];
-        this.logo = "/football.jfif";
-        this.weekInfo = [
-            ...Array(numWeeks + 1).fill({
-                weekScore: 0,
-                addedPoints: 0,
-                finalizedLineup: {},
-            }),
-        ];
-    }
-    static updateNumWeeks(team, numWeeks) {
-        const newWeekInfo = [
-            ...Array(numWeeks + 1).fill({
-                weekScore: 0,
-                addedPoints: 0,
-                finalizedLineup: {},
-            }),
-        ];
-        team.weekInfo.forEach((info, i) => {
-            if (i <= numWeeks) {
-                newWeekInfo[i] = info;
-            }
-        });
-        team.weekInfo = newWeekInfo;
-    }
-    static sumWeekScore(team, week) {
-        if (week >= team.weekInfo.length) {
-            return 0;
-        }
-        return team.weekInfo[week].addedPoints + team.weekInfo[week].weekScore;
-    }
-}
-const lineupToIterable = (lineup) => {
-    return Object.keys(lineup).reduce((acc, pos) => {
-        lineup[pos].forEach((player) => {
-            acc.push(player);
-        });
-        return acc;
-    }, []);
-};
-
 const sanitizePlayerName = (name) => name.replace(/\./g, "").toLowerCase();
 const sanitizeNflScheduleTeamName = (name) => {
     return name
         .replace(/\@/g, "")
         .replace("JAC", "JAX")
         .replace("WAS", "WSH");
+};
+const playerTeamIsNflAbbreviation = (team) => {
+    return (team === "ARI" ||
+        team === "ATL" ||
+        team === "BAL" ||
+        team === "BUF" ||
+        team === "CAR" ||
+        team === "CHI" ||
+        team === "CIN" ||
+        team === "CLE" ||
+        team === "DAL" ||
+        team === "DEN" ||
+        team === "DET" ||
+        team === "GB" ||
+        team === "HOU" ||
+        team === "IND" ||
+        team === "JAX" ||
+        team === "JAC" ||
+        team === "KC" ||
+        team === "LAC" ||
+        team === "LAR" ||
+        team === "MIA" ||
+        team === "MIN" ||
+        team === "NE" ||
+        team === "NO" ||
+        team === "NYG" ||
+        team === "NYJ" ||
+        team === "OAK" ||
+        team === "PHI" ||
+        team === "PIT" ||
+        team === "SEA" ||
+        team === "SF" ||
+        team === "TB" ||
+        team === "TEN" ||
+        team === "WAS" ||
+        team === "WSH");
 };
 const convertedScoringTypes = {
     QB: {
@@ -192,6 +150,90 @@ const scoringTypes = [
     "FG/XP MISS",
 ];
 
+const setPlayerName = (player, name) => {
+    player.fullName = name;
+    player.sanitizedName = sanitizePlayerName(name);
+};
+class FinalizedPlayer {
+    constructor(name, position, team, lineup) {
+        this.fullName = name;
+        this.sanitizedName = sanitizePlayerName(name);
+        this.position = position;
+        this.lineup = lineup;
+        this.team = team;
+    }
+}
+class RosteredPlayer {
+    constructor(name, team, pos) {
+        this.fullName = name;
+        this.sanitizedName = sanitizePlayerName(name);
+        this.position = pos;
+        this.team = team;
+    }
+}
+const positionTypes = [
+    "QB",
+    "RB",
+    "WR",
+    "TE",
+    "K",
+    "WR/RB",
+    "WR/RB/TE",
+    "QB/WR/RB/TE",
+];
+const emptyDefaultPositions = positionTypes.reduce((map, pos) => {
+    map[pos] = 0;
+    return map;
+}, {});
+
+class Team {
+    constructor(name, leagueName, ownerName, isCommissioner, numWeeks) {
+        this.name = name;
+        this.leagueName = leagueName;
+        this.ownerName = ownerName;
+        this.isCommissioner = isCommissioner;
+        this.lastUpdated = "";
+        this.rosteredPlayers = [];
+        this.logo = "/football.jfif";
+        this.weekInfo = [
+            ...Array(numWeeks + 1).fill({
+                weekScore: 0,
+                addedPoints: 0,
+                finalizedLineup: {},
+            }),
+        ];
+    }
+    static updateNumWeeks(team, numWeeks) {
+        const newWeekInfo = [
+            ...Array(numWeeks + 1).fill({
+                weekScore: 0,
+                addedPoints: 0,
+                finalizedLineup: {},
+            }),
+        ];
+        team.weekInfo.forEach((info, i) => {
+            if (i <= numWeeks) {
+                newWeekInfo[i] = info;
+            }
+        });
+        team.weekInfo = newWeekInfo;
+    }
+    static sumWeekScore(team, week) {
+        if (week >= team.weekInfo.length) {
+            return 0;
+        }
+        return team.weekInfo[week].addedPoints + team.weekInfo[week].weekScore;
+    }
+}
+const lineupToIterable = (lineup) => {
+    return Object.keys(lineup).reduce((acc, pos) => {
+        lineup[pos].forEach((player) => {
+            acc.push(player);
+        });
+        return acc;
+    }, []);
+};
+
 const AbbreviationToFullTeam = {
     ARI: "arizona cardinals",
     ATL: "atlanta falcons",
@@ -229,4 +271,4 @@ const AbbreviationToFullTeam = {
     WSH: "washington commanders",
 };
 
-export { AbbreviationToFullTeam, FinalizedPlayer, League, RosteredPlayer, ScoringError, Team, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes };
+export { AbbreviationToFullTeam, FinalizedPlayer, League, RosteredPlayer, ScoringError, Team, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName };

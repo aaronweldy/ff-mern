@@ -58,7 +58,7 @@ export const fetchPlayers = () => {
         if (player.Player !== "") {
           players.push(
             new RosteredPlayer(
-              sanitizePlayerName(player.Player),
+              player.Player,
               player.Team as AbbreviatedNflTeam,
               pos.toUpperCase() as SinglePosition
             )
@@ -137,7 +137,9 @@ export const fetchWeeklyStats = async (week: number) => {
           const team = hashedName
             .slice(hashedName.indexOf("(") + 1, hashedName.indexOf(")"))
             .toUpperCase() as AbbreviatedNflTeam;
-          usableStats[hashedName.slice(0, hashedName.indexOf("(") - 1)] =
+          usableStats[
+            sanitizePlayerName(hashedName.slice(0, hashedName.indexOf("(") - 1))
+          ] =
             pos === "QB"
               ? {
                   ...player,
@@ -189,7 +191,7 @@ export const scoreAllPlayers = async (
   const stats = await fetchWeeklySnapCount(week.toString() as Week);
   const data: PlayerScoreData = {};
   players
-    .filter((player) => player.name in stats)
+    .filter((player) => player.sanitizedName in stats)
     .forEach((player) => {
       const catPoints = league.scoringSettings
         .filter((set) => set.position.indexOf(player.position) >= 0)
@@ -202,7 +204,7 @@ export const scoreAllPlayers = async (
           let points = 0;
           try {
             const statNumber = Number.parseFloat(
-              stats[player.name][
+              stats[player.sanitizedName][
                 convertedScoringTypes[player.position][cat.statType] as StatKey
               ]
             );
@@ -226,7 +228,7 @@ export const scoreAllPlayers = async (
             }
             const successMins = category.minimums.filter((min) => {
               const statNumber = Number.parseFloat(
-                stats[player.name][
+                stats[player.sanitizedName][
                   convertedScoringTypes[player.position][
                     min.statType
                   ] as StatKey
@@ -240,13 +242,13 @@ export const scoreAllPlayers = async (
             return retObj;
           } catch (error) {
             console.log(
-              `Error finding stats for player ${player.name}, ${player.position}`
+              `Error finding stats for player ${player.fullName}, ${player.position}`
             );
             return { hashVal: 0 };
           }
         });
-      data[player.name] = {
-        team: stats[player.name].team as AbbreviatedNflTeam,
+      data[player.sanitizedName] = {
+        team: stats[player.sanitizedName].team as AbbreviatedNflTeam,
         position: player.position,
         scoring: {
           totalPoints: Number.parseFloat(
@@ -256,7 +258,7 @@ export const scoreAllPlayers = async (
           ),
           categories: Object.assign({}, ...catPoints),
         },
-        statistics: stats[player.name],
+        statistics: stats[player.sanitizedName],
       };
     });
   const yearWeek = getCurrentSeason() + week.toString();

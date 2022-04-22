@@ -5,12 +5,12 @@ import { v4 } from "uuid";
 import admin, { db } from "../config/firebase-config.js";
 import {
   League,
-  sanitizePlayerName,
   ScoringError,
   Team,
   PlayerScoreData,
   PlayerScoresResponse,
   CumulativePlayerScores,
+  playerTeamIsNflAbbreviation,
 } from "@ff-mern/ff-types";
 import {
   fetchPlayers,
@@ -23,7 +23,6 @@ import {
   handleKickerBackupResolution,
   handleNonKickerBackupResolution,
 } from "../utils/backupResolution.js";
-
 const router = Router();
 
 type LeagueScoringDefault = "Standard" | "PPR";
@@ -305,24 +304,32 @@ router.post("/:leagueId/runScores/", async (req, res) => {
     team.weekInfo[week].weekScore = 0;
     Object.values(team.weekInfo[week].finalizedLineup).forEach((players) => {
       players
-        .filter((player) => player.name !== "")
+        .filter((player) => player.fullName !== "")
         .forEach((player) => {
-          let playerName = sanitizePlayerName(player.name);
+          let sanitizedPlayerName = player.sanitizedName;
 
-          if (!(playerName in data)) {
+          if (!(sanitizedPlayerName in data)) {
             return;
           }
           if (player.position !== "K") {
-            playerName = handleNonKickerBackupResolution(
+            sanitizedPlayerName = handleNonKickerBackupResolution(
               team,
               player,
               week,
-              parseInt(data[playerName].statistics.snaps || "0")
+              parseInt(data[sanitizedPlayerName].statistics.snaps || "0")
             );
           } else {
-            playerName = handleKickerBackupResolution(team, player, week, data);
+            sanitizedPlayerName = handleKickerBackupResolution(
+              team,
+              player,
+              week,
+              data
+            );
           }
-          const playerData = data[playerName];
+          if (!playerTeamIsNflAbbreviation(player.team)) {
+            player.team = data[player.sanitizedName].team;
+          }
+          const playerData = data[sanitizedPlayerName];
           if (player.lineup !== "bench") {
             team.weekInfo[week].weekScore += playerData.scoring.totalPoints;
           }
@@ -391,7 +398,7 @@ router.get("/:id/cumulativePlayerScores/", async (req, res) => {
     const curPlayers = await fetchPlayers();
     const initData = curPlayers.reduce(
       (acc: CumulativePlayerScores, player) => {
-        acc[player.name] = {
+        acc[player.fullName] = {
           totalPointsInSeason: 0,
           pointsByWeek: Array(18).fill(0),
           position: player.position,

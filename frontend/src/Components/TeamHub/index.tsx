@@ -7,6 +7,7 @@ import { Team } from "@ff-mern/ff-types";
 import { ref, getDownloadURL } from "firebase/storage";
 import { useTeamsByUser } from "../../hooks/query/useTeamsByUser";
 import { useAuthUser } from "@react-query-firebase/auth";
+import { Navigate } from "react-router-dom";
 
 const TeamHub = () => {
   const user = useAuthUser("user", auth);
@@ -30,6 +31,9 @@ const TeamHub = () => {
       });
     }
   }, [userTeamsQuery.isSuccess, userTeamsQuery.data]);
+  if (user.isSuccess && !user.data) {
+    return <Navigate to="/login" />;
+  }
   return (
     <Container fluid>
       <Row className="justify-content-center">

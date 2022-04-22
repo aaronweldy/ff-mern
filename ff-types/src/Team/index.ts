@@ -8,7 +8,7 @@ export class Team {
   public owner: string;
   public rosteredPlayers: RosteredPlayer[];
   public weekInfo: TeamWeekInfo[];
-  public lastUpdated: Date;
+  public lastUpdated: string;
 
   constructor(
     public name: string,
@@ -17,7 +17,7 @@ export class Team {
     public isCommissioner: boolean,
     numWeeks: number
   ) {
-    this.lastUpdated = new Date();
+    this.lastUpdated = "";
     this.rosteredPlayers = [];
     this.logo = "/football.jfif";
     this.weekInfo = [

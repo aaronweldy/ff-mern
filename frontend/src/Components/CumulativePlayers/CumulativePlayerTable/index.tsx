@@ -1,6 +1,5 @@
 import { CumulativePlayerScores } from "@ff-mern/ff-types";
 import { Col, Row, Table } from "react-bootstrap";
-import { capitalizePlayerName } from "../../utils/capitalizePlayerName";
 
 export type CumulativePlayerTableProps = {
   players: CumulativePlayerScores;
@@ -44,9 +43,7 @@ export const CumulativePlayerTable = ({
                       };
                 return (
                   <tr key={player}>
-                    <td className="sticky-col sticky-td">
-                      {capitalizePlayerName(player)}
-                    </td>
+                    <td className="sticky-col sticky-td">{player}</td>
                     <td>{playerData.position}</td>
                     <td>{playerData.totalPointsInSeason.toFixed(2)}</td>
                     <td>

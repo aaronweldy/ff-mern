@@ -8,25 +8,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { db } from "../config/firebase-config.js";
+import { fetchPlayers } from "./fetchRoutes.js";
 export const updateCumulativeStats = (leagueId, week, data) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("updating stats");
+    const curPlayers = yield fetchPlayers();
     let curStats = (yield db.collection("cumulativePlayerScores").doc(leagueId).get()).data();
     if (!curStats) {
         curStats = {};
     }
-    Object.keys(data).forEach((player) => {
-        const playerPointsInWeek = data[player].scoring.totalPoints;
-        if (!(player in curStats)) {
-            curStats[player] = {
-                position: data[player].position,
+    curPlayers.forEach((player) => {
+        if (!(player.sanitizedName in data)) {
+            return;
+        }
+        const playerPointsInWeek = data[player.sanitizedName].scoring.totalPoints;
+        if (!(player.fullName in curStats)) {
+            curStats[player.fullName] = {
+                position: data[player.sanitizedName].position,
                 totalPointsInSeason: playerPointsInWeek,
                 pointsByWeek: [...Array(18).fill(0)],
             };
-            curStats[player].pointsByWeek[week - 1] = playerPointsInWeek;
+            curStats[player.fullName].pointsByWeek[week - 1] = playerPointsInWeek;
         }
         else {
-            curStats[player].pointsByWeek[week - 1] = playerPointsInWeek;
-            curStats[player].totalPointsInSeason = curStats[player].pointsByWeek.reduce((acc, score) => acc + score, 0);
+            curStats[player.fullName].pointsByWeek[week - 1] = playerPointsInWeek;
+            curStats[player.fullName].totalPointsInSeason = curStats[player.fullName].pointsByWeek.reduce((acc, score) => acc + score, 0);
         }
     });
     yield db.collection("cumulativePlayerScores").doc(leagueId).set(curStats);

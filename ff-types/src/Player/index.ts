@@ -1,7 +1,17 @@
 import { AbbreviatedNflTeam } from "..";
+import { sanitizePlayerName } from "../Utils";
+
+export const setPlayerName = (
+  player: FinalizedPlayer | RosteredPlayer,
+  name: string
+) => {
+  player.fullName = name;
+  player.sanitizedName = sanitizePlayerName(name);
+};
 
 export class FinalizedPlayer {
-  name: string;
+  fullName: string;
+  sanitizedName: string;
   position: SinglePosition;
   team: AbbreviatedNflTeam | "";
   lineup: Position;
@@ -13,7 +23,8 @@ export class FinalizedPlayer {
     team: AbbreviatedNflTeam | "",
     lineup: Position
   ) {
-    this.name = name;
+    this.fullName = name;
+    this.sanitizedName = sanitizePlayerName(name);
     this.position = position;
     this.lineup = lineup;
     this.team = team;
@@ -21,12 +32,16 @@ export class FinalizedPlayer {
 }
 
 export class RosteredPlayer {
-  name: string;
+  // Used in most places -- correctly capitalized version of name.
+  fullName: string;
+  // Used to index into data structures with capitalization/periods removed.
+  sanitizedName: string;
   position: SinglePosition;
   team: AbbreviatedNflTeam;
 
   constructor(name: string, team: AbbreviatedNflTeam, pos: SinglePosition) {
-    this.name = name;
+    this.fullName = name;
+    this.sanitizedName = sanitizePlayerName(name);
     this.position = pos;
     this.team = team;
   }

@@ -29,12 +29,12 @@ export const useSingleTeam = (teamId?: string) => {
       enabled: !!teamId,
     }
   );
-  const updateTeamMutation = useMutation<UpdateTeamsResponse, Error, Team>(
+  const updateTeamMutation = useMutation<SingleTeamResponse, Error, Team>(
     async (team: Team) => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/updateTeams/`;
-      const body = JSON.stringify({ teams: [team] });
+      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/updateSingleTeam/`;
+      const body = JSON.stringify({ team });
       const req = {
-        method: "POST",
+        method: "PUT",
         headers: { "content-type": "application/json" },
         body,
       };
@@ -46,7 +46,7 @@ export const useSingleTeam = (teamId?: string) => {
     },
     {
       onSuccess: (data) => {
-        queryClient.setQueryData(["team", teamId], { team: data.teams[0] });
+        queryClient.setQueryData(["team", teamId], { team: data.team });
       },
     }
   );
