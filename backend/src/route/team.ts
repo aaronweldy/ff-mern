@@ -1,7 +1,6 @@
 import {
   FinalizedLineup,
   FinalizedPlayer,
-  getEmptyLineupFromLineupSettings,
   LineupSettings,
   QuicksetLineupType,
   setPlayerName,
