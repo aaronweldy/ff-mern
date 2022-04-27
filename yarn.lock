@@ -1660,6 +1660,7 @@ __metadata:
   resolution: "@ff-mern/ff-types@workspace:ff-types"
   dependencies:
     "@rollup/plugin-typescript": ^8.3.0
+    class-transformer: ^0.5.1
     cross-env: ^7.0.3
     rollup: ^2.64.0
     rollup-plugin-dts: ^4.1.0

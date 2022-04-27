@@ -17,6 +17,7 @@
     "rollup-plugin-dts": "^4.1.0"
   },
   "dependencies": {
+    "class-transformer": "^0.5.1",
     "cross-env": "^7.0.3"
   }
 }
