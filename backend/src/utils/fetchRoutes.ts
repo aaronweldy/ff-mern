@@ -10,6 +10,7 @@ import {
   Team,
   AbbreviatedNflTeam,
   Week,
+  ScrapedPlayerProjection,
 } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
 import puppeteer from "puppeteer";
@@ -47,6 +48,39 @@ export type PlayerSnapCountsResponse = {
   AVG: string;
 };
 export const positions = ["qb", "rb", "wr", "te", "k"];
+
+const sliceTeamFromName = (name: string) => {
+  const lastSpace = name.lastIndexOf(" ");
+  return name.substring(0, lastSpace);
+};
+
+export const fetchPlayerProjections = async (week: Week) => {
+  const season = getCurrentSeason();
+  const check = await db
+    .collection("playerProjections")
+    .doc(`${season}${week}`)
+    .get();
+  if (check.exists) {
+    return check.data() as Record<string, number>;
+  }
+  let scrapedProjections: Record<string, number> = {};
+  for (const pos of positions) {
+    const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=${week}`;
+    const tableData = await scraper.get(url);
+    for (const player of tableData[0] as ScrapedPlayerProjection[]) {
+      if (player.Player !== "") {
+        scrapedProjections[
+          sliceTeamFromName(sanitizePlayerName(player.Player))
+        ] = parseFloat(player.FPTS);
+      }
+    }
+  }
+  await db
+    .collection("playerProjections")
+    .doc(`${season}week${week}`)
+    .set(scrapedProjections);
+  return scrapedProjections;
+};
 
 export const fetchPlayers = () => {
   return new Promise<RosteredPlayer[]>(async (resolve, _) => {

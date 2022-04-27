@@ -83,5 +83,8 @@ export const getWeeklyLineup = (
       return currLineup;
     }, teamLatestLineup);
   currentFinalizedLineup["bench"] = getBench(team, notBenched);
+  if (Object.keys(team.weekInfo[week].finalizedLineup).length === 0) {
+    team.weekInfo[week].finalizedLineup = currentFinalizedLineup;
+  }
   return currentFinalizedLineup;
 };

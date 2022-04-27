@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { Container, Col, Row } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
@@ -6,7 +6,6 @@ import { TeamTable } from "../shared/TeamTable";
 import EditWeek from "../shared/EditWeek";
 import "../../CSS/LeaguePages.css";
 import {
-  Team,
   FinalizedLineup,
   FinalizedPlayer,
   LineupSettings,
@@ -19,33 +18,41 @@ import { useNflDefenseStats } from "../../hooks/query/useNflDefenseStats";
 import { useLeagueScoringData } from "../../hooks/useLeagueScoringData";
 import { useSingleTeam } from "../../hooks/query/useSingleTeam";
 import { TeamSelectionDropdown } from "../shared/TeamSelectionDropdown";
+import { QuicksetDropdown } from "../shared/QuicksetDropdown";
+import { useUpdateAllTeamsMutation } from "../../hooks/query/useQuicksetAllTeamsMutation";
+import { QuicksetAllDropdown } from "./QuicksetAllDropdown";
 
 export default function AdjustLineups() {
   const { id } = useParams() as { id: string };
   const [selectedTeamId, setSelectedTeamId] = useState<string>();
   const { league, teams, week, setWeek } = useLeagueScoringData(id);
-  const { team: selectedTeam, updateTeamMutation } =
-    useSingleTeam(selectedTeamId);
+  const updateAllLineups = useUpdateAllTeamsMutation(
+    id,
+    teams,
+    week,
+    league?.lineupSettings
+  );
+  const {
+    team: selectedTeam,
+    updateTeamMutation,
+    setHighestProjectedLineupMutation,
+  } = useSingleTeam(selectedTeamId);
   const scheduleQuery = useNflSchedule();
   const defenseStatsQuery = useNflDefenseStats();
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
-  const [lineupsPerTeam, setLineupsPerTeam] = useState(
-    {} as Record<string, FinalizedLineup>
-  );
-
+  const currentLineup = useMemo(() => {
+    if (selectedTeam && league) {
+      return getWeeklyLineup(week, selectedTeam, league.lineupSettings);
+    }
+    return {} as FinalizedLineup;
+  }, [selectedTeam, week, league]);
   useEffect(() => {
     if (teams.length > 0 && league) {
       if (!selectedTeamId) {
         setSelectedTeamId(() => teams[0].id);
       }
-      setLineupsPerTeam(
-        teams.reduce((acc: Record<string, FinalizedLineup>, team: Team) => {
-          acc[team.id] = getWeeklyLineup(week, team, league.lineupSettings);
-          return acc;
-        }, {})
-      );
     }
-  }, [teams, league, week, selectedTeamId]);
+  }, [teams, selectedTeamId, league]);
 
   const updateSelectedTeam = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedTeamId(e.target.value);
@@ -64,17 +71,17 @@ export default function AdjustLineups() {
         name,
         swapPlayer,
         selectedIndex,
-        lineupsPerTeam[teamId]
+        currentLineup
       );
-      selectedTeam.weekInfo[week].finalizedLineup = lineupsPerTeam[teamId];
+      selectedTeam.weekInfo[week].finalizedLineup = currentLineup;
       updateTeamMutation.mutate(selectedTeam);
     }
   };
 
   const onBench = (selectedPlayer: FinalizedPlayer, teamId?: string) => {
     if (teamId && selectedTeam) {
-      handleBenchPlayer(selectedPlayer, lineupsPerTeam[teamId]);
-      selectedTeam.weekInfo[week].finalizedLineup = lineupsPerTeam[teamId];
+      handleBenchPlayer(selectedPlayer, currentLineup);
+      selectedTeam.weekInfo[week].finalizedLineup = currentLineup;
       updateTeamMutation.mutate(selectedTeam);
     }
   };
@@ -87,6 +94,11 @@ export default function AdjustLineups() {
         maxWeeks={league?.numWeeks}
         onChange={(e) => setWeek(parseInt(e.target.value))}
       />
+      <Row className="mb-3">
+        <Col>
+          <QuicksetAllDropdown mutationFn={updateAllLineups} />
+        </Col>
+      </Row>
       <TeamSelectionDropdown
         teams={teams}
         selectedTeam={selectedTeamId}
@@ -97,15 +109,22 @@ export default function AdjustLineups() {
         scheduleQuery.isSuccess &&
         defenseStatsQuery.isSuccess && (
           <Row>
-            <Col xs={12}>
+            <Col sm={2}>
               <h2>{selectedTeam.name}</h2>
+            </Col>
+            <Col>
+              <QuicksetDropdown
+                week={week}
+                mutationFn={setHighestProjectedLineupMutation}
+                lineupSettings={league.lineupSettings}
+              />
             </Col>
             <Col xs={12}>
               <h4>Starters</h4>
             </Col>
             <Col xs={12}>
               <TeamTable
-                players={lineupsPerTeam[selectedTeam.id]}
+                players={currentLineup}
                 positionsInTable={league.lineupSettings}
                 name="starters"
                 nflDefenseStats={defenseStatsQuery.data?.data}
@@ -122,7 +141,7 @@ export default function AdjustLineups() {
             </Col>
             <Col xs={12}>
               <TeamTable
-                players={lineupsPerTeam[selectedTeam.id]}
+                players={currentLineup}
                 positionsInTable={{ bench: 1 } as LineupSettings}
                 name="bench"
                 nflDefenseStats={defenseStatsQuery.data?.data}
@@ -136,6 +155,8 @@ export default function AdjustLineups() {
             </Col>
           </Row>
         )}
+      {(setHighestProjectedLineupMutation.isLoading ||
+        updateAllLineups.isLoading) && <div className="spinning-loader" />}
     </Container>
   );
 }

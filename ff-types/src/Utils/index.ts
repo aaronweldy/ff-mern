@@ -42,7 +42,7 @@ export const playerTeamIsNflAbbreviation = (
     team === "NO" ||
     team === "NYG" ||
     team === "NYJ" ||
-    team === "OAK" ||
+    team === "LV" ||
     team === "PHI" ||
     team === "PIT" ||
     team === "SEA" ||

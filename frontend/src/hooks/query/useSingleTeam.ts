@@ -1,7 +1,6 @@
-import { Team } from "@ff-mern/ff-types";
+import { QuicksetRequest, SingleTeamResponse, Team } from "@ff-mern/ff-types";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import { UpdateTeamsResponse } from "./useUpdateTeamsMutation";
 
 const fetchSingleTeam = async (teamId?: string) => {
   const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/${teamId}/`;
@@ -10,10 +9,6 @@ const fetchSingleTeam = async (teamId?: string) => {
     throw new Error(resp.statusText);
   }
   return (await resp.json()) as SingleTeamResponse;
-};
-
-type SingleTeamResponse = {
-  team: Team;
 };
 
 export const useSingleTeam = (teamId?: string) => {
@@ -50,5 +45,42 @@ export const useSingleTeam = (teamId?: string) => {
       },
     }
   );
-  return { team, setTeam, isLoading, isSuccess, updateTeamMutation };
+  const setHighestProjectedLineupMutation = useMutation<
+    SingleTeamResponse,
+    Error,
+    QuicksetRequest
+  >(
+    async (info) => {
+      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/setLineupFromProjection/`;
+      const body = JSON.stringify({
+        team,
+        week: info.week,
+        type: info.type,
+        lineupSettings: info.lineupSettings,
+      });
+      const req = {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body,
+      };
+      const resp = await fetch(url, req);
+      if (!resp.ok) {
+        throw new Error(resp.statusText);
+      }
+      return resp.json();
+    },
+    {
+      onSuccess: (data) => {
+        queryClient.setQueryData(["team", teamId], { team: data.team });
+      },
+    }
+  );
+  return {
+    team,
+    setTeam,
+    isLoading,
+    isSuccess,
+    updateTeamMutation,
+    setHighestProjectedLineupMutation,
+  };
 };

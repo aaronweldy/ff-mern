@@ -18,6 +18,7 @@ import { useSingleTeam } from "../../hooks/query/useSingleTeam";
 import { SuperflexModal } from "./SuperflexModal";
 import { useLeagueScoringData } from "../../hooks/useLeagueScoringData";
 import { useSuperflexData } from "../../hooks/useSuperflexData";
+import { QuicksetDropdown } from "../shared/QuicksetDropdown";
 
 const TeamPage = () => {
   const { id, leagueId } = useParams() as { id: string; leagueId: string };
@@ -30,7 +31,8 @@ const TeamPage = () => {
     teamsLoading,
     leagueLoading,
   } = useLeagueScoringData(leagueId);
-  const { team, updateTeamMutation } = useSingleTeam(id);
+  const { team, updateTeamMutation, setHighestProjectedLineupMutation } =
+    useSingleTeam(id);
   const user = useAuthUser(["user"], auth);
   const [showImageModal, setShowImageModal] = useState(false);
   const {
@@ -52,6 +54,7 @@ const TeamPage = () => {
     () => getWeeklyLineup(week, team, league?.lineupSettings),
     [week, team, league]
   );
+  console.log(lineup);
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
 
   const handleInfoSubmission = (imageUrl: string) => {
@@ -140,9 +143,19 @@ const TeamPage = () => {
                       Use Superflex Lineup
                     </Button>
                   )}
-                  <Button onClick={() => setShowImageModal(true)}>
+                  <Button
+                    onClick={() => setShowImageModal(true)}
+                    className="mr-2"
+                  >
                     Change/Set Team Logo
                   </Button>
+                  {week > league.lastScoredWeek && (
+                    <QuicksetDropdown
+                      week={week}
+                      mutationFn={setHighestProjectedLineupMutation}
+                      lineupSettings={league.lineupSettings}
+                    />
+                  )}
                 </ButtonGroup>
               </Col>
             ) : null}

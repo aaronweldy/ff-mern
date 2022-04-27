@@ -96,7 +96,6 @@ export const TeamTable = ({
             const newRows = players[pos];
             acc = acc.concat(
               newRows.map((player, i) => {
-                console.log(player);
                 return (
                   <tr
                     key={

@@ -7,15 +7,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { instanceToPlain } from "class-transformer";
 import { Router } from "express";
 import { db } from "../config/firebase-config.js";
 import { fetchPlayers } from "../utils/fetchRoutes.js";
 const router = Router();
-router.get("/allPlayers/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/allPlayers/", (_, res) => __awaiter(void 0, void 0, void 0, function* () {
     const allPlayers = yield db.collection("globalPlayers").doc("players").get();
     if (!allPlayers.exists) {
         fetchPlayers().then((players) => {
-            const deconstructedPlayers = players.map((player) => Object.assign({}, player));
+            const deconstructedPlayers = players.map((player) => instanceToPlain(player));
             db.collection("globalPlayers")
                 .doc("players")
                 .set({ players: deconstructedPlayers });
@@ -26,11 +27,11 @@ router.get("/allPlayers/", (req, res) => __awaiter(void 0, void 0, void 0, funct
         res.status(200).send({ players: allPlayers.data().players });
     }
 }));
-router.get("/nflSchedule/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/nflSchedule/", (_, res) => __awaiter(void 0, void 0, void 0, function* () {
     const schedule = (yield db.collection("nflTeamSchedules").doc("dist").get()).data();
     res.status(200).send({ schedule });
 }));
-router.get("/nflDefenseStats/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/nflDefenseStats/", (_, res) => __awaiter(void 0, void 0, void 0, function* () {
     const data = (yield db.collection("nflDefenseVsPositionStats").doc("dist").get()).data();
     res.status(200).send({ data });
 }));

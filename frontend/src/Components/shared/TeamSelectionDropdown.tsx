@@ -15,7 +15,7 @@ export const TeamSelectionDropdown = ({
 }: TeamSelectionDropdownProps) => {
   return (
     <Row className="mb-3">
-      <Col xs={2}>
+      <Col xs={4}>
         <Form.Control as="select" value={selectedTeam} onChange={updateTeam}>
           {teams.map((team) => (
             <option key={team.id} value={team.id}>

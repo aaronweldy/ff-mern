@@ -54,7 +54,7 @@ export const handleKickerBackupResolution = (
   if (
     curDay > 1 &&
     curDay < 4 &&
-    data[player.fullName].scoring.totalPoints === 0
+    data[player.sanitizedName].scoring.totalPoints === 0
   ) {
     const playerRef = team.weekInfo[week].finalizedLineup[player.lineup].find(
       (p) => p.fullName === player.fullName

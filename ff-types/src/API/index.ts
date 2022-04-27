@@ -5,6 +5,7 @@ import {
   FullNflTeam,
   SinglePosition,
 } from "..";
+import { LineupSettings } from "../League";
 
 export type GenericRequest = {
   [key: string]: any;
@@ -56,3 +57,23 @@ export type TeamToSchedule = Record<
   FullNflTeam,
   Record<Week, AbbreviatedNflTeam | "BYE">
 >;
+
+export type ScrapedPlayerProjection = {
+  Player: string;
+  FPTS: string;
+};
+
+export type SingleTeamResponse = {
+  team: Team;
+};
+
+export type QuicksetRequest = {
+  week: Week;
+  type: QuicksetLineupType;
+  lineupSettings: LineupSettings;
+};
+export type QuicksetLineupType = "LastWeek" | "Projection";
+
+export type UpdateAllTeamsResponse = {
+  teams: Team[];
+};

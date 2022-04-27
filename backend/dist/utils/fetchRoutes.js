@@ -21,6 +21,35 @@ import puppeteer from "puppeteer";
 import scraper from "table-scraper";
 import { getCurrentSeason } from "./dates.js";
 export const positions = ["qb", "rb", "wr", "te", "k"];
+const sliceTeamFromName = (name) => {
+    const lastSpace = name.lastIndexOf(" ");
+    return name.substring(0, lastSpace);
+};
+export const fetchPlayerProjections = (week) => __awaiter(void 0, void 0, void 0, function* () {
+    const season = getCurrentSeason();
+    const check = yield db
+        .collection("playerProjections")
+        .doc(`${season}${week}`)
+        .get();
+    if (check.exists) {
+        return check.data();
+    }
+    let scrapedProjections = {};
+    for (const pos of positions) {
+        const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=${week}`;
+        const tableData = yield scraper.get(url);
+        for (const player of tableData[0]) {
+            if (player.Player !== "") {
+                scrapedProjections[sliceTeamFromName(sanitizePlayerName(player.Player))] = parseFloat(player.FPTS);
+            }
+        }
+    }
+    yield db
+        .collection("playerProjections")
+        .doc(`${season}week${week}`)
+        .set(scrapedProjections);
+    return scrapedProjections;
+});
 export const fetchPlayers = () => {
     return new Promise((resolve, _) => __awaiter(void 0, void 0, void 0, function* () {
         let players = [];
