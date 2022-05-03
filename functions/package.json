@@ -15,10 +15,10 @@
   "main": "lib/index.js",
   "dependencies": {
     "@ff-mern/ff-types": "^1.9.11",
+    "cheerio": "^1.0.0-rc.10",
     "firebase-admin": "^10.0.2",
     "firebase-functions": "^3.20.0",
     "node-fetch": "2",
-    "puppeteer": "^13.5.2",
     "table-scraper": "^1.0.3"
   },
   "devDependencies": {

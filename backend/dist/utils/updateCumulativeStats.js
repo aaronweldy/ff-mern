@@ -24,6 +24,7 @@ export const updateCumulativeStats = (leagueId, week, data) => __awaiter(void 0,
         if (!(player.fullName in curStats)) {
             curStats[player.fullName] = {
                 position: data[player.sanitizedName].position,
+                team: player.team,
                 totalPointsInSeason: playerPointsInWeek,
                 pointsByWeek: [...Array(18).fill(0)],
             };

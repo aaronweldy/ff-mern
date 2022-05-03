@@ -13,6 +13,7 @@ import { Team, StoredPlayerInformation } from "@ff-mern/ff-types";
 import { lineupSorter } from "../../constants";
 import "../../CSS/LeaguePages.css";
 import { ScoringToggleType } from "../shared/StatTypeToggleButton";
+import { InlineTeamTile } from "../shared/InlineTeamTile";
 
 type TeamScoringBreakdownProps = {
   leagueScoringCategories: ScoringSetting[];
@@ -120,6 +121,7 @@ const TeamScoringBreakdown = ({
               <th className="sticky-th">Lineup</th>
               <th className="sticky-th">Position</th>
               <th className="sticky-th">Player Name</th>
+              <th className="sticky-th">Team</th>
               <th className="sticky-th">Points</th>
               {scoringHeaders}
             </tr>
@@ -148,7 +150,10 @@ const TeamScoringBreakdown = ({
                       <td className="sticky-td sticky-col gray-col">
                         {player.fullName}
                       </td>
-                      <td>
+                      <td className="gray-col">
+                        <InlineTeamTile team={player.team} />
+                      </td>
+                      <td className="align-items-center">
                         <span>
                           {data?.scoring?.totalPoints?.toFixed(2) || 0}
                         </span>

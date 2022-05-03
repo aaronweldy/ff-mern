@@ -10,8 +10,8 @@ import {
   TeamToSchedule,
   Week,
 } from "@ff-mern/ff-types";
-import puppeteer from "puppeteer";
 import fetch from "node-fetch";
+import { load } from "cheerio";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -90,29 +90,11 @@ export const runScoresForAllLeagues = functions.pubsub
   });
 
 const getWeekFromPuppeteer = async () => {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox"],
-  });
-  const page = await browser.newPage();
-  await page.setRequestInterception(true);
-  page.on("request", (req) => {
-    if (req.resourceType() === "image") {
-      req.abort();
-    } else {
-      req.continue();
-    }
-  });
-  await page.goto(`https://www.fantasypros.com/nfl/stats/qb.php?range=week`, {
-    waitUntil: "domcontentloaded",
-    timeout: 60 * 1000,
-  });
-  await page.waitForSelector("#single-week");
-  const week = await page.$eval("#single-week", (el) =>
-    el.getAttribute("value")
-  );
-  await browser.close();
-  return week;
+  const data = await (
+    await fetch(`https://www.fantasypros.com/nfl/stats/qb.php?range=week`)
+  ).text();
+  const $ = load(data);
+  return $("#single-week").attr("value");
 };
 
 export const fetchLatestFantasyProsScoredWeek = functions

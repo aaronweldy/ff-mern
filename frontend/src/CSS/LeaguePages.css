@@ -203,3 +203,16 @@
   max-height: 70vh;
   overflow-y: scroll;
 }
+
+.spaced-span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.logo-image {
+  max-width: 2rem;
+  max-height: 2rem;
+  margin-right: 1em;
+}

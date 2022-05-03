@@ -13,7 +13,8 @@ import {
   ScrapedPlayerProjection,
 } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
-import puppeteer from "puppeteer";
+import fetch from "node-fetch";
+import { load } from "cheerio";
 // @ts-ignore
 import scraper from "table-scraper";
 import { getCurrentSeason } from "./dates.js";
@@ -105,17 +106,13 @@ export const fetchPlayers = () => {
 };
 
 export const fetchLatestFantasyProsScoredWeek = async (targetWeek: string) => {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  await page.goto(
-    `https://www.fantasypros.com/nfl/stats/qb.php?week=${targetWeek}&range=week`
-  );
-  await page.waitForSelector("#single-week");
-  const week = await page.$eval("#single-week", (el) =>
-    el.getAttribute("value")
-  );
-  await browser.close();
-  return parseInt(week);
+  const data = await (
+    await fetch(
+      `https://www.fantasypros.com/nfl/stats/qb.php?week=${targetWeek}&range=week`
+    )
+  ).text();
+  const $ = load(data);
+  return parseInt($("#single-week").attr("value"));
 };
 
 export const fetchWeeklySnapCount = async (week: Week) => {

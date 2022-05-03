@@ -20,6 +20,7 @@ import {
 } from "@ff-mern/ff-types";
 import { useTeams } from "../../hooks/query/useTeams";
 import { useUpdateTeamsMutation } from "../../hooks/query/useUpdateTeamsMutation";
+import { InlineTeamTile } from "../shared/InlineTeamTile";
 
 const EditRosters = () => {
   const [redirect, setRedirect] = useState(false);
@@ -181,7 +182,7 @@ const EditRosters = () => {
                             />
                           </td>
                           <td className="centered-td align-middle">
-                            {player.team}
+                            <InlineTeamTile team={player.team} />
                           </td>
                         </tr>
                       </OverlayTrigger>

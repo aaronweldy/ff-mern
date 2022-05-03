@@ -400,6 +400,7 @@ router.get("/:id/cumulativePlayerScores/", async (req, res) => {
       (acc: CumulativePlayerScores, player) => {
         acc[player.fullName] = {
           totalPointsInSeason: 0,
+          team: player.team,
           pointsByWeek: Array(18).fill(0),
           position: player.position,
         };

@@ -85,6 +85,7 @@ export type CumulativePlayerScore = {
   position: SinglePosition;
   totalPointsInSeason: number;
   pointsByWeek: number[];
+  team: AbbreviatedNflTeam;
 };
 
 export type CumulativePlayerScores = Record<string, CumulativePlayerScore>;

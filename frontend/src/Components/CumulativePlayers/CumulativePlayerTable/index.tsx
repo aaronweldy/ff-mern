@@ -1,5 +1,9 @@
-import { CumulativePlayerScores } from "@ff-mern/ff-types";
+import {
+  CumulativePlayerScore,
+  CumulativePlayerScores,
+} from "@ff-mern/ff-types";
 import { Col, Row, Table } from "react-bootstrap";
+import { InlineTeamTile } from "../../shared/InlineTeamTile";
 
 export type CumulativePlayerTableProps = {
   players: CumulativePlayerScores;
@@ -8,6 +12,7 @@ export type CumulativePlayerTableProps = {
 export const CumulativePlayerTable = ({
   players,
 }: CumulativePlayerTableProps) => {
+  console.log(players);
   return (
     <Row className="justify-content-center mt-3">
       <Col>
@@ -22,6 +27,7 @@ export const CumulativePlayerTable = ({
                   Player Name
                 </th>
                 <th className="sticky-th">Position</th>
+                <th className="sticky-th">Team</th>
                 <th className="sticky-th">Total Points</th>
                 <th className="sticky-th">Average</th>
                 {[...Array(18).keys()].map((iter) => (
@@ -36,15 +42,19 @@ export const CumulativePlayerTable = ({
                 const playerData =
                   player in players
                     ? players[player]
-                    : {
+                    : ({
                         position: "QB",
+                        team: "ARI",
                         totalPointsInSeason: 0,
                         pointsByWeek: Array(19).fill(0),
-                      };
+                      } as CumulativePlayerScore);
                 return (
                   <tr key={player}>
                     <td className="sticky-col sticky-td">{player}</td>
                     <td>{playerData.position}</td>
+                    <td>
+                      <InlineTeamTile team={playerData.team} />
+                    </td>
                     <td>{playerData.totalPointsInSeason.toFixed(2)}</td>
                     <td>
                       {(

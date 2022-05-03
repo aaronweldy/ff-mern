@@ -351,6 +351,7 @@ router.get("/:id/cumulativePlayerScores/", (req, res) => __awaiter(void 0, void 
         const initData = curPlayers.reduce((acc, player) => {
             acc[player.fullName] = {
                 totalPointsInSeason: 0,
+                team: player.team,
                 pointsByWeek: Array(18).fill(0),
                 position: player.position,
             };

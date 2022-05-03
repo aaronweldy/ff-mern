@@ -16,7 +16,8 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
 };
 import { convertedScoringTypes, RosteredPlayer, sanitizePlayerName, } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
-import puppeteer from "puppeteer";
+import fetch from "node-fetch";
+import { load } from "cheerio";
 // @ts-ignore
 import scraper from "table-scraper";
 import { getCurrentSeason } from "./dates.js";
@@ -66,13 +67,9 @@ export const fetchPlayers = () => {
     }));
 };
 export const fetchLatestFantasyProsScoredWeek = (targetWeek) => __awaiter(void 0, void 0, void 0, function* () {
-    const browser = yield puppeteer.launch();
-    const page = yield browser.newPage();
-    yield page.goto(`https://www.fantasypros.com/nfl/stats/qb.php?week=${targetWeek}&range=week`);
-    yield page.waitForSelector("#single-week");
-    const week = yield page.$eval("#single-week", (el) => el.getAttribute("value"));
-    yield browser.close();
-    return parseInt(week);
+    const data = yield (yield fetch(`https://www.fantasypros.com/nfl/stats/qb.php?week=${targetWeek}&range=week`)).text();
+    const $ = load(data);
+    return parseInt($("#single-week").attr("value"));
 });
 export const fetchWeeklySnapCount = (week) => __awaiter(void 0, void 0, void 0, function* () {
     const year = getCurrentSeason();

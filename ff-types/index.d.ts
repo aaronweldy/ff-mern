@@ -67,6 +67,7 @@ declare type CumulativePlayerScore = {
     position: SinglePosition;
     totalPointsInSeason: number;
     pointsByWeek: number[];
+    team: AbbreviatedNflTeam;
 };
 declare type CumulativePlayerScores = Record<string, CumulativePlayerScore>;
 

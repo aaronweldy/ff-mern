@@ -15,6 +15,7 @@ import {
 } from "@ff-mern/ff-types";
 import { lineupSorter } from "../../constants";
 import { NflRankedText } from "./NflRankedText";
+import { InlineTeamTile } from "./InlineTeamTile";
 
 type TableType = "starters" | "bench" | "backup";
 
@@ -154,17 +155,22 @@ export const TeamTable = ({
                       <span className="flex-nowrap">{player.fullName}</span>
                     </td>
                     <td className="centered-td align-middle">
-                      <span>{player.team}</span>
+                      <InlineTeamTile team={player.team} />
                     </td>
                     {nflSchedule && nflDefenseStats && (
                       <>
                         <td className="centered-td align-middle">
                           <div>
                             {player.team &&
-                              playerTeamIsNflAbbreviation(player.team) &&
-                              nflSchedule[AbbreviationToFullTeam[player.team]][
-                                week
-                              ]}
+                              playerTeamIsNflAbbreviation(player.team) && (
+                                <InlineTeamTile
+                                  team={
+                                    nflSchedule[
+                                      AbbreviationToFullTeam[player.team]
+                                    ][week]
+                                  }
+                                />
+                              )}
                           </div>
                         </td>
                         <td className="centered-td align-middle">
