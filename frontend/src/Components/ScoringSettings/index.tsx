@@ -1,45 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
-import {
-  Container,
-  Col,
-  Form,
-  Button,
-  Row,
-  OverlayTrigger,
-} from "react-bootstrap";
+import { Container, Col, Button, Row } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
-import {
-  Position,
-  Qualifier,
-  ScoringCategory,
-  scoringTypes,
-} from "@ff-mern/ff-types";
+import { Position, Qualifier, ScoringCategory } from "@ff-mern/ff-types";
 import { useLeagueSettingsMutation } from "../../hooks/query/useLeagueSettingsMutation";
 import { useLeague } from "../../hooks/query/useLeague";
-//import { useLeagueSettingsMutation } from "../../hooks/query/useLeagueSettingsMutation";
+import { SingleSettingRow } from "./SingleSettingRow";
+import { PositionFilter, PositionToggle } from "../shared/PositionToggle";
 
-const positionTypes = [
-  "QB",
-  "RB",
-  "WR",
-  "TE",
-  "K",
-  "WR/RB",
-  "WR/RB/TE",
-  "QB/WR/RB/TE",
-];
-
-type CategoryChange =
+export type CategoryChange =
   | "threshold"
   | "thresholdMin"
   | "thresholdMax"
   | "statType"
   | "qualifier";
 
-type MinimumChange = "threshold" | "statType";
+export type MinimumChange = "threshold" | "statType";
 
-type ModifiableSetting = {
+export type ModifiableSetting = {
   position: Position;
   points: string;
   category: {
@@ -55,9 +33,39 @@ type ModifiableSetting = {
   }[];
 };
 
+const filterOverlapsPosition = (filter: PositionFilter, position: Position) => {
+  if (filter === "all") {
+    return true;
+  }
+  return filter.includes(position) || position.includes(filter);
+};
+
+const getSettingsIndex = (
+  settings: ModifiableSetting[],
+  filter: PositionFilter,
+  relativeIndex: number
+) => {
+  let seenSettings = 0;
+  if (filter === "all") {
+    return relativeIndex;
+  }
+  return settings.findIndex((setting) => {
+    if (
+      seenSettings === relativeIndex &&
+      filterOverlapsPosition(filter, setting.position)
+    ) {
+      return true;
+    } else if (filterOverlapsPosition(filter, setting.position)) {
+      seenSettings++;
+    }
+    return false;
+  });
+};
+
 const ScoringSettings = () => {
   const [settings, setSettings] = useState<ModifiableSetting[]>([]);
   const [redirect, setRedirect] = useState(false);
+  const [selectedFilter, setFilter] = useState<PositionFilter>("all");
   const { id } = useParams() as { id: string };
   const { mutate } = useLeagueSettingsMutation(id);
   const { league } = useLeague(id);
@@ -81,102 +89,92 @@ const ScoringSettings = () => {
       setSettings(newSettings);
     }
   }, [league]);
-  const handleSettingChange = (
+  const settingsToRender = useMemo(() => {
+    if (selectedFilter !== "all") {
+      return settings.filter((setting) => {
+        return filterOverlapsPosition(selectedFilter, setting.position);
+      });
+    }
+    return settings;
+  }, [selectedFilter, settings]);
+  const onPositionFilterChange = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    setFilter(e.currentTarget.textContent as PositionFilter);
+  };
+  const handleSettingChange = <
+    K extends "points" | "position",
+    V extends ModifiableSetting[K]
+  >(
     e:
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLSelectElement>,
     settingIdx: number,
-    name: string
+    name: K
   ) => {
     const tempSettings = [...settings];
-    switch (name) {
-      case "points":
-        tempSettings[settingIdx].points = e.target.value;
-        break;
-      case "position":
-        tempSettings[settingIdx].position = e.target.value as Position;
-        break;
-    }
-
+    const idx = getSettingsIndex(settings, selectedFilter, settingIdx);
+    tempSettings[idx][name] = e.target.value as V;
     setSettings(tempSettings);
   };
   const handleAddSetting = () => {
     const tempSettings = [...settings];
     tempSettings.push({
-      position: "QB",
+      position: selectedFilter === "all" ? "QB" : selectedFilter,
       points: "0",
       category: { qualifier: "per", threshold: "0", statType: "PASS YD" },
       minimums: [],
     });
     setSettings(tempSettings);
   };
-  const handleCategoryChange = (
+  const handleCategoryChange = <
+    K extends keyof ModifiableSetting["category"],
+    V extends ModifiableSetting["category"][K]
+  >(
     e:
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLSelectElement>,
     settingIdx: number,
-    name: CategoryChange
+    name: K
   ) => {
     const tempSettings = [...settings];
-    switch (name) {
-      case "qualifier":
-        tempSettings[settingIdx].category.qualifier = e.target
-          .value as Qualifier;
-        break;
-      case "threshold":
-        tempSettings[settingIdx].category.threshold = e.target.value;
-        break;
-      case "thresholdMin":
-        tempSettings[settingIdx].category.thresholdMin = e.target.value;
-        break;
-      case "thresholdMax":
-        tempSettings[settingIdx].category.thresholdMax = e.target.value;
-        break;
-      case "statType":
-        tempSettings[settingIdx].category.statType = e.target
-          .value as ScoringCategory;
-        break;
-    }
+    const idx = getSettingsIndex(settings, selectedFilter, settingIdx);
+    tempSettings[idx].category[name] = e.target.value as V;
     setSettings(tempSettings);
   };
   const handleRemoveSetting = (index: number) => {
     const tempSettings = [...settings];
-    console.log(index);
-    tempSettings.splice(index, 1);
-    console.log(settings);
-    console.log(tempSettings);
+    const idx = getSettingsIndex(settings, selectedFilter, index);
+    tempSettings.splice(idx, 1);
     setSettings(tempSettings);
   };
   const handleRemoveMinimum = (settingIdx: number, minIdx: number) => {
     const tempSettings = [...settings];
-    tempSettings[settingIdx].minimums.splice(minIdx, 1);
+    const idx = getSettingsIndex(settings, selectedFilter, settingIdx);
+    tempSettings[idx].minimums.splice(minIdx, 1);
     setSettings(tempSettings);
   };
   const handleAddMinimum = (settingIdx: number) => {
     const tempSettings = [...settings];
-    tempSettings[settingIdx].minimums.push({
+    const idx = getSettingsIndex(settings, selectedFilter, settingIdx);
+    tempSettings[idx].minimums.push({
       statType: "ATT",
       threshold: "0",
     });
     setSettings(tempSettings);
   };
-  const handleMinimumChange = (
+  const handleMinimumChange = <
+    K extends keyof ModifiableSetting["minimums"][0],
+    V extends ModifiableSetting["minimums"][0][K]
+  >(
     e: React.ChangeEvent<HTMLInputElement>,
     settingIdx: number,
     minIdx: number,
-    name: MinimumChange
+    name: K
   ) => {
     const tempSettings = [...settings];
-    switch (name) {
-      case "threshold":
-        tempSettings[settingIdx].minimums[minIdx].threshold = e.target.value;
-        break;
-      case "statType":
-        tempSettings[settingIdx].minimums[minIdx].statType = e.target
-          .value as ScoringCategory;
-        break;
-    }
-
+    const idx = getSettingsIndex(settings, selectedFilter, settingIdx);
+    tempSettings[idx].minimums[minIdx][name] = e.target.value as V;
     setSettings(tempSettings);
   };
   const sendData = () => {
@@ -203,193 +201,38 @@ const ScoringSettings = () => {
   }
   return (
     <Container fluid>
-      <Row>
+      <Row className="mt-3 mb-3">
         <Col>
           <LeagueButton id={id} />
         </Col>
       </Row>
       <Row>
         <Col>
-          <h2 className="mb-5">Scoring Settings</h2>
+          <h2 className="m-0">Scoring Settings</h2>
         </Col>
       </Row>
+      <Row>
+        <Col>
+          <PositionToggle
+            selectedFilter={selectedFilter}
+            onChange={onPositionFilterChange}
+          />
+        </Col>
+      </Row>
+      <hr />
       {settings
-        ? settings.map((setting, i) => (
-            <OverlayTrigger
+        ? settingsToRender.map((setting, i) => (
+            <SingleSettingRow
               key={i}
-              placement="top-start"
-              delay={1000}
-              overlay={
-                <Button
-                  onClick={() => handleRemoveSetting(i)}
-                  variant="danger"
-                  size="sm"
-                  className="ml-2 mb-2"
-                >
-                  Remove setting
-                </Button>
-              }
-            >
-              <Row className="mt-3 mb-5">
-                <Col md={2}>
-                  <Form.Control
-                    as="select"
-                    defaultValue={setting.position}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      handleSettingChange(e, i, "position")
-                    }
-                  >
-                    {positionTypes.map((type, j) => (
-                      <option value={type} key={j}>
-                        {type}
-                      </option>
-                    ))}
-                  </Form.Control>
-                </Col>
-                <Col md={1}>
-                  <Form.Control
-                    value={setting.points}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleSettingChange(e, i, "points")
-                    }
-                    type="text"
-                  />{" "}
-                  {setting.points === "1" ? "point" : "points"}
-                </Col>
-                <Col md={2}>
-                  <Row>
-                    <Col>
-                      <Form.Control
-                        as="select"
-                        value={setting.category.qualifier || "per"}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                          handleCategoryChange(e, i, "qualifier")
-                        }
-                      >
-                        <option value="per">per</option>
-                        <option value="greater than">greater than</option>
-                        <option value="between">between</option>
-                      </Form.Control>
-                    </Col>
-                  </Row>
-                  {settings[i].category.qualifier === "between" ? (
-                    <Row>
-                      <Col>
-                        <Form.Control
-                          value={setting.category.thresholdMin || ""}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            handleCategoryChange(e, i, "thresholdMin")
-                          }
-                          type="text"
-                        />
-                      </Col>
-                      and
-                      <Col>
-                        <Form.Control
-                          value={setting.category.thresholdMax || ""}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            handleCategoryChange(e, i, "thresholdMax")
-                          }
-                          type="text"
-                        />
-                      </Col>
-                    </Row>
-                  ) : (
-                    <Row>
-                      <Col>
-                        <Form.Control
-                          value={setting.category.threshold || ""}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            handleCategoryChange(e, i, "threshold")
-                          }
-                          type="text"
-                        />
-                      </Col>
-                    </Row>
-                  )}
-                  <Row>
-                    <Col>
-                      <Form.Control
-                        name="statType"
-                        data-setting={i}
-                        as="select"
-                        defaultValue={setting.category.statType}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                          handleCategoryChange(e, i, "statType")
-                        }
-                      >
-                        {scoringTypes.map((type, idx) => (
-                          <option key={idx} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </Form.Control>
-                    </Col>
-                  </Row>
-                </Col>
-                {setting.minimums.map((min, j) => (
-                  <OverlayTrigger
-                    key={i}
-                    placement="bottom"
-                    delay={1000}
-                    overlay={
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        onClick={() => handleRemoveMinimum(i, j)}
-                      >
-                        Remove Minimum
-                      </Button>
-                    }
-                  >
-                    <Col key={j} md={2}>
-                      <Row>
-                        <Col>
-                          <span>Minimum:</span>
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col>
-                          <Form.Control
-                            value={min.threshold || ""}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLInputElement>
-                            ) => handleMinimumChange(e, i, j, "threshold")}
-                            type="text"
-                          />
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col>
-                          <Form.Control
-                            as="select"
-                            defaultValue={min.statType}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLInputElement>
-                            ) => handleMinimumChange(e, i, j, "statType")}
-                          >
-                            {scoringTypes.map((type, idx) => (
-                              <option key={idx} value={type}>
-                                {type}
-                              </option>
-                            ))}
-                          </Form.Control>
-                        </Col>
-                      </Row>
-                    </Col>
-                  </OverlayTrigger>
-                ))}
-                <Col sm={2}>
-                  <Button
-                    onClick={() => handleAddMinimum(i)}
-                    className="mt-4"
-                    variant="primary"
-                  >
-                    Add new minimum
-                  </Button>
-                </Col>
-              </Row>
-            </OverlayTrigger>
+              setting={setting}
+              index={i}
+              handleAddMinimum={handleAddMinimum}
+              handleCategoryChange={handleCategoryChange}
+              handleMinimumChange={handleMinimumChange}
+              handleRemoveMinimum={handleRemoveMinimum}
+              handleRemoveSetting={handleRemoveSetting}
+              handleSettingChange={handleSettingChange}
+            />
           ))
         : ""}
       <Row className="justify-content-center">

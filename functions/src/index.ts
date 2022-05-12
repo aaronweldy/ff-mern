@@ -54,7 +54,7 @@ export const fetchRankings = functions.pubsub
 export const fetchNflSchedule = functions.pubsub
   .schedule("1st thursday of month 00:00")
   .onRun(async () => {
-    const url = "http://www.espn.com/nfl/schedulegrid";
+    const url = "http://www.espn.com/nfl/schedulegrid/_/year/2021";
     const data: Record<Week | "0", AbbreviatedNflTeam | "WSH">[] = (
       await scraper.get(url)
     )[0];

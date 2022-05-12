@@ -87,8 +87,12 @@ export default function AdjustLineups() {
   };
 
   return (
-    <Container id="small-left">
-      <LeagueButton id={id} />
+    <Container>
+      <Row className="mt-3">
+        <Col>
+          <LeagueButton id={id} />
+        </Col>
+      </Row>
       <EditWeek
         week={week}
         maxWeeks={league?.numWeeks}

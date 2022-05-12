@@ -20,7 +20,7 @@ const LeagueCreationHeader = ({
 }: LeagueCreationHeaderProps) => {
   return (
     <>
-      <Row className="align-items-center mt-5">
+      <Row className="align-items-center">
         <Col sm="auto">
           <Form.Label>League Name:</Form.Label>
         </Col>

@@ -1,6 +1,7 @@
 import { Table } from "react-bootstrap";
 import React from "react";
 import { Team } from "@ff-mern/ff-types";
+import styles from "./TableStyle.module.css";
 
 const backgroundIters = [
   "first-background",
@@ -17,7 +18,7 @@ const ScorePlacementTable = ({ teams, week }: ScorePlacementTableProps) => {
   const teamSorter = (a: Team, b: Team) =>
     Team.sumWeekScore(b, week) - Team.sumWeekScore(a, week);
   return (
-    <Table striped bordered hover className="table-width">
+    <Table striped bordered className="table-width">
       <thead>
         <tr>
           <th>Place</th>
@@ -27,7 +28,7 @@ const ScorePlacementTable = ({ teams, week }: ScorePlacementTableProps) => {
       </thead>
       <tbody>
         {teams.sort(teamSorter).map((team, i) => (
-          <tr key={i} id={i <= 2 ? backgroundIters[i] : ""}>
+          <tr key={i} id={i <= 2 ? styles[backgroundIters[i]] : ""}>
             <td>{i + 1}</td>
             <td>{team.name}</td>
             <td>

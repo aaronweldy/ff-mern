@@ -1,24 +1,12 @@
 import React, { useEffect } from "react";
-import { useDispatch } from "react-redux";
 import { Row, Container } from "react-bootstrap";
-import { login } from "../../Redux/userSlice";
-import { auth, ui, uiConfig } from "../../firebase-config";
+import { ui, uiConfig } from "../../firebase-config";
 import "firebase/auth";
 
 const Login = () => {
-  const dispatch = useDispatch();
-
   useEffect(() => {
     ui.start("#firebaseui-auth-container", uiConfig);
-    const authFunc = auth.onAuthStateChanged((user) => {
-      if (user) {
-        dispatch(login());
-      } else {
-        console.log(user);
-      }
-    });
-    return () => authFunc();
-  }, [dispatch]);
+  }, []);
   return (
     <Container>
       <Row className="justify-content-center mt-3">

@@ -12,7 +12,6 @@ export type CumulativePlayerTableProps = {
 export const CumulativePlayerTable = ({
   players,
 }: CumulativePlayerTableProps) => {
-  console.log(players);
   return (
     <Row className="justify-content-center mt-3">
       <Col>

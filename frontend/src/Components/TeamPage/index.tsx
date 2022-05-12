@@ -116,7 +116,7 @@ const TeamPage = () => {
         handleHide={() => setShowImageModal(!showImageModal)}
         handleInfoSubmission={handleInfoSubmission}
       />
-      <Row>
+      <Row className="mt-3">
         <LeagueButton id={leagueId} />
       </Row>
       {team && league && user.isSuccess ? (

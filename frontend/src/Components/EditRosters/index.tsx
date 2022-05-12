@@ -21,6 +21,7 @@ import {
 import { useTeams } from "../../hooks/query/useTeams";
 import { useUpdateTeamsMutation } from "../../hooks/query/useUpdateTeamsMutation";
 import { InlineTeamTile } from "../shared/InlineTeamTile";
+import styles from "./EditRosters.module.css";
 
 const EditRosters = () => {
   const [redirect, setRedirect] = useState(false);
@@ -94,114 +95,125 @@ const EditRosters = () => {
     return <Navigate to={`/league/${id}/`} />;
   }
   return (
-    <Container fluid>
+    <Container fluid className="mt-3">
       <Row className="justify-content-center">
-        <LeagueButton id={id} />
-      </Row>
-      <Row className="justify-content-center">
-        {isSuccess
-          ? teams.map((team, i) => (
-              <Col md={4} key={i} className="bordered-row m-3 p-3">
-                <Form.Group as={Row} className="mt-3">
-                  <Form.Label column md={4}>
-                    Team Name
-                  </Form.Label>
-                  <Col md={8}>
-                    <Form.Control
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInfoChange(e, "name", i)
-                      }
-                      size="lg"
-                      type="text"
-                      value={team.name}
-                    />
-                  </Col>
-                </Form.Group>
-                <Row className="mb-2">
-                  <Form.Label column md={4}>
-                    Team Owner
-                  </Form.Label>
-                  <Col md={8}>
-                    <Form.Control
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInfoChange(e, "ownerName", i)
-                      }
-                      size="sm"
-                      type="text"
-                      value={team.ownerName}
-                    />
-                  </Col>
-                </Row>
-                <Table striped bordered hover>
-                  <thead>
-                    <tr>
-                      <th className="centered-td">Position</th>
-                      <th className="centered-td">Player Name</th>
-                      <th className="centered-td">Team</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {team.rosteredPlayers.map((player, j) => (
-                      <OverlayTrigger
-                        key={j}
-                        placement="left"
-                        delay={1000}
-                        overlay={
-                          <Button
-                            onClick={(e) => handleRemovePlayer(e, i, j)}
-                            name="remove"
-                            variant="danger"
-                            data-team={i}
-                            data-id={j}
-                          >
-                            X
-                          </Button>
-                        }
-                      >
+        <Col md={8}>
+          <LeagueButton id={id} />
+          <Row>
+            {isSuccess
+              ? teams.map((team, i) => (
+                  <Col
+                    md={5}
+                    key={i}
+                    className={`${styles["bordered-row"]} m-3 p-3`}
+                  >
+                    <Form.Group as={Row} className="mt-3">
+                      <Form.Label column md={4}>
+                        Team Name
+                      </Form.Label>
+                      <Col md={8}>
+                        <Form.Control
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleInfoChange(e, "name", i)
+                          }
+                          size="lg"
+                          type="text"
+                          value={team.name}
+                        />
+                      </Col>
+                    </Form.Group>
+                    <Row className="mb-2">
+                      <Form.Label column md={4}>
+                        Team Owner
+                      </Form.Label>
+                      <Col md={8}>
+                        <Form.Control
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleInfoChange(e, "ownerName", i)
+                          }
+                          size="sm"
+                          type="text"
+                          value={team.ownerName}
+                        />
+                      </Col>
+                    </Row>
+                    <Table striped bordered hover>
+                      <thead>
                         <tr>
-                          <td className="centered-td align-middle">
-                            {player.position}
-                          </td>
-                          <td>
-                            <Typeahead
-                              id="player-typeahead"
-                              selected={[player]}
-                              options={
-                                (playersQuery.isSuccess &&
-                                  playersQuery.data.players) ||
-                                []
-                              }
-                              placeholder="Select Player"
-                              onInputChange={(input) =>
-                                handleInputChange(i, j, input)
-                              }
-                              onChange={(selected) =>
-                                handleSelectPlayer(i, j, selected)
-                              }
-                              labelKey={(player) => player.fullName ?? ""}
-                            />
-                          </td>
-                          <td className="centered-td align-middle">
-                            <InlineTeamTile team={player.team} />
-                          </td>
+                          <th className="centered-td">Position</th>
+                          <th className="centered-td">Player Name</th>
+                          <th className="centered-td">Team</th>
                         </tr>
-                      </OverlayTrigger>
-                    ))}
-                  </tbody>
-                </Table>
-                <Row className="justify-content-center mb-2">
-                  <Button onClick={() => handleAddPlayer(i)} variant="primary">
-                    Add Player
-                  </Button>
-                </Row>
-              </Col>
-            ))
-          : ""}
-      </Row>
-      <Row className="justify-content-center m-5">
-        <Button onClick={sendUpdatedTeams} variant="success">
-          Submit Teams
-        </Button>
+                      </thead>
+                      <tbody>
+                        {team.rosteredPlayers.map((player, j) => (
+                          <OverlayTrigger
+                            key={j}
+                            placement="left"
+                            delay={1000}
+                            overlay={
+                              <Button
+                                onClick={(e) => handleRemovePlayer(e, i, j)}
+                                name="remove"
+                                variant="danger"
+                                data-team={i}
+                                data-id={j}
+                              >
+                                X
+                              </Button>
+                            }
+                          >
+                            <tr>
+                              <td className="centered-td align-middle">
+                                {player.position}
+                              </td>
+                              <td>
+                                <Typeahead
+                                  id="player-typeahead"
+                                  selected={[player]}
+                                  options={
+                                    (playersQuery.isSuccess &&
+                                      playersQuery.data.players) ||
+                                    []
+                                  }
+                                  placeholder="Select Player"
+                                  onInputChange={(input) =>
+                                    handleInputChange(i, j, input)
+                                  }
+                                  onChange={(selected) =>
+                                    handleSelectPlayer(i, j, selected)
+                                  }
+                                  labelKey={(player) => player.fullName ?? ""}
+                                />
+                              </td>
+                              <td className="centered-td align-middle">
+                                <InlineTeamTile team={player.team} />
+                              </td>
+                            </tr>
+                          </OverlayTrigger>
+                        ))}
+                      </tbody>
+                    </Table>
+                    <Row className="justify-content-center mb-2">
+                      <Button
+                        onClick={() => handleAddPlayer(i)}
+                        variant="primary"
+                      >
+                        Add Player
+                      </Button>
+                    </Row>
+                  </Col>
+                ))
+              : ""}
+          </Row>
+          <Row className="my-5">
+            <Col>
+              <Button onClick={sendUpdatedTeams} variant="success">
+                Submit Teams
+              </Button>
+            </Col>
+          </Row>
+        </Col>
       </Row>
     </Container>
   );

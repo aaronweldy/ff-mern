@@ -37,7 +37,7 @@ const TeamHub = () => {
   return (
     <Container fluid>
       <Row className="justify-content-center">
-        <CardDeck id="teamCards">
+        <CardDeck className="padded-container">
           {userTeamsQuery.isSuccess &&
             userTeamsQuery.data.teams.map((team, index) => (
               <Card key={index} className="m-2">

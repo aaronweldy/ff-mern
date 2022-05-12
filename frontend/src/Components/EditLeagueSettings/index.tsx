@@ -19,6 +19,7 @@ import { ref, getDownloadURL, uploadString } from "firebase/storage";
 import { useTeams } from "../../hooks/query/useTeams";
 import { useUpdateLeagueMutation } from "../../hooks/query/useUpdateLeagueMutation";
 import { IncDecInput } from "../CreateLeague/IncDecInput";
+import LeagueButton from "../shared/LeagueButton";
 
 function EditLeagueSettings() {
   const { id } = useParams() as { id: string };
@@ -149,6 +150,11 @@ function EditLeagueSettings() {
   }
   return (
     <Container>
+      <Row className="mt-3 mb-3">
+        <Col>
+          <LeagueButton id={id} />
+        </Col>
+      </Row>
       <Form>
         <LeagueCreationHeader
           handleSizeChange={handleSizeChange}
@@ -209,7 +215,9 @@ function EditLeagueSettings() {
           </Col>
         </Row>
         <Row>
-          <Image className="image-fit" src={imageUrl} />
+          <Col>
+            <Image className="image-fit" src={imageUrl} />
+          </Col>
         </Row>
         <Form.Row className="mb-3 mt-3">
           <Button variant="success" onClick={() => handleLeagueSubmission()}>

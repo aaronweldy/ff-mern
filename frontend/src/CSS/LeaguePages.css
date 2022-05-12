@@ -1,27 +1,9 @@
-.no-background {
-  background-color: transparent !important;
+:root {
+  box-sizing: border-box;
 }
 
-#teamCards .card {
-  min-width: 18rem;
-  max-width: 18rem;
-}
-
-.bordered-row {
-  border: 1pt solid;
-}
-
-#small-left {
-  margin-left: 1.5rem;
-}
-
-.left-corner {
-  margin-left: 5px;
-  margin-top: 5px;
-}
-
-.error-background {
-  background-color: red;
+.padded-container {
+  padding: 0 3em;
 }
 
 #first-background {
@@ -132,10 +114,6 @@
   }
 }
 
-.top-bordered-row {
-  border-top: 3px solid black;
-}
-
 .centered-td {
   text-align: center;
   vertical-align: middle;
@@ -182,12 +160,8 @@
 }
 
 .sticky-td {
-  left: 0;
+  left: -15px;
   width: 100px;
-}
-
-.gray-col {
-  background-color: lightgray;
 }
 
 .time-display {

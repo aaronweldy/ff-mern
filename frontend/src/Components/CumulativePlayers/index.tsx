@@ -3,8 +3,8 @@ import { useParams } from "react-router-dom";
 import { CumulativePlayerScores } from "@ff-mern/ff-types";
 import LeagueButton from "../shared/LeagueButton";
 import { CumulativePlayerTable } from "./CumulativePlayerTable";
-import { Container } from "react-bootstrap";
-import { PositionFilter, PositionToggle } from "./PositionToggle";
+import { Col, Container, Row } from "react-bootstrap";
+import { PositionFilter, PositionToggle } from "../shared/PositionToggle";
 import { useCumulativePlayerScores } from "../../hooks/query/useCumulativePlayerScores";
 
 export const CumulativePlayers = () => {
@@ -12,8 +12,8 @@ export const CumulativePlayers = () => {
   const cumulativeScoresQuery = useCumulativePlayerScores(id);
   const [selectedFilter, setFilter] = useState<PositionFilter>("all");
 
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilter(e.target.value as PositionFilter);
+  const onChange = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    setFilter(e.currentTarget.textContent as PositionFilter);
   };
 
   const playersToRender = useMemo(() => {
@@ -34,7 +34,11 @@ export const CumulativePlayers = () => {
   }, [selectedFilter, cumulativeScoresQuery]);
   return (
     <Container fluid>
-      <LeagueButton id={id} />
+      <Row className="mt-3">
+        <Col>
+          <LeagueButton id={id} />
+        </Col>
+      </Row>
       <PositionToggle selectedFilter={selectedFilter} onChange={onChange} />
       {cumulativeScoresQuery.isSuccess && (
         <CumulativePlayerTable players={playersToRender} />

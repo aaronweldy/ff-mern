@@ -19,7 +19,6 @@ import {
   updatePassword,
   updateProfile,
 } from "firebase/auth";
-
 import "../../CSS/LeaguePages.css";
 import { Team } from "@ff-mern/ff-types";
 import { useAuthUser } from "@react-query-firebase/auth";
@@ -279,7 +278,7 @@ const User = () => {
         ""
       )}
       <Row className="justify-content-center">
-        <CardDeck id="teamCards">
+        <CardDeck>
           {userTeamsQuery.isSuccess &&
             userTeamsQuery.data.teams.map((team, index) => (
               <Card key={index} className="m-2">

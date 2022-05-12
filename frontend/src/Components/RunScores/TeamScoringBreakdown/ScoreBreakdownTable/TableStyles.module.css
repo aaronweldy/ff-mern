@@ -1,0 +1,7 @@
+.gray-col {
+  background-color: lightgray;
+}
+
+.top-bordered-row {
+  border-top: 3px solid black;
+}

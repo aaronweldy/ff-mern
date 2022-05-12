@@ -1,4 +1,4 @@
-import { League, Position, Team, TeamWeekInfo, Week } from "@ff-mern/ff-types";
+import { League, Position, Team, TeamWeekInfo } from "@ff-mern/ff-types";
 import { useMemo, useState } from "react";
 import { getWeeklyLineup } from "../Components/utils/getWeeklyLineup";
 

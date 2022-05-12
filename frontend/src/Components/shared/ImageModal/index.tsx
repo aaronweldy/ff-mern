@@ -9,7 +9,7 @@ import {
 } from "react-bootstrap";
 import { useDropzone } from "react-dropzone";
 import React, { useState, useCallback, useEffect } from "react";
-import { storage } from "../../firebase-config";
+import { storage } from "../../../firebase-config";
 import { ref, getDownloadURL } from "firebase/storage";
 
 type ImageModalProps = {

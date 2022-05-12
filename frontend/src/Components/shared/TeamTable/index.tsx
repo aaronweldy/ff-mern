@@ -13,9 +13,9 @@ import {
   TeamToSchedule,
   Week,
 } from "@ff-mern/ff-types";
-import { lineupSorter } from "../../constants";
-import { NflRankedText } from "./NflRankedText";
-import { InlineTeamTile } from "./InlineTeamTile";
+import { lineupSorter } from "../../../constants";
+import { NflRankedText } from "../NflRankedText";
+import { InlineTeamTile } from "../InlineTeamTile";
 
 type TableType = "starters" | "bench" | "backup";
 

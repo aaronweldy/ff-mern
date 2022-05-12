@@ -29,10 +29,8 @@ export default function AddPoints() {
     return <Navigate to={`/league/${id}/`} />;
   }
   return (
-    <Container id="small-left">
-      <Row>
-        <LeagueButton id={id} />
-      </Row>
+    <Container className="mt-3">
+      <LeagueButton id={id} />
       <Row className="mt-3 mb-3">
         <Col className="justify-items-center align-self-center" md={1}>
           <Form.Label>Week: </Form.Label>
@@ -51,36 +49,42 @@ export default function AddPoints() {
           </Form.Control>
         </Col>
       </Row>
-      <Table bordered>
-        <thead>
-          <tr>
-            <th>Team Name</th>
-            <th>Points in Week</th>
-            <th>Points to Add</th>
-          </tr>
-        </thead>
-        <tbody>
-          {teams && league
-            ? teams.map((team, i) => {
-                return (
-                  <tr key={i}>
-                    <td>{team.name}</td>
-                    <td>{(team.weekInfo[week].weekScore || 0).toFixed(2)}</td>
-                    <td>
-                      <Form.Control
-                        value={team.weekInfo[week].addedPoints || 0}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                          handleAddedPoints(e, i)
-                        }
-                        type="text"
-                      />
-                    </td>
-                  </tr>
-                );
-              })
-            : null}
-        </tbody>
-      </Table>
+      <Row>
+        <Col>
+          <Table bordered>
+            <thead>
+              <tr>
+                <th>Team Name</th>
+                <th>Points in Week</th>
+                <th>Points to Add</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teams && league
+                ? teams.map((team, i) => {
+                    return (
+                      <tr key={i}>
+                        <td>{team.name}</td>
+                        <td>
+                          {(team.weekInfo[week].weekScore || 0).toFixed(2)}
+                        </td>
+                        <td>
+                          <Form.Control
+                            value={team.weekInfo[week].addedPoints || 0}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLSelectElement>
+                            ) => handleAddedPoints(e, i)}
+                            type="text"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })
+                : null}
+            </tbody>
+          </Table>
+        </Col>
+      </Row>
       <Button variant="success" className="mt-5 mb-5" onClick={updateTeams}>
         Submit
       </Button>
