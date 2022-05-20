@@ -14,13 +14,12 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
     function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
     function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
 };
-import { convertedScoringTypes, RosteredPlayer, sanitizePlayerName, } from "@ff-mern/ff-types";
+import { convertedScoringTypes, RosteredPlayer, sanitizePlayerName, getCurrentSeason, } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
 import fetch from "node-fetch";
 import { load } from "cheerio";
 // @ts-ignore
 import scraper from "table-scraper";
-import { getCurrentSeason } from "./dates.js";
 export const positions = ["qb", "rb", "wr", "te", "k"];
 const sliceTeamFromName = (name) => {
     const lastSpace = name.lastIndexOf(" ");

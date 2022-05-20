@@ -5,6 +5,7 @@ import user from "./route/user.js";
 import league from "./route/league.js";
 import nflData from "./route/nflData.js";
 import team from "./route/team.js";
+import trade from "./route/trade.js";
 import env from "dotenv";
 const app = express();
 env.config();
@@ -18,6 +19,7 @@ app.use("/api/v1/user/", user);
 app.use("/api/v1/league/", league);
 app.use("/api/v1/team/", team);
 app.use("/api/v1/nflData/", nflData);
+app.use("/api/v1/trade/", trade);
 app.all("*", (_, res) => {
     console.log("Returning a 404 from the catch-all route");
     return res.sendStatus(404);

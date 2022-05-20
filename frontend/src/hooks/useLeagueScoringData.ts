@@ -7,7 +7,7 @@ import { useTeams } from "./query/useTeams";
 
 export const useLeagueScoringData = (id: string) => {
   const { league, isLoading: leagueLoading } = useLeague(id);
-  const { teams, setTeams, isLoading: teamsLoading } = useTeams(id);
+  const { teams, setTeams, query: teamsQuery } = useTeams(id);
   const [week, setWeek] = useState<number>(1);
   const { data: playerData, isLoading: scoresLoading } = usePlayerScores(
     id,
@@ -24,14 +24,14 @@ export const useLeagueScoringData = (id: string) => {
   const isLoading = useMemo(() => {
     return (
       leagueLoading ||
-      teamsLoading ||
+      teamsQuery.isLoading ||
       scoresLoading ||
       nflScheduleQuery.isLoading ||
       defenseStatsQuery.isLoading
     );
   }, [
     leagueLoading,
-    teamsLoading,
+    teamsQuery.isLoading,
     scoresLoading,
     nflScheduleQuery,
     defenseStatsQuery,
@@ -47,7 +47,7 @@ export const useLeagueScoringData = (id: string) => {
     isLoading,
     nflScheduleQuery,
     defenseStatsQuery,
-    teamsLoading,
+    teamsLoading: teamsQuery.isLoading,
     leagueLoading,
   };
 };

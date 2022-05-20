@@ -1664,6 +1664,7 @@ __metadata:
     cross-env: ^7.0.3
     rollup: ^2.64.0
     rollup-plugin-dts: ^4.1.0
+    uuid: ^8.3.2
   languageName: unknown
   linkType: soft
 
@@ -6527,6 +6528,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"clsx@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "clsx@npm:1.1.1"
+  checksum: ff052650329773b9b245177305fc4c4dc3129f7b2be84af4f58dc5defa99538c61d4207be7419405a5f8f3d92007c954f4daba5a7b74e563d5de71c28c830063
+  languageName: node
+  linkType: hard
+
 "co@npm:3.1.0":
   version: 3.1.0
   resolution: "co@npm:3.1.0"
@@ -9150,6 +9158,7 @@ __metadata:
     react-icons: ^4.3.1
     react-router-dom: ^6.2.2
     react-scripts: ^5.0.0
+    react-toastify: ^9.0.1
     ts-loader: ^9.2.6
     typescript: ^4.5.5
     uuid: ^8.3.2
@@ -16021,6 +16030,18 @@ __metadata:
   bin:
     react-scripts: bin/react-scripts.js
   checksum: 55ffad0d68ee6345326f5803c1925ae44b46cc33cb1cad9bcb68fd1784acfb3876bc12118b3079bc4d934834ae0197a9776baa0a06df0263831acc91ac42df29
+  languageName: node
+  linkType: hard
+
+"react-toastify@npm:^9.0.1":
+  version: 9.0.1
+  resolution: "react-toastify@npm:9.0.1"
+  dependencies:
+    clsx: ^1.1.1
+  peerDependencies:
+    react: ">=16"
+    react-dom: ">=16"
+  checksum: 920603bfd18d26537ad7fcd31899eea1469922176a730a8e597c199447af79cb8dba3bd30e9327aa3f841790737d564880f76c83b60ec34c4b1c5c32e2a79b06
   languageName: node
   linkType: hard
 

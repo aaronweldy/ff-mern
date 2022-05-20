@@ -1,11 +1,17 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { CumulativePlayerScores } from "@ff-mern/ff-types";
+import {
+  CumulativePlayerScores,
+  positionTypes,
+  SinglePosition,
+} from "@ff-mern/ff-types";
 import LeagueButton from "../shared/LeagueButton";
 import { CumulativePlayerTable } from "./CumulativePlayerTable";
 import { Col, Container, Row } from "react-bootstrap";
-import { PositionFilter, PositionToggle } from "../shared/PositionToggle";
+import { MenuSelector } from "../shared/MenuSelector";
 import { useCumulativePlayerScores } from "../../hooks/query/useCumulativePlayerScores";
+
+export type PositionFilter = SinglePosition | "all";
 
 export const CumulativePlayers = () => {
   const { id } = useParams() as { id: string };
@@ -39,7 +45,11 @@ export const CumulativePlayers = () => {
           <LeagueButton id={id} />
         </Col>
       </Row>
-      <PositionToggle selectedFilter={selectedFilter} onChange={onChange} />
+      <MenuSelector
+        options={["all"].concat(positionTypes)}
+        selectedOption={selectedFilter}
+        onChange={onChange}
+      />
       {cumulativeScoresQuery.isSuccess && (
         <CumulativePlayerTable players={playersToRender} />
       )}

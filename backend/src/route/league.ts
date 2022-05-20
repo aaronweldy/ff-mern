@@ -11,6 +11,7 @@ import {
   PlayerScoresResponse,
   CumulativePlayerScores,
   playerTeamIsNflAbbreviation,
+  getCurrentSeason,
 } from "@ff-mern/ff-types";
 import {
   fetchPlayers,
@@ -18,7 +19,6 @@ import {
   scoreAllPlayers,
 } from "../utils/fetchRoutes.js";
 import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
-import { getCurrentSeason } from "../utils/dates.js";
 import {
   handleKickerBackupResolution,
   handleNonKickerBackupResolution,

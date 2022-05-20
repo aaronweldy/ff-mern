@@ -1,0 +1,82 @@
+:root {
+  --add-button-green: 120;
+  --add-button-red: 0;
+}
+
+.team-selection-row {
+  margin: 0;
+  padding: 1em 2em;
+  border: 1px solid black;
+  border-radius: 5px;
+}
+
+.trade-row-text {
+  margin-bottom: 0.5em;
+  font-size: 1.25em;
+  font-weight: bold;
+  color: black;
+}
+
+.submit-button {
+  padding: 0.375em 0.75em;
+  background-color: hsl(var(--add-button-green), 50%, 50%);
+  color: white;
+  border: none;
+}
+
+.submit-button:disabled {
+  background-color: hsl(var(--add-button-green), 5%, 35%);
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: hsl(var(--add-button-green), 60%, 50%);
+}
+
+.submit-button:active:not(:disabled) {
+  background-color: hsl(var(--add-button-green), 70%, 50%);
+}
+
+.button {
+  border-radius: 50%;
+  height: 1.5em;
+  width: 1.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 1px solid #000000;
+  font-size: 1.3em;
+  line-height: 0.8em;
+  padding: 0;
+  box-shadow: 0.05em 0.05em 0.1em #00000033;
+}
+
+.button--add {
+  background-color: hsl(var(--add-button-green), 50%, 90%);
+  border-color: hsl(var(--add-button-green), 50%, 90%);
+}
+
+.button--add:hover {
+  background-color: hsl(var(--add-button-green), 70%, 60%);
+  border-color: hsl(var(--add-button-green), 70%, 60%);
+}
+
+.button--add:active {
+  background-color: hsl(var(--add-button-green), 90%, 60%);
+  border-color: hsl(var(--add-button-green), 90%, 60%);
+}
+
+.button--remove {
+  background-color: hsl(var(--add-button-red), 50%, 85%);
+  border-color: hsl(var(--add-button-red), 50%, 85%);
+}
+
+.button--remove:hover {
+  background-color: hsl(var(--add-button-red), 70%, 60%);
+  border-color: hsl(var(--add-button-red), 70%, 60%);
+}
+
+.button--remove:active {
+  background-color: hsl(var(--add-button-red), 90%, 60%);
+  border-color: hsl(var(--add-button-green), 90%, 60%);
+}

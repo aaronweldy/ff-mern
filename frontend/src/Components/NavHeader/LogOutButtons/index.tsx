@@ -34,11 +34,7 @@ export const LogOutButtons = () => {
                 className="dropdown-box"
               >
                 <span className="mr-4 team-name">{team.name}</span>
-                <span className="ml-auto">
-                  <a className="league-name" href={`/league/${team.league}/`}>
-                    {team.leagueName}
-                  </a>
-                </span>
+                <span className="ml-auto">{team.leagueName}</span>
               </NavDropdown.Item>
             ))}
         </NavDropdown>

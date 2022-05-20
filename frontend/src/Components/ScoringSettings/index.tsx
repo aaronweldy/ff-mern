@@ -2,11 +2,17 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { Container, Col, Button, Row } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
-import { Position, Qualifier, ScoringCategory } from "@ff-mern/ff-types";
+import {
+  Position,
+  positionTypes,
+  Qualifier,
+  ScoringCategory,
+} from "@ff-mern/ff-types";
 import { useLeagueSettingsMutation } from "../../hooks/query/useLeagueSettingsMutation";
 import { useLeague } from "../../hooks/query/useLeague";
 import { SingleSettingRow } from "./SingleSettingRow";
-import { PositionFilter, PositionToggle } from "../shared/PositionToggle";
+import { MenuSelector } from "../shared/MenuSelector";
+import { PositionFilter } from "../CumulativePlayers";
 
 export type CategoryChange =
   | "threshold"
@@ -213,8 +219,9 @@ const ScoringSettings = () => {
       </Row>
       <Row>
         <Col>
-          <PositionToggle
-            selectedFilter={selectedFilter}
+          <MenuSelector
+            options={["all"].concat(positionTypes)}
+            selectedOption={selectedFilter}
             onChange={onPositionFilterChange}
           />
         </Col>

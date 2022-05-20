@@ -11,13 +11,13 @@ import {
   AbbreviatedNflTeam,
   Week,
   ScrapedPlayerProjection,
+  getCurrentSeason,
 } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
 import fetch from "node-fetch";
 import { load } from "cheerio";
 // @ts-ignore
 import scraper from "table-scraper";
-import { getCurrentSeason } from "./dates.js";
 
 export type ScrapedPlayer = Record<string, string>;
 export type TableScraperStatsResponse = Omit<

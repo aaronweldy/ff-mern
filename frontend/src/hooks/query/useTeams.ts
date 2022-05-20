@@ -13,15 +13,11 @@ const fetchTeams = async (leagueId: string) => {
 
 export const useTeams = (leagueId: string) => {
   const [teams, setTeams] = useState<Team[]>([]);
-  const { isLoading, isSuccess } = useQuery(
-    ["teams", leagueId],
-    () => fetchTeams(leagueId),
-    {
-      onSuccess: (data) => {
-        setTeams(data.teams);
-      },
-      staleTime: 1000 * 10 * 60,
-    }
-  );
-  return { teams, setTeams, isLoading, isSuccess };
+  const query = useQuery(["teams", leagueId], () => fetchTeams(leagueId), {
+    onSuccess: (data) => {
+      setTeams(data.teams);
+    },
+    staleTime: 1000 * 10 * 60,
+  });
+  return { teams, setTeams, query };
 };

@@ -72,11 +72,15 @@ const RunScores = () => {
       />
       {league && teams && playerData && selectedTeam && (
         <>
-          <TeamSelectionDropdown
-            teams={teams}
-            selectedTeam={selectedTeamId}
-            updateTeam={updateSelectedTeam}
-          />
+          <Row>
+            <Col xl={2}>
+              <TeamSelectionDropdown
+                teams={teams}
+                selectedTeam={selectedTeamId}
+                updateTeam={updateSelectedTeam}
+              />
+            </Col>
+          </Row>
           <Row>
             <Col>
               <TeamScoringBreakdown

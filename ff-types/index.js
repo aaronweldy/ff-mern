@@ -1,3 +1,5 @@
+import { v4 } from 'uuid';
+
 class League {
     constructor(name, commissioners, numWeeks, lineupSettings, logo) {
         this.name = name;
@@ -149,6 +151,15 @@ const scoringTypes = [
     "FG 50+",
     "FG/XP MISS",
 ];
+const getCurrentSeason = () => {
+    const curDate = new Date();
+    const curYear = curDate.getFullYear();
+    const curMonth = curDate.getMonth();
+    if (curMonth < 9) {
+        return curYear - 1;
+    }
+    return curYear;
+};
 
 const setPlayerName = (player, name) => {
     player.fullName = name;
@@ -271,4 +282,26 @@ const AbbreviationToFullTeam = {
     WSH: "washington commanders",
 };
 
-export { AbbreviationToFullTeam, FinalizedPlayer, League, RosteredPlayer, ScoringError, Team, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName };
+const buildTrade = (playersInvolved, teamIds) => {
+    const players = [];
+    playersInvolved.forEach((group, index) => {
+        Object.values(group).forEach((player) => {
+            players.push({
+                player,
+                fromTeam: teamIds[index],
+                toTeam: teamIds[(index + 1) % 2],
+            });
+        });
+    });
+    return {
+        id: v4(),
+        season: getCurrentSeason(),
+        teamsInvolved: teamIds,
+        players,
+        status: "pending",
+        dateProposed: Date.now(),
+        counterId: null,
+    };
+};
+
+export { AbbreviationToFullTeam, FinalizedPlayer, League, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, emptyDefaultPositions, getCurrentSeason, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName };

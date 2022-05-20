@@ -5,3 +5,4 @@ export * from "./Team";
 export * from "./API";
 export * from "./Utils";
 export * from "./Constants";
+export * from "./Trade";

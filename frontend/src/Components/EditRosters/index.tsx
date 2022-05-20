@@ -26,7 +26,7 @@ import styles from "./EditRosters.module.css";
 const EditRosters = () => {
   const [redirect, setRedirect] = useState(false);
   const { id } = useParams() as { id: string };
-  const { teams, setTeams, isSuccess } = useTeams(id);
+  const { teams, setTeams, query: teamsQuery } = useTeams(id);
   const { mutate: validateTeams } = useUpdateTeamsMutation(id, teams, true);
   const playersQuery = usePlayers();
 
@@ -100,7 +100,7 @@ const EditRosters = () => {
         <Col md={8}>
           <LeagueButton id={id} />
           <Row>
-            {isSuccess
+            {teamsQuery.isSuccess
               ? teams.map((team, i) => (
                   <Col
                     md={5}

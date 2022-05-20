@@ -19,10 +19,9 @@ import { defaultScoringSettings } from "../constants/league.js";
 import { Router } from "express";
 import { v4 } from "uuid";
 import admin, { db } from "../config/firebase-config.js";
-import { playerTeamIsNflAbbreviation, } from "@ff-mern/ff-types";
+import { playerTeamIsNflAbbreviation, getCurrentSeason, } from "@ff-mern/ff-types";
 import { fetchPlayers, getTeamsInLeague, scoreAllPlayers, } from "../utils/fetchRoutes.js";
 import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
-import { getCurrentSeason } from "../utils/dates.js";
 import { handleKickerBackupResolution, handleNonKickerBackupResolution, } from "../utils/backupResolution.js";
 const router = Router();
 router.get("/find/:query/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

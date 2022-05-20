@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { Router } from "express";
 import env from "dotenv";
 import { db } from "../config/firebase-config.js";
+import { getCurrentSeason } from "@ff-mern/ff-types";
 const router = Router();
 env.config();
 router.get("/:id/leagues/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -28,6 +29,38 @@ router.get("/:id/leagues/", (req, res) => __awaiter(void 0, void 0, void 0, func
             resp.url = urlDoc.data().url;
         res.json(resp).send();
     }));
+}));
+router.get("/:id/trades/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const response = [];
+    const userProposed = {};
+    const { id } = req.params;
+    const teamsForUser = yield db
+        .collection("teams")
+        .where("owner", "==", id)
+        .get()
+        .then((snapshot) => __awaiter(void 0, void 0, void 0, function* () {
+        const teamIds = [];
+        snapshot.forEach((data) => {
+            teamIds.push(data.data().id);
+        });
+        return teamIds;
+    }));
+    for (const teamId of teamsForUser) {
+        const trades = yield db
+            .collection("trades")
+            .where("teamsInvolved", "array-contains", teamId)
+            .where("season", "==", getCurrentSeason())
+            .orderBy("dateProposed", "desc")
+            .get();
+        trades.forEach((trade) => {
+            const tradeData = trade.data();
+            response.push(tradeData);
+            if (tradeData.teamsInvolved[0] === teamId) {
+                userProposed[tradeData.id] = true;
+            }
+        });
+    }
+    res.status(200).send({ trades: response, userProposed });
 }));
 router.post("/:id/updatePhoto", (req, res) => {
     const { id } = req.params;

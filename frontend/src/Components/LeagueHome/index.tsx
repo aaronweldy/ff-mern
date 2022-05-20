@@ -54,7 +54,6 @@ function LeagueHome() {
   if (redirect && deleteLeagueQuery.isSuccess) {
     return <Navigate to="/" />;
   }
-  console.log(teams);
   return (
     <Container fluid>
       <LeagueDeletionModal
@@ -96,6 +95,13 @@ function LeagueHome() {
           href={`/league/${id}/cumulativePlayerScores/`}
         >
           Cumulative Player Scoring
+        </Button>
+        <Button
+          className="ml-3"
+          variant="primary"
+          href={`/league/${id}/tradeCenter/`}
+        >
+          Trade Center
         </Button>
       </Row>
     </Container>

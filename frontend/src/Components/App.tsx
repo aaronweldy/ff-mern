@@ -21,6 +21,9 @@ import { CumulativePlayers } from "./CumulativePlayers";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { CommissionerRoute } from "./utils/CommissionerRoute";
 import { ReactQueryDevtools } from "react-query/devtools";
+import { TradeCenter } from "./TradeCenter";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.min.css";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +61,7 @@ const App = () => {
               path="/league/:id/cumulativePlayerScores/"
               element={<CumulativePlayers />}
             />
+            <Route path="/league/:id/tradeCenter" element={<TradeCenter />} />
             <Route path="/league/:id/" element={<LeagueHome />} />
           </Route>
           <Route path="/user/:userid/" element={<User />} />
@@ -65,6 +69,7 @@ const App = () => {
           <Route path="/" element={<TeamHub />} />
         </Routes>
       </Router>
+      <ToastContainer />
     </QueryClientProvider>
   );
 };

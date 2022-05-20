@@ -159,5 +159,23 @@ declare const sanitizeNflScheduleTeamName: (name: string) => AbbreviatedNflTeam;
 declare const playerTeamIsNflAbbreviation: (team: string) => team is AbbreviatedNflTeam;
 declare const convertedScoringTypes: Record<SinglePosition, Partial<Record<ScoringCategory, StatKey>>>;
 declare const scoringTypes: string[];
+declare const getCurrentSeason: () => number;
 
-export { AbbreviatedNflTeam, AbbreviationToFullTeam, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, League, LeagueAPIResponse, LineupSettings, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedPlayerProjection, SinglePosition, SingleTeamResponse, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, UpdateAllTeamsResponse, Week, convertedScoringTypes, emptyDefaultPositions, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName };
+declare type PlayerInTrade = {
+    player: RosteredPlayer;
+    fromTeam: string;
+    toTeam: string;
+};
+declare type TradeStatus = "pending" | "accepted" | "rejected" | "countered";
+declare type Trade = {
+    id: string;
+    season: number;
+    teamsInvolved: string[];
+    players: PlayerInTrade[];
+    status: TradeStatus;
+    dateProposed: number;
+    counterId: string | null;
+};
+declare const buildTrade: (playersInvolved: Record<string, RosteredPlayer>[], teamIds: string[]) => Trade;
+
+export { AbbreviatedNflTeam, AbbreviationToFullTeam, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, League, LeagueAPIResponse, LineupSettings, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedPlayerProjection, SinglePosition, SingleTeamResponse, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, emptyDefaultPositions, getCurrentSeason, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName };
