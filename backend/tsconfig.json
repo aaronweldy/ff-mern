@@ -1,27 +1,23 @@
 {
   "compilerOptions": {
-      "esModuleInterop": true,
-      "target": "es6",
-      "noImplicitAny": true,
-      "moduleResolution": "node",
-      "sourceMap": true,
-      "outDir": "dist",
-      "baseUrl": ".",
-      "paths": {
-          "*": [
-              "node_modules/*"
-          ]
-      },
-      "typeRoots": ["src/types"],
-      "strictPropertyInitialization": false,
+    "esModuleInterop": true,
+    "target": "es6",
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["node_modules/*"]
+    },
+    "typeRoots": ["src/types"],
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true
   },
   "references": [
-      {
-          "path": "../ff-types"
-      }
+    {
+      "path": "../ff-types"
+    }
   ],
-  "include": [
-      "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }
-

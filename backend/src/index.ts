@@ -8,8 +8,30 @@ import nflData from "./route/nflData.js";
 import team from "./route/team.js";
 import trade from "./route/trade.js";
 import env from "dotenv";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import {
+  ClientToServerEvents,
+  InterServerEvents,
+  ServerToClientEvents,
+  SocketData,
+} from "@ff-mern/ff-types";
+import { initSocket } from "./socket/draft/index.js";
 
 const app = express();
+const server = createServer(app);
+const io = new Server<
+  ServerToClientEvents,
+  ClientToServerEvents,
+  InterServerEvents,
+  SocketData
+>(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+initSocket(io);
 env.config();
 
 // env variables
@@ -32,7 +54,7 @@ app.all("*", (_, res) => {
   return res.sendStatus(404);
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Listening on port: ${PORT}`);
 });
 

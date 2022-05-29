@@ -1,4 +1,5 @@
 import admin from "firebase-admin";
+import { getAuth } from "firebase-admin/auth";
 
 admin.initializeApp({
   credential: admin.credential.cert(
@@ -10,3 +11,4 @@ admin.initializeApp({
 
 export default admin;
 export const db = admin.firestore();
+export const auth = getAuth();

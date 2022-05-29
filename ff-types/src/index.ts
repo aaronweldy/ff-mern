@@ -6,3 +6,4 @@ export * from "./API";
 export * from "./Utils";
 export * from "./Constants";
 export * from "./Trade";
+export * from "./Socket";

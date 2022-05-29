@@ -24,52 +24,58 @@ import { ReactQueryDevtools } from "react-query/devtools";
 import { TradeCenter } from "./TradeCenter";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
+import { SocketProvider } from "../Context/SocketContext";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ReactQueryDevtools initialIsOpen={true} />
-      <Router>
-        <NavHeader />
-        <Routes>
-          <Route path="/league/create/" element={<CreateLeague />} />
-          <Route path="/league/join/" element={<JoinLeague />} />
-          <Route element={<SecureRoute />}>
-            <Route path="/league/:leagueId/team/:id/" element={<TeamPage />} />
-            <Route path="/league/:id/editTeams/" element={<EditRosters />} />
-            <Route
-              path="/league/:id/editScoringSettings/"
-              element={
-                <CommissionerRoute>
-                  <ScoringSettings />
-                </CommissionerRoute>
-              }
-            />
-            <Route
-              path="/league/:id/updateSettings/"
-              element={<EditLeagueSettings />}
-            />
-            <Route path="/league/:id/runScores/" element={<RunScores />} />
-            <Route path="/league/:id/addPoints/" element={<AddPoints />} />
-            <Route
-              path="/league/:id/adjustLineups/"
-              element={<AdjustLineups />}
-            />
-            <Route
-              path="/league/:id/cumulativePlayerScores/"
-              element={<CumulativePlayers />}
-            />
-            <Route path="/league/:id/tradeCenter" element={<TradeCenter />} />
-            <Route path="/league/:id/" element={<LeagueHome />} />
-          </Route>
-          <Route path="/user/:userid/" element={<User />} />
-          <Route path="/login/" element={<Login />} />
-          <Route path="/" element={<TeamHub />} />
-        </Routes>
-      </Router>
-      <ToastContainer />
+      <SocketProvider>
+        <ReactQueryDevtools initialIsOpen={true} />
+        <Router>
+          <NavHeader />
+          <Routes>
+            <Route path="/league/create/" element={<CreateLeague />} />
+            <Route path="/league/join/" element={<JoinLeague />} />
+            <Route element={<SecureRoute />}>
+              <Route
+                path="/league/:leagueId/team/:id/"
+                element={<TeamPage />}
+              />
+              <Route path="/league/:id/editTeams/" element={<EditRosters />} />
+              <Route
+                path="/league/:id/editScoringSettings/"
+                element={
+                  <CommissionerRoute>
+                    <ScoringSettings />
+                  </CommissionerRoute>
+                }
+              />
+              <Route
+                path="/league/:id/updateSettings/"
+                element={<EditLeagueSettings />}
+              />
+              <Route path="/league/:id/runScores/" element={<RunScores />} />
+              <Route path="/league/:id/addPoints/" element={<AddPoints />} />
+              <Route
+                path="/league/:id/adjustLineups/"
+                element={<AdjustLineups />}
+              />
+              <Route
+                path="/league/:id/cumulativePlayerScores/"
+                element={<CumulativePlayers />}
+              />
+              <Route path="/league/:id/tradeCenter" element={<TradeCenter />} />
+              <Route path="/league/:id/" element={<LeagueHome />} />
+            </Route>
+            <Route path="/user/:userid/" element={<User />} />
+            <Route path="/login/" element={<Login />} />
+            <Route path="/" element={<TeamHub />} />
+          </Routes>
+        </Router>
+        <ToastContainer />
+      </SocketProvider>
     </QueryClientProvider>
   );
 };

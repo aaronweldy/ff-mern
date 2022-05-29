@@ -81,11 +81,11 @@ export const TeamTable = ({
         <thead>
           <tr>
             {isOwner ? <th>Move</th> : null}
-            <th>Position</th>
-            <th>Player Name</th>
-            <th>Team</th>
-            <th>Matchup</th>
-            <th>Matchup vs. Position</th>
+            <th className="text-center">Position</th>
+            <th className="text-center">Player Name</th>
+            <th className="text-center">Team</th>
+            <th className="text-center">Matchup</th>
+            <th className="text-center">Matchup vs. Position</th>
             {isOwner && name === "starters" ? <th>Backup</th> : null}
           </tr>
         </thead>
