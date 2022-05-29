@@ -61,13 +61,13 @@
 }
 
 .image-fit-height {
-  max-width: 120px;
-  height: auto;
+  width: 120px;
+  max-height: 120px;
 }
 
 .thumbnail-image {
-  max-width: 50px;
-  height: auto;
+  width: 50px;
+  max-height: 50px;
 }
 
 .hide-cells {

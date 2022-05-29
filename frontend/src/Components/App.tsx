@@ -25,6 +25,7 @@ import { TradeCenter } from "./TradeCenter";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import { SocketProvider } from "../Context/SocketContext";
+import { DraftRoom } from "./DraftRoom";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => {
               />
               <Route path="/league/:id/tradeCenter" element={<TradeCenter />} />
               <Route path="/league/:id/" element={<LeagueHome />} />
+              <Route path="/draft/:id/" element={<DraftRoom />} />
             </Route>
             <Route path="/user/:userid/" element={<User />} />
             <Route path="/login/" element={<Login />} />

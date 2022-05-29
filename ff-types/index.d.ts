@@ -1,3 +1,5 @@
+import { DecodedIdToken } from 'firebase-admin/auth';
+
 declare type LineupSettings = Record<Position, number>;
 declare class League {
     name: string;
@@ -178,9 +180,21 @@ declare type Trade = {
 };
 declare const buildTrade: (playersInvolved: Record<string, RosteredPlayer>[], teamIds: string[]) => Trade;
 
-declare type ServerToClientEvents = {};
-declare type ClientToServerEvents = {};
+declare type ConnectionAction = {
+    userId: string;
+    userEmail: string;
+    type: "connect" | "disconnect";
+};
+declare type ServerToClientEvents = {
+    "user connection": (action: ConnectionAction) => void;
+};
+declare type ClientToServerEvents = {
+    "join room": (room: string) => void;
+    "leave room": (room: string) => void;
+};
 declare type InterServerEvents = {};
-declare type SocketData = {};
+declare type SocketData = {
+    user: DecodedIdToken;
+};
 
-export { AbbreviatedNflTeam, AbbreviationToFullTeam, ClientToServerEvents, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, League, LeagueAPIResponse, LineupSettings, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedPlayerProjection, ServerToClientEvents, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, emptyDefaultPositions, getCurrentSeason, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName };
+export { AbbreviatedNflTeam, AbbreviationToFullTeam, ClientToServerEvents, ConnectionAction, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, League, LeagueAPIResponse, LineupSettings, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedPlayerProjection, ServerToClientEvents, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, emptyDefaultPositions, getCurrentSeason, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName };
