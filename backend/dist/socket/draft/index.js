@@ -11,8 +11,6 @@ export class DraftSocket {
         socket.on("leave room", (room) => this.onLeaveRoom(room));
     }
     onDisconnect() {
-        var _a;
-        console.info("user", (_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email, "disconnected");
         Object.entries(activeRooms).forEach(([room, users]) => {
             if (users[this.uid]) {
                 this.onLeaveRoom(room);
@@ -64,8 +62,6 @@ export const initSocket = (io) => {
         });
     });
     io.on("connection", (socket) => {
-        var _a;
-        console.log("New client", (_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.email, "connected");
         connectedUsers[socket.data.user.uid] = socket.data.user;
         new DraftSocket(socket, io, socket.data.user);
     });

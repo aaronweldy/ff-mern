@@ -1,7 +1,7 @@
 import { AbbreviatedNflTeam, AbbreviationToFullTeam } from "@ff-mern/ff-types";
 
 type InlineTeamTileProps = {
-  team: AbbreviatedNflTeam | "BYE" | "";
+  team: AbbreviatedNflTeam | "BYE" | "None";
 };
 
 export const InlineTeamTile = ({ team }: InlineTeamTileProps) => {

@@ -6,6 +6,7 @@ import {
   SinglePosition,
 } from "..";
 import { LineupSettings } from "../League";
+import { NflPlayer, RosteredPlayer } from "../Player";
 
 export type GenericRequest = {
   [key: string]: any;
@@ -77,3 +78,25 @@ export type QuicksetLineupType = "LastWeek" | "Projection";
 export type UpdateAllTeamsResponse = {
   teams: Team[];
 };
+
+export type ScrapedADPData = {
+  Overall: string;
+  "Player Team (Bye)": string;
+  AVG: string;
+  QB?: string;
+  RB?: string;
+  WR?: string;
+  TE?: string;
+  K?: string;
+};
+
+export class ProjectedPlayer implements NflPlayer {
+  fullName: string;
+  sanitizedName: string;
+  position: SinglePosition;
+  team: AbbreviatedNflTeam | "None";
+  byeWeek: Week;
+  positionRank: string;
+  overall: number;
+  average: number;
+}

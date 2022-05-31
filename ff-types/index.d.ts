@@ -44,16 +44,22 @@ declare type StatKey = "20+" | "ATT" | "CMP" | "Y/CMP" | "FL" | "FPTS" | "FPTS/G
 declare type DatabasePlayer = Record<StatKey, string>;
 
 declare const setPlayerName: (player: FinalizedPlayer | RosteredPlayer, name: string) => void;
-declare class FinalizedPlayer {
+interface NflPlayer {
     fullName: string;
     sanitizedName: string;
     position: SinglePosition;
-    team: AbbreviatedNflTeam | "";
+    team: AbbreviatedNflTeam | "None";
+}
+declare class FinalizedPlayer implements NflPlayer {
+    fullName: string;
+    sanitizedName: string;
+    position: SinglePosition;
+    team: AbbreviatedNflTeam | "None";
     lineup: Position;
     backup: string;
-    constructor(name: string, position: SinglePosition, team: AbbreviatedNflTeam | "", lineup: Position);
+    constructor(name: string, position: SinglePosition, team: AbbreviatedNflTeam | "None", lineup: Position);
 }
-declare class RosteredPlayer {
+declare class RosteredPlayer implements NflPlayer {
     fullName: string;
     sanitizedName: string;
     position: SinglePosition;
@@ -64,6 +70,7 @@ declare type SinglePosition = "QB" | "RB" | "WR" | "TE" | "K";
 declare type Position = "QB" | "RB" | "WR" | "TE" | "K" | "WR/RB" | "WR/RB/TE" | "QB/WR/RB/TE" | "bench";
 declare type PositionInfo = Record<Position, number>;
 declare const positionTypes: Position[];
+declare const singlePositionTypes: SinglePosition[];
 declare const emptyDefaultPositions: PositionInfo;
 declare type CumulativePlayerScore = {
     position: SinglePosition;
@@ -150,6 +157,26 @@ declare type QuicksetLineupType = "LastWeek" | "Projection";
 declare type UpdateAllTeamsResponse = {
     teams: Team[];
 };
+declare type ScrapedADPData = {
+    Overall: string;
+    "Player Team (Bye)": string;
+    AVG: string;
+    QB?: string;
+    RB?: string;
+    WR?: string;
+    TE?: string;
+    K?: string;
+};
+declare class ProjectedPlayer implements NflPlayer {
+    fullName: string;
+    sanitizedName: string;
+    position: SinglePosition;
+    team: AbbreviatedNflTeam | "None";
+    byeWeek: Week;
+    positionRank: string;
+    overall: number;
+    average: number;
+}
 
 declare type FullNflTeam = "green bay packers" | "pittsburgh steelers" | "kansas city chiefs" | "new england patriots" | "buffalo bills" | "carolina panthers" | "seattle seahawks" | "indianapolis colts" | "arizona cardinals" | "baltimore ravens" | "houston texans" | "new orleans saints" | "philadelphia eagles" | "denver broncos" | "detroit lions" | "minnesota vikings" | "atlanta falcons" | "new york giants" | "dallas cowboys" | "jacksonville jaguars" | "miami dolphins" | "cincinnati bengals" | "las vegas raiders" | "tampa bay buccaneers" | "los angeles rams" | "chicago bears" | "cleveland browns" | "los angeles chargers" | "san francisco 49ers" | "new york jets" | "washington commanders" | "tennessee titans";
 declare type AbbreviatedNflTeam = "ARI" | "ATL" | "BAL" | "BUF" | "CAR" | "CHI" | "CIN" | "CLE" | "DAL" | "DEN" | "DET" | "GB" | "HOU" | "IND" | "JAC" | "JAX" | "KC" | "LAC" | "LAR" | "LV" | "MIA" | "MIN" | "NE" | "NO" | "NYG" | "NYJ" | "PHI" | "PIT" | "SEA" | "SF" | "TB" | "TEN" | "WAS" | "WSH";
@@ -180,6 +207,26 @@ declare type Trade = {
 };
 declare const buildTrade: (playersInvolved: Record<string, RosteredPlayer>[], teamIds: string[]) => Trade;
 
+declare type DraftType = "mock" | "official";
+declare type DraftPhase = "predraft" | "live" | "postdraft";
+declare type DraftSettings = {
+    type: DraftType;
+    draftId: string;
+    numRounds: number;
+};
+declare type DraftPick = {
+    pick: number;
+    selectedBy: string;
+    player: ProjectedPlayer;
+};
+interface DraftState {
+    settings: DraftSettings;
+    currentPick: number;
+    phase: DraftPhase;
+    availablePlayers: ProjectedPlayer[];
+    selections: DraftPick[];
+}
+
 declare type ConnectionAction = {
     userId: string;
     userEmail: string;
@@ -187,6 +234,7 @@ declare type ConnectionAction = {
 };
 declare type ServerToClientEvents = {
     "user connection": (action: ConnectionAction) => void;
+    sync: (state: DraftState) => void;
 };
 declare type ClientToServerEvents = {
     "join room": (room: string) => void;
@@ -197,4 +245,4 @@ declare type SocketData = {
     user: DecodedIdToken;
 };
 
-export { AbbreviatedNflTeam, AbbreviationToFullTeam, ClientToServerEvents, ConnectionAction, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, League, LeagueAPIResponse, LineupSettings, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedPlayerProjection, ServerToClientEvents, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, emptyDefaultPositions, getCurrentSeason, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName };
+export { AbbreviatedNflTeam, AbbreviationToFullTeam, ClientToServerEvents, ConnectionAction, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, DraftPhase, DraftPick, DraftSettings, DraftState, DraftType, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, League, LeagueAPIResponse, LineupSettings, NflPlayer, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, ProjectedPlayer, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedADPData, ScrapedPlayerProjection, ServerToClientEvents, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, emptyDefaultPositions, getCurrentSeason, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };

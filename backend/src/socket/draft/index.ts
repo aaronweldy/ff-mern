@@ -61,6 +61,7 @@ export class DraftSocket {
       type: "connect",
     });
   }
+
   onLeaveRoom(room: string) {
     this.socket.leave(room);
     delete activeRooms[room][this.uid];

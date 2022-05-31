@@ -6,9 +6,13 @@ import {
   AbbreviatedNflTeam,
   AbbreviationToFullTeam,
   FullNflTeam,
+  singlePositionTypes,
+  ScrapedADPData,
   TeamFantasyPositionPerformance,
   TeamToSchedule,
   Week,
+  ProjectedPlayer,
+  sanitizePlayerName,
 } from "@ff-mern/ff-types";
 import fetch from "node-fetch";
 import { load } from "cheerio";
@@ -32,29 +36,66 @@ type ScrapedTeamData = {
   DST: string;
 };
 
+const fetchTeamDefensePerformance = async () => {
+  const url = "https://www.fantasypros.com/nfl/points-allowed.php";
+  const data = await scraper.get(url);
+  let updateData: TeamFantasyPositionPerformance =
+    {} as TeamFantasyPositionPerformance;
+  (data[0] as ScrapedTeamData[]).forEach((teamData) => {
+    updateData[teamData.Team.toLowerCase() as FullNflTeam] = {
+      QB: parseInt(teamData.Rank),
+      RB: parseInt(teamData.Rank_2),
+      WR: parseInt(teamData.Rank_3),
+      TE: parseInt(teamData.Rank_4),
+      K: parseFloat(teamData.Rank_5),
+    };
+  });
+  await db.collection("nflDefenseVsPositionStats").doc("dist").set(updateData);
+};
+
+const fetchSeasonProjections = async () => {
+  for (const pos of singlePositionTypes) {
+    const url = `https://www.fantasypros.com/nfl/adp/${pos.toLowerCase()}.php`;
+    const data = (await scraper.get(url))[0] as ScrapedADPData[];
+    data.forEach((playerData) => {
+      if (playerData["Player Team (Bye)"]) {
+        const playerSegments = playerData["Player Team (Bye)"].split(" ");
+        const [player, team, byeWeek] = [
+          playerSegments.slice(0, -2).join(" "),
+          playerSegments.slice(-2, -1)[0],
+          playerSegments.slice(-1)[0].slice(1, -1) as Week,
+        ];
+        if (player) {
+          const dbData: ProjectedPlayer = {
+            fullName: player,
+            sanitizedName: sanitizePlayerName(player),
+            overall: parseInt(playerData.Overall) || 500,
+            positionRank: `${pos}${playerData[pos]}`,
+            team: (team as AbbreviatedNflTeam) ?? "None",
+            byeWeek: byeWeek ?? "1",
+            position: pos,
+            average: parseFloat(playerData.AVG),
+          };
+          db.collection("playerADP").doc(player).set({
+            dbData,
+          });
+        }
+      }
+    });
+  }
+};
+
 export const fetchRankings = functions.pubsub
   .schedule("every day 00:00")
   .onRun(async () => {
-    const url = "https://www.fantasypros.com/nfl/points-allowed.php";
-    const data = await scraper.get(url);
-    let updateData: TeamFantasyPositionPerformance =
-      {} as TeamFantasyPositionPerformance;
-    (data[0] as ScrapedTeamData[]).forEach((teamData) => {
-      updateData[teamData.Team.toLowerCase() as FullNflTeam] = {
-        QB: parseInt(teamData.Rank),
-        RB: parseInt(teamData.Rank_2),
-        WR: parseInt(teamData.Rank_3),
-        TE: parseInt(teamData.Rank_4),
-        K: parseFloat(teamData.Rank_5),
-      };
-    });
-    db.collection("nflDefenseVsPositionStats").doc("dist").set(updateData);
+    await fetchTeamDefensePerformance();
+    await fetchSeasonProjections();
   });
 
 export const fetchNflSchedule = functions.pubsub
   .schedule("1st thursday of month 00:00")
   .onRun(async () => {
-    const url = "http://www.espn.com/nfl/schedulegrid/_/year/2021";
+    const url = "http://www.espn.com/nfl/schedulegrid/_/";
     const data: Record<Week | "0", AbbreviatedNflTeam | "WSH">[] = (
       await scraper.get(url)
     )[0];

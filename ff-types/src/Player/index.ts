@@ -9,18 +9,27 @@ export const setPlayerName = (
   player.sanitizedName = sanitizePlayerName(name);
 };
 
-export class FinalizedPlayer {
+export interface NflPlayer {
+  // Used in most places -- correctly capitalized version of name.
+  fullName: string;
+  // Used to index into data structures with capitalization/periods removed.
+  sanitizedName: string;
+  position: SinglePosition;
+  team: AbbreviatedNflTeam | "None";
+}
+
+export class FinalizedPlayer implements NflPlayer {
   fullName: string;
   sanitizedName: string;
   position: SinglePosition;
-  team: AbbreviatedNflTeam | "";
+  team: AbbreviatedNflTeam | "None";
   lineup: Position;
   backup: string;
 
   constructor(
     name: string,
     position: SinglePosition,
-    team: AbbreviatedNflTeam | "",
+    team: AbbreviatedNflTeam | "None",
     lineup: Position
   ) {
     this.fullName = name;
@@ -31,10 +40,8 @@ export class FinalizedPlayer {
   }
 }
 
-export class RosteredPlayer {
-  // Used in most places -- correctly capitalized version of name.
+export class RosteredPlayer implements NflPlayer {
   fullName: string;
-  // Used to index into data structures with capitalization/periods removed.
   sanitizedName: string;
   position: SinglePosition;
   team: AbbreviatedNflTeam;
@@ -71,6 +78,14 @@ export const positionTypes: Position[] = [
   "WR/RB",
   "WR/RB/TE",
   "QB/WR/RB/TE",
+];
+
+export const singlePositionTypes: SinglePosition[] = [
+  "QB",
+  "RB",
+  "WR",
+  "TE",
+  "K",
 ];
 
 export const emptyDefaultPositions = positionTypes.reduce(

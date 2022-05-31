@@ -1,4 +1,5 @@
 import { DecodedIdToken } from "firebase-admin/auth";
+import { DraftState } from "../Draft";
 
 export type ConnectionAction = {
   userId: string;
@@ -8,6 +9,7 @@ export type ConnectionAction = {
 
 export type ServerToClientEvents = {
   "user connection": (action: ConnectionAction) => void;
+  sync: (state: DraftState) => void;
 };
 
 export type ClientToServerEvents = {

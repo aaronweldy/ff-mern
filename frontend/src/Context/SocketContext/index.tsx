@@ -5,7 +5,10 @@ import { createContext, useContext, useEffect, useReducer } from "react";
 import { io, Socket } from "socket.io-client";
 import { auth } from "../../firebase-config";
 
-type SocketType = Socket<ServerToClientEvents, ClientToServerEvents> | null;
+export type SocketType = Socket<
+  ServerToClientEvents,
+  ClientToServerEvents
+> | null;
 type State = { socket: SocketType };
 type Action = { type: "set"; value: SocketType };
 type Dispatch = (action: Action) => void;

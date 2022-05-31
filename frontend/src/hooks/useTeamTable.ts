@@ -66,7 +66,7 @@ export const useTeamTable = () => {
         )
       );
       selectedPlayer.fullName = "";
-      selectedPlayer.team = "";
+      selectedPlayer.team = "None";
     },
     []
   );

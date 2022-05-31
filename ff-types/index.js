@@ -192,6 +192,13 @@ const positionTypes = [
     "WR/RB/TE",
     "QB/WR/RB/TE",
 ];
+const singlePositionTypes = [
+    "QB",
+    "RB",
+    "WR",
+    "TE",
+    "K",
+];
 const emptyDefaultPositions = positionTypes.reduce((map, pos) => {
     map[pos] = 0;
     return map;
@@ -244,6 +251,9 @@ const lineupToIterable = (lineup) => {
         return acc;
     }, []);
 };
+
+class ProjectedPlayer {
+}
 
 const AbbreviationToFullTeam = {
     ARI: "arizona cardinals",
@@ -304,4 +314,4 @@ const buildTrade = (playersInvolved, teamIds) => {
     };
 };
 
-export { AbbreviationToFullTeam, FinalizedPlayer, League, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, emptyDefaultPositions, getCurrentSeason, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName };
+export { AbbreviationToFullTeam, FinalizedPlayer, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, emptyDefaultPositions, getCurrentSeason, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
