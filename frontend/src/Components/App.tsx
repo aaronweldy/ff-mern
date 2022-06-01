@@ -5,7 +5,7 @@ import TeamHub from "./TeamHub";
 import TeamPage from "./TeamPage";
 import NavHeader from "./NavHeader";
 import Login from "./Login";
-import LeagueHome from "./LeagueHome";
+import { LeagueHome } from "./LeagueHome";
 import EditRosters from "./EditRosters";
 import RunScores from "./RunScores";
 import ScoringSettings from "./ScoringSettings";

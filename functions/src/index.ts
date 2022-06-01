@@ -13,6 +13,7 @@ import {
   Week,
   ProjectedPlayer,
   sanitizePlayerName,
+  playerTeamIsNflAbbreviation,
 } from "@ff-mern/ff-types";
 import fetch from "node-fetch";
 import { load } from "cheerio";
@@ -60,12 +61,18 @@ const fetchSeasonProjections = async () => {
     data.forEach((playerData) => {
       if (playerData["Player Team (Bye)"]) {
         const playerSegments = playerData["Player Team (Bye)"].split(" ");
-        const [player, team, byeWeek] = [
+        let [player, team, byeWeek] = [
           playerSegments.slice(0, -2).join(" "),
           playerSegments.slice(-2, -1)[0],
           playerSegments.slice(-1)[0].slice(1, -1) as Week,
         ];
         if (player) {
+          // Unsigned players don't have a team/bye week, so the parsing needs to be updated.
+          if (!playerTeamIsNflAbbreviation(team)) {
+            team = "None";
+            byeWeek = "1";
+            player = playerSegments.join(" ");
+          }
           const dbData: ProjectedPlayer = {
             fullName: player,
             sanitizedName: sanitizePlayerName(player),
@@ -76,9 +83,11 @@ const fetchSeasonProjections = async () => {
             position: pos,
             average: parseFloat(playerData.AVG),
           };
-          db.collection("playerADP").doc(player).set({
-            dbData,
-          });
+          db.collection("playerADP")
+            .doc(player)
+            .set({
+              ...dbData,
+            });
         }
       }
     });

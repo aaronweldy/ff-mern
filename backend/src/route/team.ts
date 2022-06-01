@@ -129,7 +129,7 @@ router.post("/setLineupFromProjection/", async (req, res) => {
         newLineup[pos][i].team = playerOptions[i].team;
       } else {
         setPlayerName(newLineup[pos][i], "");
-        newLineup[pos][i].team = "";
+        newLineup[pos][i].team = "None";
       }
     }
   }

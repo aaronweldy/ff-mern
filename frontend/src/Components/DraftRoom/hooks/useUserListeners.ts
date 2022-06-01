@@ -16,7 +16,6 @@ export const useUserListeners = (socket: SocketType) => {
   );
   useEffect(() => {
     if (socket) {
-      console.log(connectedUsers);
       const handleUserConnection = (action: ConnectionAction) => {
         if (action.type === "connect") {
           toast.success(`${action.userEmail} has connected!`, {

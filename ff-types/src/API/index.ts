@@ -5,6 +5,7 @@ import {
   FullNflTeam,
   SinglePosition,
 } from "..";
+import { DraftSettings } from "../Draft";
 import { LineupSettings } from "../League";
 import { NflPlayer, RosteredPlayer } from "../Player";
 
@@ -100,3 +101,8 @@ export class ProjectedPlayer implements NflPlayer {
   overall: number;
   average: number;
 }
+
+export type CreateDraftRequest = {
+  leagueId: string;
+  draftSettings: DraftSettings;
+};

@@ -12,4 +12,5 @@ const createRootSlice = (set: SetState<any>, get: GetState<any>) => ({
   ...createUserSlice(set, get),
 });
 
-export const useStore = create(createRootSlice);
+export const useStore =
+  create<ReturnType<typeof createRootSlice>>(createRootSlice);

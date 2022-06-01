@@ -3,6 +3,10 @@ import { ScoringSetting } from "..";
 
 export type LineupSettings = Record<Position, number>;
 
+export const getNumPlayersFromLineupSettings = (settings: LineupSettings) => {
+  return Object.values(settings).reduce((acc, num) => acc + num, 0);
+};
+
 export class League {
   public name: string;
   public logo: string;

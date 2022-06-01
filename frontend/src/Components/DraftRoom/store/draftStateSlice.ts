@@ -3,6 +3,7 @@ import { StoreSlice } from ".";
 
 type DraftStateType = {
   state: DraftState | null;
+  setDraftState: (draftState: DraftState) => void;
 };
 
 export const createDraftStateSlice: StoreSlice<DraftStateType> = (set) => ({

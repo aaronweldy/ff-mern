@@ -3,10 +3,11 @@ import {
   ClientToServerEvents,
   InterServerEvents,
   SocketData,
+  DraftState,
 } from "@ff-mern/ff-types";
 import { DecodedIdToken } from "firebase-admin/auth";
 import { Server, Socket } from "socket.io";
-import { auth } from "../../config/firebase-config.js";
+import { auth, db } from "../../config/firebase-config.js";
 
 type ServerType = Server<
   ClientToServerEvents,
@@ -24,6 +25,7 @@ type SocketType = Socket<
 type UserRoomData = {};
 const connectedUsers: Record<string, DecodedIdToken> = {};
 const activeRooms: Record<string, Record<string, UserRoomData>> = {};
+const activeDrafts: Record<string, DraftState> = {};
 
 export class DraftSocket {
   io: ServerType;
@@ -35,7 +37,7 @@ export class DraftSocket {
     this.socket = socket;
     this.uid = user.uid;
     socket.on("disconnect", () => this.onDisconnect());
-    socket.on("join room", (room) => this.onJoinRoom(room));
+    socket.on("join room", async (room) => this.onJoinRoom(room));
     socket.on("leave room", (room) => this.onLeaveRoom(room));
   }
 
@@ -48,10 +50,20 @@ export class DraftSocket {
     delete connectedUsers[this.uid];
   }
 
-  onJoinRoom(room: string) {
+  async onJoinRoom(room: string) {
     this.socket.join(room);
     if (!activeRooms[room]) {
       activeRooms[room] = {};
+    }
+    let draftState = activeDrafts[room];
+    if (!draftState) {
+      const draftRef = await db.collection("drafts").doc(room).get();
+      if (draftRef.exists) {
+        draftState = draftRef.data() as DraftState;
+        if (draftState) {
+          activeDrafts[room] = draftState;
+        }
+      }
     }
     activeRooms[room][this.uid] = {};
     console.info("user", connectedUsers[this.uid]?.email, "joined room", room);
@@ -60,6 +72,7 @@ export class DraftSocket {
       userEmail: connectedUsers[this.uid]?.email,
       type: "connect",
     });
+    this.socket.emit("sync", draftState);
   }
 
   onLeaveRoom(room: string) {
@@ -93,6 +106,14 @@ export const initSocket = (io: ServerType) => {
   });
   io.on("connection", (socket) => {
     connectedUsers[socket.data.user.uid] = socket.data.user;
+    db.collection("drafts")
+      .where("phase", "==", "live")
+      .get()
+      .then((liveDrafts) => {
+        liveDrafts.forEach((doc) => {
+          activeDrafts[doc.id] = doc.data() as DraftState;
+        });
+      });
     new DraftSocket(socket, io, socket.data.user);
   });
 };

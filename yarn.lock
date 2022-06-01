@@ -1665,7 +1665,6 @@ __metadata:
     firebase-admin: ^10.2.0
     rollup: ^2.64.0
     rollup-plugin-dts: ^4.1.0
-    uuid: ^8.3.2
   languageName: unknown
   linkType: soft
 

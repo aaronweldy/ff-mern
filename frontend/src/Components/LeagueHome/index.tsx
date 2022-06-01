@@ -14,8 +14,9 @@ import { CumulativeScoreTable } from "./CumulativeScoreTable";
 import { LeagueDeletionModal } from "./LeagueDeletionModal";
 import { LeagueName } from "./LeagueName";
 import { CommissionerOptions } from "./CommissionerOptions";
+import { useCreateDraft } from "../../hooks/query/useCreateDraftMutation";
 
-function LeagueHome() {
+export const LeagueHome = () => {
   const { id } = useParams() as { id: string };
   const { league } = useLeague(id);
   const { teams: initTeams } = useTeams(id);
@@ -25,6 +26,7 @@ function LeagueHome() {
   const [redirect, setRedirect] = useState(false);
   const [imgUrl, setImgUrl] = useState("");
   const user = useAuthUser("user", auth);
+  const createDraftMutation = useCreateDraft(id, teams, league);
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (newUser) => {
       if (newUser && league) {
@@ -103,9 +105,16 @@ function LeagueHome() {
         >
           Trade Center
         </Button>
+        {league && (
+          <Button
+            className="ml-3"
+            onClick={() => createDraftMutation.mutate()}
+            variant="primary"
+          >
+            Create Draft
+          </Button>
+        )}
       </Row>
     </Container>
   );
-}
-
-export default LeagueHome;
+};

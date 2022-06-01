@@ -1,6 +1,7 @@
 import { DecodedIdToken } from 'firebase-admin/auth';
 
 declare type LineupSettings = Record<Position, number>;
+declare const getNumPlayersFromLineupSettings: (settings: LineupSettings) => number;
 declare class League {
     name: string;
     logo: string;
@@ -106,6 +107,29 @@ declare type TeamWeekInfo = {
 declare type FinalizedLineup = Record<Position, FinalizedPlayer[]>;
 declare const lineupToIterable: (lineup: FinalizedLineup) => FinalizedPlayer[];
 
+declare type DraftType = "mock" | "official";
+declare type DraftPhase = "predraft" | "live" | "postdraft";
+declare type DraftSettings = {
+    type: DraftType;
+    draftId: string;
+    numRounds: number;
+    draftOrder: string[];
+};
+declare type DraftPick = {
+    pick: number;
+    selectedBy: string;
+    player: ProjectedPlayer;
+};
+interface DraftState {
+    settings: DraftSettings;
+    leagueId: string;
+    currentPick: number;
+    phase: DraftPhase;
+    availablePlayers: ProjectedPlayer[];
+    selections: DraftPick[];
+}
+declare const createDraftStateForLeague: (lineupSettings: LineupSettings, leagueId: string, teams: Team[], availablePlayers: ProjectedPlayer[], draftId: string, settings?: DraftSettings) => DraftState;
+
 declare type GenericRequest = {
     [key: string]: any;
 };
@@ -177,6 +201,10 @@ declare class ProjectedPlayer implements NflPlayer {
     overall: number;
     average: number;
 }
+declare type CreateDraftRequest = {
+    leagueId: string;
+    draftSettings: DraftSettings;
+};
 
 declare type FullNflTeam = "green bay packers" | "pittsburgh steelers" | "kansas city chiefs" | "new england patriots" | "buffalo bills" | "carolina panthers" | "seattle seahawks" | "indianapolis colts" | "arizona cardinals" | "baltimore ravens" | "houston texans" | "new orleans saints" | "philadelphia eagles" | "denver broncos" | "detroit lions" | "minnesota vikings" | "atlanta falcons" | "new york giants" | "dallas cowboys" | "jacksonville jaguars" | "miami dolphins" | "cincinnati bengals" | "las vegas raiders" | "tampa bay buccaneers" | "los angeles rams" | "chicago bears" | "cleveland browns" | "los angeles chargers" | "san francisco 49ers" | "new york jets" | "washington commanders" | "tennessee titans";
 declare type AbbreviatedNflTeam = "ARI" | "ATL" | "BAL" | "BUF" | "CAR" | "CHI" | "CIN" | "CLE" | "DAL" | "DEN" | "DET" | "GB" | "HOU" | "IND" | "JAC" | "JAX" | "KC" | "LAC" | "LAR" | "LV" | "MIA" | "MIN" | "NE" | "NO" | "NYG" | "NYJ" | "PHI" | "PIT" | "SEA" | "SF" | "TB" | "TEN" | "WAS" | "WSH";
@@ -207,26 +235,6 @@ declare type Trade = {
 };
 declare const buildTrade: (playersInvolved: Record<string, RosteredPlayer>[], teamIds: string[]) => Trade;
 
-declare type DraftType = "mock" | "official";
-declare type DraftPhase = "predraft" | "live" | "postdraft";
-declare type DraftSettings = {
-    type: DraftType;
-    draftId: string;
-    numRounds: number;
-};
-declare type DraftPick = {
-    pick: number;
-    selectedBy: string;
-    player: ProjectedPlayer;
-};
-interface DraftState {
-    settings: DraftSettings;
-    currentPick: number;
-    phase: DraftPhase;
-    availablePlayers: ProjectedPlayer[];
-    selections: DraftPick[];
-}
-
 declare type ConnectionAction = {
     userId: string;
     userEmail: string;
@@ -245,4 +253,4 @@ declare type SocketData = {
     user: DecodedIdToken;
 };
 
-export { AbbreviatedNflTeam, AbbreviationToFullTeam, ClientToServerEvents, ConnectionAction, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, DraftPhase, DraftPick, DraftSettings, DraftState, DraftType, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, League, LeagueAPIResponse, LineupSettings, NflPlayer, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, ProjectedPlayer, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedADPData, ScrapedPlayerProjection, ServerToClientEvents, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, emptyDefaultPositions, getCurrentSeason, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
+export { AbbreviatedNflTeam, AbbreviationToFullTeam, ClientToServerEvents, ConnectionAction, CreateDraftRequest, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, DraftPhase, DraftPick, DraftSettings, DraftState, DraftType, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, League, LeagueAPIResponse, LineupSettings, NflPlayer, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, ProjectedPlayer, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedADPData, ScrapedPlayerProjection, ServerToClientEvents, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, createDraftStateForLeague, emptyDefaultPositions, getCurrentSeason, getNumPlayersFromLineupSettings, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };

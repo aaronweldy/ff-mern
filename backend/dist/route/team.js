@@ -101,7 +101,7 @@ router.post("/setLineupFromProjection/", (req, res) => __awaiter(void 0, void 0,
             }
             else {
                 setPlayerName(newLineup[pos][i], "");
-                newLineup[pos][i].team = "";
+                newLineup[pos][i].team = "None";
             }
         }
     }

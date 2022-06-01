@@ -7,6 +7,7 @@ import league from "./route/league.js";
 import nflData from "./route/nflData.js";
 import team from "./route/team.js";
 import trade from "./route/trade.js";
+import draft from "./route/draft.js";
 import env from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -48,6 +49,7 @@ app.use("/api/v1/league/", league);
 app.use("/api/v1/team/", team);
 app.use("/api/v1/nflData/", nflData);
 app.use("/api/v1/trade/", trade);
+app.use("/api/v1/draft", draft);
 
 app.all("*", (_, res) => {
   console.log("Returning a 404 from the catch-all route");

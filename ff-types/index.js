@@ -1,5 +1,8 @@
 import { v4 } from 'uuid';
 
+const getNumPlayersFromLineupSettings = (settings) => {
+    return Object.values(settings).reduce((acc, num) => acc + num, 0);
+};
 class League {
     constructor(name, commissioners, numWeeks, lineupSettings, logo) {
         this.name = name;
@@ -314,4 +317,23 @@ const buildTrade = (playersInvolved, teamIds) => {
     };
 };
 
-export { AbbreviationToFullTeam, FinalizedPlayer, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, emptyDefaultPositions, getCurrentSeason, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
+const createDraftStateForLeague = (lineupSettings, leagueId, teams, availablePlayers, draftId, settings = null) => {
+    if (!settings) {
+        settings = {
+            type: "official",
+            draftId,
+            numRounds: getNumPlayersFromLineupSettings(lineupSettings),
+            draftOrder: teams.map((team) => team.id),
+        };
+    }
+    return {
+        settings,
+        leagueId: leagueId,
+        currentPick: 0,
+        phase: "predraft",
+        availablePlayers,
+        selections: Array(settings.numRounds * teams.length).fill(null),
+    };
+};
+
+export { AbbreviationToFullTeam, FinalizedPlayer, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, createDraftStateForLeague, emptyDefaultPositions, getCurrentSeason, getNumPlayersFromLineupSettings, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
