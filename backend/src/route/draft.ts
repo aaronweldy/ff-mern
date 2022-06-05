@@ -20,7 +20,6 @@ router.put("/create/", async (req, res) => {
   const league = leagueDoc.data() as League;
   let players: ProjectedPlayer[] = [];
   playersDoc.forEach((doc) => {
-    console.log(doc.data());
     players.push(doc.data() as ProjectedPlayer);
   });
   const draftData = createDraftStateForLeague(

@@ -1,0 +1,49 @@
+.footer {
+  display: flex;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(
+    176deg,
+    rgba(111, 128, 144, 1) 0%,
+    rgba(144, 128, 112, 1) 100%
+  );
+}
+
+.footer-row {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: center;
+  padding: 1em;
+  color: white;
+}
+
+.player-selection-text {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.confirm-pick-button {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  background-color: hsl(90, 13%, 50%);
+  border: none;
+  color: white;
+  padding: 0.5em 1em;
+  border-radius: 5px;
+}
+
+.cancel-pick-button {
+  display: flex;
+  align-items: center;
+  margin-left: 1em;
+  background-color: hsl(330, 12.6%, 50%);
+  border: none;
+  color: white;
+  padding: 0.5em 1em;
+  border-radius: 5px;
+}

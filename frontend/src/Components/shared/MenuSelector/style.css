@@ -3,6 +3,8 @@
   margin-top: 1em;
   padding: 0;
   display: inline-flex;
+  justify-content: center;
+  flex-wrap: wrap;
   list-style: none;
   /*border-bottom: 2px solid black;*/
 }

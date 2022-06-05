@@ -21,6 +21,7 @@ export const useCreateDraft = (
         draftSettings: {
           draftId: v4(),
           type: "official",
+          pickOrder: "snake",
           numRounds: getNumPlayersFromLineupSettings(league.lineupSettings) + 6,
           draftOrder: teams.map((team) => team.id),
         },

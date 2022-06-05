@@ -1,0 +1,17 @@
+.team-logo-bubble {
+  position: relative;
+  top: 0.05em;
+  display: flex;
+  justify-content: center;
+  border-radius: 50px;
+  border: 2px solid hsl(215, 12%, 80%);
+  box-shadow: 0 0 0.5em hsla(0, 0%, 75%, 0.5);
+  width: 2em;
+  height: 2em;
+}
+
+.bubble-image {
+  max-width: 2em;
+  max-height: 2em;
+  object-fit: contain;
+}

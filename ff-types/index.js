@@ -317,12 +317,44 @@ const buildTrade = (playersInvolved, teamIds) => {
     };
 };
 
+const createPickOrderWithTeams = (settings) => {
+    const { draftOrder, pickOrder, numRounds } = settings;
+    const reversedDraftOrder = draftOrder.slice().reverse();
+    const numPicks = numRounds * draftOrder.length;
+    const picks = {};
+    let expandedPickOrder = [];
+    for (let i = 0; i < numRounds; ++i) {
+        picks[i] = new Array(draftOrder.length).fill(null);
+        if (pickOrder === "snake" && i % 2 === 1) {
+            expandedPickOrder.push(reversedDraftOrder.slice());
+        }
+        else {
+            expandedPickOrder.push(draftOrder.slice());
+        }
+    }
+    let curPick = 0;
+    let curRound = 0;
+    while (curPick < numPicks) {
+        const pickInd = curRound === 0 ? curPick : curPick % draftOrder.length;
+        picks[curRound][pickInd] = {
+            pick: curPick,
+            selectedBy: expandedPickOrder[curRound][pickInd],
+            player: null,
+        };
+        curPick++;
+        if (curPick % draftOrder.length === 0) {
+            curRound++;
+        }
+    }
+    return picks;
+};
 const createDraftStateForLeague = (lineupSettings, leagueId, teams, availablePlayers, draftId, settings = null) => {
     if (!settings) {
         settings = {
             type: "official",
             draftId,
             numRounds: getNumPlayersFromLineupSettings(lineupSettings),
+            pickOrder: "snake",
             draftOrder: teams.map((team) => team.id),
         };
     }
@@ -332,7 +364,7 @@ const createDraftStateForLeague = (lineupSettings, leagueId, teams, availablePla
         currentPick: 0,
         phase: "predraft",
         availablePlayers,
-        selections: Array(settings.numRounds * teams.length).fill(null),
+        selections: createPickOrderWithTeams(settings),
     };
 };
 

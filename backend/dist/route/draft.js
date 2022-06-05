@@ -22,7 +22,6 @@ router.put("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function*
     const league = leagueDoc.data();
     let players = [];
     playersDoc.forEach((doc) => {
-        console.log(doc.data());
         players.push(doc.data());
     });
     const draftData = createDraftStateForLeague(league.lineupSettings, leagueId, teams, players, draftSettings.draftId, draftSettings);

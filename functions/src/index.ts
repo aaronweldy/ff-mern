@@ -54,25 +54,54 @@ const fetchTeamDefensePerformance = async () => {
   await db.collection("nflDefenseVsPositionStats").doc("dist").set(updateData);
 };
 
+const parsePlayerFromScrapedData = (playerString: string) => {
+  const playerSegments = playerString.split(" ");
+  let [player, team, byeWeek] = [
+    playerSegments.slice(0, -2).join(" "),
+    playerSegments.slice(-2, -1)[0],
+    playerSegments.slice(-1)[0].slice(1, -1) as Week,
+  ];
+  if (!player) {
+    return null;
+  }
+  // Unsigned players don't have a team/bye week, so the parsing needs to be updated.
+  if (!playerTeamIsNflAbbreviation(team)) {
+    team = "None";
+    byeWeek = "1";
+    player = playerSegments.join(" ");
+  }
+  return {
+    player,
+    team,
+    byeWeek,
+  };
+};
+
 const fetchSeasonProjections = async () => {
+  let playerAvgAdp: Record<string, number> = {};
+  const overallUrl = "https://www.fantasypros.com/nfl/adp/overall.php";
+  const overallData = (await scraper.get(overallUrl))[0] as {
+    "Player Team (Bye)": string;
+    AVG: string;
+  }[];
+  for (const data of overallData) {
+    const parsedData = parsePlayerFromScrapedData(data["Player Team (Bye)"]);
+    if (!parsedData) {
+      continue;
+    }
+    const { player } = parsedData;
+    playerAvgAdp[player] = parseFloat(data.AVG);
+  }
   for (const pos of singlePositionTypes) {
     const url = `https://www.fantasypros.com/nfl/adp/${pos.toLowerCase()}.php`;
     const data = (await scraper.get(url))[0] as ScrapedADPData[];
     data.forEach((playerData) => {
       if (playerData["Player Team (Bye)"]) {
-        const playerSegments = playerData["Player Team (Bye)"].split(" ");
-        let [player, team, byeWeek] = [
-          playerSegments.slice(0, -2).join(" "),
-          playerSegments.slice(-2, -1)[0],
-          playerSegments.slice(-1)[0].slice(1, -1) as Week,
-        ];
-        if (player) {
-          // Unsigned players don't have a team/bye week, so the parsing needs to be updated.
-          if (!playerTeamIsNflAbbreviation(team)) {
-            team = "None";
-            byeWeek = "1";
-            player = playerSegments.join(" ");
-          }
+        const parsedData = parsePlayerFromScrapedData(
+          playerData["Player Team (Bye)"]
+        );
+        if (parsedData) {
+          const { player, team, byeWeek } = parsedData;
           const dbData: ProjectedPlayer = {
             fullName: player,
             sanitizedName: sanitizePlayerName(player),
@@ -81,7 +110,7 @@ const fetchSeasonProjections = async () => {
             team: (team as AbbreviatedNflTeam) ?? "None",
             byeWeek: byeWeek ?? "1",
             position: pos,
-            average: parseFloat(playerData.AVG),
+            average: playerAvgAdp[player] || 500,
           };
           db.collection("playerADP")
             .doc(player)
