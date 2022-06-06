@@ -254,6 +254,12 @@ const lineupToIterable = (lineup) => {
         return acc;
     }, []);
 };
+const mapTeamsToIds = (teams) => {
+    return teams.reduce((acc, team) => {
+        acc[team.id] = team;
+        return acc;
+    }, {});
+};
 
 class ProjectedPlayer {
 }
@@ -326,7 +332,7 @@ const getCurrentPickInfo = (state) => {
         pickInRound,
     };
 };
-const createPickOrderWithTeams = (settings) => {
+const createPickOrderWithTeams = (settings, teamsMap) => {
     const { draftOrder, pickOrder, numRounds } = settings;
     const reversedDraftOrder = draftOrder.slice().reverse();
     const numPicks = numRounds * draftOrder.length;
@@ -345,9 +351,15 @@ const createPickOrderWithTeams = (settings) => {
     let curRound = 0;
     while (curPick < numPicks) {
         const pickInd = curRound === 0 ? curPick : curPick % draftOrder.length;
+        const team = teamsMap[expandedPickOrder[curRound][pickInd]];
         picks[curRound][pickInd] = {
             pick: curPick,
-            selectedBy: expandedPickOrder[curRound][pickInd],
+            selectedBy: {
+                owner: team.owner,
+                ownerName: team.ownerName,
+                name: team.name,
+                id: team.id,
+            },
             player: null,
         };
         curPick++;
@@ -373,8 +385,8 @@ const createDraftStateForLeague = (lineupSettings, leagueId, teams, availablePla
         currentPick: 0,
         phase: "predraft",
         availablePlayers,
-        selections: createPickOrderWithTeams(settings),
+        selections: createPickOrderWithTeams(settings, mapTeamsToIds(teams)),
     };
 };
 
-export { AbbreviationToFullTeam, FinalizedPlayer, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, createDraftStateForLeague, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getNumPlayersFromLineupSettings, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
+export { AbbreviationToFullTeam, FinalizedPlayer, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, createDraftStateForLeague, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getNumPlayersFromLineupSettings, lineupToIterable, mapTeamsToIds, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };

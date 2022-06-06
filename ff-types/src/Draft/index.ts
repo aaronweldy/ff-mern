@@ -1,4 +1,4 @@
-import { Team } from "../Team";
+import { mapTeamsToIds, Team } from "../Team";
 import { ProjectedPlayer } from "../API";
 import { getNumPlayersFromLineupSettings, LineupSettings } from "../League";
 
@@ -14,10 +14,17 @@ export type DraftSettings = {
   pickOrder: PickOrder;
 };
 
+// All of the team information we need in the draft.
+type SimplifiedTeamInfo = {
+  owner: string;
+  ownerName: string;
+  name: string;
+  id: string;
+};
+
 export type DraftPick = {
   pick: number;
-  // Id of the team that selected this player
-  selectedBy: string;
+  selectedBy: SimplifiedTeamInfo;
   player: ProjectedPlayer | null;
 };
 
@@ -48,7 +55,10 @@ export const getCurrentPickInfo = (state: DraftState) => {
 
 export type PickOrder = "round-robin" | "snake";
 
-const createPickOrderWithTeams = (settings: DraftSettings) => {
+const createPickOrderWithTeams = (
+  settings: DraftSettings,
+  teamsMap: Record<string, Team>
+) => {
   const { draftOrder, pickOrder, numRounds } = settings;
   const reversedDraftOrder = draftOrder.slice().reverse();
   const numPicks = numRounds * draftOrder.length;
@@ -66,9 +76,15 @@ const createPickOrderWithTeams = (settings: DraftSettings) => {
   let curRound = 0;
   while (curPick < numPicks) {
     const pickInd = curRound === 0 ? curPick : curPick % draftOrder.length;
+    const team = teamsMap[expandedPickOrder[curRound][pickInd]];
     picks[curRound][pickInd] = {
       pick: curPick,
-      selectedBy: expandedPickOrder[curRound][pickInd],
+      selectedBy: {
+        owner: team.owner,
+        ownerName: team.ownerName,
+        name: team.name,
+        id: team.id,
+      },
       player: null,
     };
     curPick++;
@@ -102,6 +118,6 @@ export const createDraftStateForLeague = (
     currentPick: 0,
     phase: "predraft",
     availablePlayers,
-    selections: createPickOrderWithTeams(settings),
+    selections: createPickOrderWithTeams(settings, mapTeamsToIds(teams)),
   };
 };

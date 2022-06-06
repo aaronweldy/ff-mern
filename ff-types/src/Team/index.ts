@@ -70,3 +70,10 @@ export const lineupToIterable = (lineup: FinalizedLineup) => {
     return acc;
   }, []);
 };
+
+export const mapTeamsToIds = (teams: Team[]) => {
+  return teams.reduce((acc: Record<string, Team>, team) => {
+    acc[team.id] = team;
+    return acc;
+  }, {});
+};

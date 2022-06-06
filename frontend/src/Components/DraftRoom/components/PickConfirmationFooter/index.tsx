@@ -6,7 +6,6 @@ import "./style.css";
 import shallow from "zustand/shallow";
 import { getCurrentPickInfo } from "@ff-mern/ff-types";
 import { auth } from "../../../../firebase-config";
-import { useTeams } from "../../../../hooks/query/useTeams";
 import { useAuthUser } from "@react-query-firebase/auth";
 import { useSocket } from "../../../../Context/SocketContext";
 
@@ -27,21 +26,12 @@ export const PickConfirmationFooter = ({
   );
   const { socket } = useSocket();
   const userQuery = useAuthUser("user", auth);
-  const { query: teamsQuery } = useTeams(draftState?.leagueId || "");
 
   const handlePickConfirmation = () => {
-    if (
-      socket &&
-      draftState &&
-      selectedPlayer &&
-      userQuery.isSuccess &&
-      teamsQuery.isSuccess
-    ) {
+    if (socket && draftState && selectedPlayer && userQuery.isSuccess) {
       const { round, pickInRound } = getCurrentPickInfo(draftState);
       const curPick = draftState.selections[round][pickInRound];
-      const selectingTeam = teamsQuery.data.teams.find(
-        (team) => team.id === curPick.selectedBy
-      );
+      const selectingTeam = curPick.selectedBy;
       //if (selectingTeam?.owner === userQuery.data?.uid) {
       const pick = {
         ...curPick,

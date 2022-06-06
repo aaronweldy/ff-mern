@@ -18,6 +18,11 @@ export const DraftRoom = () => {
   useDraftSocket();
   useEffect(() => {
     socket?.emit("join room", roomId);
+    socket?.on("disconnect", (reason) => {
+      if (reason === "io server disconnect") {
+        socket?.connect();
+      }
+    });
     return () => {
       if (socket) {
         socket.emit("leave room", roomId);

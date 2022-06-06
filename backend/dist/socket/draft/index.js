@@ -7,8 +7,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 import { getCurrentPickInfo, } from "@ff-mern/ff-types";
 import { auth, db } from "../../config/firebase-config.js";
+import { rebuildPlayersAndSelections } from "./utils.js";
 const connectedUsers = {};
 const activeRooms = {};
 const activeDrafts = {};
@@ -22,9 +34,21 @@ export class DraftSocket {
         socket.on("leave room", (room) => this.onLeaveRoom(room));
         socket.on("draftPick", (pick, room) => this.onDraftPick(pick, room));
     }
-    syncToDb(roomId) {
+    syncToDb(roomId, draftPick) {
         const draftState = activeDrafts[roomId];
-        db.collection("drafts").doc(roomId).set(draftState);
+        const draftRef = db.collection("drafts").doc(draftState.settings.draftId);
+        if (draftPick) {
+            draftRef
+                .collection("selections")
+                .doc(draftPick.pick.toString())
+                .set(draftPick);
+            draftRef
+                .collection("availablePlayers")
+                .doc(draftPick.player.fullName)
+                .delete();
+        }
+        const { availablePlayers, selections } = draftState, rest = __rest(draftState, ["availablePlayers", "selections"]);
+        db.collection("drafts").doc(roomId).set(rest);
     }
     onDisconnect() {
         Object.entries(activeRooms).forEach(([room, users]) => {
@@ -43,11 +67,10 @@ export class DraftSocket {
             }
             let draftState = activeDrafts[room];
             if (!draftState) {
-                const draftRef = yield db.collection("drafts").doc(room).get();
-                if (draftRef.exists) {
-                    draftState = draftRef.data();
-                    activeDrafts[room] = draftState;
-                }
+                const { draftState, availablePlayers, selections } = yield rebuildPlayersAndSelections(room);
+                draftState.availablePlayers = availablePlayers;
+                draftState.selections = selections;
+                activeDrafts[room] = Object.assign(Object.assign({}, draftState), { availablePlayers, selections });
             }
             activeRooms[room][this.uid] = {};
             console.info("user", (_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email, "joined room", room);
@@ -80,7 +103,7 @@ export class DraftSocket {
             draftState.currentPick += 1;
             activeDrafts[room] = draftState;
             this.io.to(room).emit("sync", draftState);
-            this.syncToDb(room);
+            this.syncToDb(room, selection);
         }
     }
 }

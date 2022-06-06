@@ -11,6 +11,7 @@ import {
 import { DecodedIdToken } from "firebase-admin/auth";
 import { Server, Socket } from "socket.io";
 import { auth, db } from "../../config/firebase-config.js";
+import { rebuildPlayersAndSelections } from "./utils.js";
 
 type ServerType = Server<
   ClientToServerEvents,
@@ -45,9 +46,21 @@ export class DraftSocket {
     socket.on("draftPick", (pick, room) => this.onDraftPick(pick, room));
   }
 
-  syncToDb(roomId: string) {
+  syncToDb(roomId: string, draftPick?: DraftPick) {
     const draftState = activeDrafts[roomId];
-    db.collection("drafts").doc(roomId).set(draftState);
+    const draftRef = db.collection("drafts").doc(draftState.settings.draftId);
+    if (draftPick) {
+      draftRef
+        .collection("selections")
+        .doc(draftPick.pick.toString())
+        .set(draftPick);
+      draftRef
+        .collection("availablePlayers")
+        .doc(draftPick.player.fullName)
+        .delete();
+    }
+    const { availablePlayers, selections, ...rest } = draftState;
+    db.collection("drafts").doc(roomId).set(rest);
   }
 
   onDisconnect() {
@@ -66,11 +79,11 @@ export class DraftSocket {
     }
     let draftState = activeDrafts[room];
     if (!draftState) {
-      const draftRef = await db.collection("drafts").doc(room).get();
-      if (draftRef.exists) {
-        draftState = draftRef.data() as DraftState;
-        activeDrafts[room] = draftState;
-      }
+      const { draftState, availablePlayers, selections } =
+        await rebuildPlayersAndSelections(room);
+      draftState.availablePlayers = availablePlayers;
+      draftState.selections = selections;
+      activeDrafts[room] = { ...draftState, availablePlayers, selections };
     }
     activeRooms[room][this.uid] = {};
     console.info("user", connectedUsers[this.uid]?.email, "joined room", room);
@@ -108,7 +121,7 @@ export class DraftSocket {
       draftState.currentPick += 1;
       activeDrafts[room] = draftState;
       this.io.to(room).emit("sync", draftState);
-      this.syncToDb(room);
+      this.syncToDb(room, selection);
     }
   }
 }

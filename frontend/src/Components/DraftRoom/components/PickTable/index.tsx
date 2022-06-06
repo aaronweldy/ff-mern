@@ -1,4 +1,4 @@
-import { getCurrentPickInfo, Team } from "@ff-mern/ff-types";
+import { getCurrentPickInfo } from "@ff-mern/ff-types";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { Col, Row } from "react-bootstrap";
 import { useTeams } from "../../../../hooks/query/useTeams";
@@ -25,14 +25,6 @@ export const PickTable = () => {
     }
   }, [draftState, scrollRef]);
   const { query: teamsQuery } = useTeams(draftState?.leagueId || "");
-  const mapTeamToIds = useMemo(() => {
-    return teamsQuery.isSuccess && draftState
-      ? teamsQuery.data.teams.reduce((acc: Record<string, Team>, team) => {
-          acc[team.id] = team;
-          return acc;
-        }, {})
-      : {};
-  }, [teamsQuery.data, draftState, teamsQuery.isSuccess]);
   if (!draftState || !teamsQuery.isSuccess) {
     return <div>Loading draft...</div>;
   }
@@ -61,7 +53,7 @@ export const PickTable = () => {
               >
                 <div className="box-header">
                   <span className="pick-num">{selection.pick + 1}</span>
-                  <span>{mapTeamToIds[selection.selectedBy].name}</span>
+                  <span>{selection.selectedBy.name}</span>
                 </div>
                 <div className="box-body">
                   {selection.player && (

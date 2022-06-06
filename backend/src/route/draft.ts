@@ -1,6 +1,7 @@
 import {
   CreateDraftRequest,
   createDraftStateForLeague,
+  DraftState,
   League,
   ProjectedPlayer,
 } from "@ff-mern/ff-types";
@@ -30,8 +31,24 @@ router.put("/create/", async (req, res) => {
     draftSettings.draftId,
     draftSettings
   );
-  console.log(draftData);
-  db.collection("drafts").doc(draftSettings.draftId).set(draftData);
+  const draftRef = db.collection("drafts").doc(draftSettings.draftId);
+  for (const player of draftData.availablePlayers) {
+    draftRef.collection("availablePlayers").doc(player.fullName).set(player);
+  }
+  for (const round of Object.keys(draftData.selections)) {
+    for (const pick of draftData.selections[round]) {
+      draftRef
+        .collection("selections")
+        .doc(pick.pick.toString())
+        .set(
+          draftData.selections[round][
+            pick.pick % draftData.settings.draftOrder.length
+          ]
+        );
+    }
+  }
+  const { availablePlayers, selections, ...rest } = draftData;
+  draftRef.set(rest);
   res.status(200).send(draftData);
 });
 
