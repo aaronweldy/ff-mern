@@ -317,6 +317,15 @@ const buildTrade = (playersInvolved, teamIds) => {
     };
 };
 
+const getCurrentPickInfo = (state) => {
+    const { settings, currentPick } = state;
+    const round = Math.floor(currentPick / settings.draftOrder.length);
+    const pickInRound = currentPick % settings.draftOrder.length;
+    return {
+        round,
+        pickInRound,
+    };
+};
 const createPickOrderWithTeams = (settings) => {
     const { draftOrder, pickOrder, numRounds } = settings;
     const reversedDraftOrder = draftOrder.slice().reverse();
@@ -368,4 +377,4 @@ const createDraftStateForLeague = (lineupSettings, leagueId, teams, availablePla
     };
 };
 
-export { AbbreviationToFullTeam, FinalizedPlayer, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, createDraftStateForLeague, emptyDefaultPositions, getCurrentSeason, getNumPlayersFromLineupSettings, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
+export { AbbreviationToFullTeam, FinalizedPlayer, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, createDraftStateForLeague, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getNumPlayersFromLineupSettings, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };

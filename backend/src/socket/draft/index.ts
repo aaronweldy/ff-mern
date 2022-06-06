@@ -4,6 +4,9 @@ import {
   InterServerEvents,
   SocketData,
   DraftState,
+  ProjectedPlayer,
+  DraftPick,
+  getCurrentPickInfo,
 } from "@ff-mern/ff-types";
 import { DecodedIdToken } from "firebase-admin/auth";
 import { Server, Socket } from "socket.io";
@@ -39,6 +42,12 @@ export class DraftSocket {
     socket.on("disconnect", () => this.onDisconnect());
     socket.on("join room", async (room) => this.onJoinRoom(room));
     socket.on("leave room", (room) => this.onLeaveRoom(room));
+    socket.on("draftPick", (pick, room) => this.onDraftPick(pick, room));
+  }
+
+  syncToDb(roomId: string) {
+    const draftState = activeDrafts[roomId];
+    db.collection("drafts").doc(roomId).set(draftState);
   }
 
   onDisconnect() {
@@ -60,9 +69,7 @@ export class DraftSocket {
       const draftRef = await db.collection("drafts").doc(room).get();
       if (draftRef.exists) {
         draftState = draftRef.data() as DraftState;
-        if (draftState) {
-          activeDrafts[room] = draftState;
-        }
+        activeDrafts[room] = draftState;
       }
     }
     activeRooms[room][this.uid] = {};
@@ -84,6 +91,25 @@ export class DraftSocket {
       userEmail: connectedUsers[this.uid]?.email,
       type: "disconnect",
     });
+  }
+
+  onDraftPick(selection: DraftPick, room: string) {
+    console.log("room", room, "received pick", selection);
+    let draftState = activeDrafts[room];
+    if (draftState) {
+      const { round, pickInRound } = getCurrentPickInfo(draftState);
+      draftState.selections[round][pickInRound] = selection;
+      draftState.availablePlayers.splice(
+        draftState.availablePlayers.findIndex(
+          (p) => p.sanitizedName === selection.player.sanitizedName
+        ),
+        1
+      );
+      draftState.currentPick += 1;
+      activeDrafts[room] = draftState;
+      this.io.to(room).emit("sync", draftState);
+      this.syncToDb(room);
+    }
   }
 }
 

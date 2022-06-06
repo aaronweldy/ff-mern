@@ -129,6 +129,14 @@ interface DraftState {
     availablePlayers: ProjectedPlayer[];
     selections: Record<string, DraftPick[]>;
 }
+declare type CurrentPick = {
+    round: number;
+    pickInRound: number;
+};
+declare const getCurrentPickInfo: (state: DraftState) => {
+    round: number;
+    pickInRound: number;
+};
 declare type PickOrder = "round-robin" | "snake";
 declare const createDraftStateForLeague: (lineupSettings: LineupSettings, leagueId: string, teams: Team[], availablePlayers: ProjectedPlayer[], draftId: string, settings?: DraftSettings) => DraftState;
 
@@ -249,10 +257,11 @@ declare type ServerToClientEvents = {
 declare type ClientToServerEvents = {
     "join room": (room: string) => void;
     "leave room": (room: string) => void;
+    draftPick: (pick: DraftPick, room: string) => void;
 };
 declare type InterServerEvents = {};
 declare type SocketData = {
     user: DecodedIdToken;
 };
 
-export { AbbreviatedNflTeam, AbbreviationToFullTeam, ClientToServerEvents, ConnectionAction, CreateDraftRequest, CumulativePlayerScore, CumulativePlayerScores, DatabasePlayer, DraftPhase, DraftPick, DraftSettings, DraftState, DraftType, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, League, LeagueAPIResponse, LineupSettings, NflPlayer, PickOrder, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, ProjectedPlayer, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedADPData, ScrapedPlayerProjection, ServerToClientEvents, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, createDraftStateForLeague, emptyDefaultPositions, getCurrentSeason, getNumPlayersFromLineupSettings, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
+export { AbbreviatedNflTeam, AbbreviationToFullTeam, ClientToServerEvents, ConnectionAction, CreateDraftRequest, CumulativePlayerScore, CumulativePlayerScores, CurrentPick, DatabasePlayer, DraftPhase, DraftPick, DraftSettings, DraftState, DraftType, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, League, LeagueAPIResponse, LineupSettings, NflPlayer, PickOrder, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, ProjectedPlayer, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedADPData, ScrapedPlayerProjection, ServerToClientEvents, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, createDraftStateForLeague, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getNumPlayersFromLineupSettings, lineupToIterable, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };

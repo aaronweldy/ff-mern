@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { getCurrentPickInfo, } from "@ff-mern/ff-types";
 import { auth, db } from "../../config/firebase-config.js";
 const connectedUsers = {};
 const activeRooms = {};
@@ -19,6 +20,11 @@ export class DraftSocket {
         socket.on("disconnect", () => this.onDisconnect());
         socket.on("join room", (room) => __awaiter(this, void 0, void 0, function* () { return this.onJoinRoom(room); }));
         socket.on("leave room", (room) => this.onLeaveRoom(room));
+        socket.on("draftPick", (pick, room) => this.onDraftPick(pick, room));
+    }
+    syncToDb(roomId) {
+        const draftState = activeDrafts[roomId];
+        db.collection("drafts").doc(roomId).set(draftState);
     }
     onDisconnect() {
         Object.entries(activeRooms).forEach(([room, users]) => {
@@ -40,9 +46,7 @@ export class DraftSocket {
                 const draftRef = yield db.collection("drafts").doc(room).get();
                 if (draftRef.exists) {
                     draftState = draftRef.data();
-                    if (draftState) {
-                        activeDrafts[room] = draftState;
-                    }
+                    activeDrafts[room] = draftState;
                 }
             }
             activeRooms[room][this.uid] = {};
@@ -65,6 +69,19 @@ export class DraftSocket {
             userEmail: (_b = connectedUsers[this.uid]) === null || _b === void 0 ? void 0 : _b.email,
             type: "disconnect",
         });
+    }
+    onDraftPick(selection, room) {
+        console.log("room", room, "received pick", selection);
+        let draftState = activeDrafts[room];
+        if (draftState) {
+            const { round, pickInRound } = getCurrentPickInfo(draftState);
+            draftState.selections[round][pickInRound] = selection;
+            draftState.availablePlayers.splice(draftState.availablePlayers.findIndex((p) => p.sanitizedName === selection.player.sanitizedName), 1);
+            draftState.currentPick += 1;
+            activeDrafts[room] = draftState;
+            this.io.to(room).emit("sync", draftState);
+            this.syncToDb(room);
+        }
     }
 }
 export const initSocket = (io) => {

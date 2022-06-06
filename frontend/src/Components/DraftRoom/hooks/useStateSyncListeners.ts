@@ -8,6 +8,7 @@ export const useStateSyncListeners = (socket: SocketType) => {
   useEffect(() => {
     if (socket) {
       const handleDraftState = (draftState: DraftState) => {
+        console.log(draftState);
         setDraftState(draftState);
       };
       socket.on("sync", handleDraftState);

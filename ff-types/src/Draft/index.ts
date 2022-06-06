@@ -31,6 +31,21 @@ export interface DraftState {
   selections: Record<string, DraftPick[]>;
 }
 
+export type CurrentPick = {
+  round: number;
+  pickInRound: number;
+};
+
+export const getCurrentPickInfo = (state: DraftState) => {
+  const { settings, currentPick } = state;
+  const round = Math.floor(currentPick / settings.draftOrder.length);
+  const pickInRound = currentPick % settings.draftOrder.length;
+  return {
+    round,
+    pickInRound,
+  };
+};
+
 export type PickOrder = "round-robin" | "snake";
 
 const createPickOrderWithTeams = (settings: DraftSettings) => {

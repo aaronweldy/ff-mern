@@ -1,5 +1,5 @@
 import { DecodedIdToken } from "firebase-admin/auth";
-import { DraftState } from "../Draft";
+import { DraftPick, DraftState } from "../Draft";
 
 export type ConnectionAction = {
   userId: string;
@@ -15,6 +15,7 @@ export type ServerToClientEvents = {
 export type ClientToServerEvents = {
   "join room": (room: string) => void;
   "leave room": (room: string) => void;
+  draftPick: (pick: DraftPick, room: string) => void;
 };
 
 export type InterServerEvents = {};

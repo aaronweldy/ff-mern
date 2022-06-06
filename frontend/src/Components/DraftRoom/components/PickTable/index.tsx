@@ -1,15 +1,31 @@
-import { Team } from "@ff-mern/ff-types";
-import { useMemo } from "react";
+import { getCurrentPickInfo, Team } from "@ff-mern/ff-types";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { Col, Row } from "react-bootstrap";
 import { useTeams } from "../../../../hooks/query/useTeams";
+import { TeamLogoBubble } from "../../../shared/TeamLogoBubble";
 import { useStore } from "../../store";
 import "./style.css";
 
 export const PickTable = () => {
   const draftState = useStore((store) => store.state);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const curPick = useMemo(() => {
+    if (draftState) {
+      return getCurrentPickInfo(draftState);
+    }
+  }, [draftState]);
+  useLayoutEffect(() => {
+    const div = scrollRef.current;
+    if (div && draftState) {
+      div.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+    }
+  }, [draftState, scrollRef]);
   const { query: teamsQuery } = useTeams(draftState?.leagueId || "");
   const mapTeamToIds = useMemo(() => {
-    console.log(teamsQuery.data);
     return teamsQuery.isSuccess && draftState
       ? teamsQuery.data.teams.reduce((acc: Record<string, Team>, team) => {
           acc[team.id] = team;
@@ -30,12 +46,36 @@ export const PickTable = () => {
                 <b>Round {parseInt(round) + 1}</b>
               </span>
             </Col>
-            {draftState.selections[round].map((selection) => (
-              <Col key={selection.pick} className="pick-box">
+            {draftState.selections[round].map((selection, pInR) => (
+              <Col
+                key={selection.pick}
+                data-position={selection.player?.position}
+                className={`pick-box`}
+                ref={
+                  curPick &&
+                  curPick.round === parseInt(round) &&
+                  curPick.pickInRound === pInR
+                    ? scrollRef
+                    : null
+                }
+              >
                 <div className="box-header">
                   <span className="pick-num">{selection.pick + 1}</span>
+                  <span>{mapTeamToIds[selection.selectedBy].name}</span>
                 </div>
-                <span>{mapTeamToIds[selection.selectedBy].name}</span>
+                <div className="box-body">
+                  {selection.player && (
+                    <>
+                      <div className="pick-body-row">
+                        <TeamLogoBubble team={selection.player.team} />
+                        <span>{selection.player.fullName}</span>
+                      </div>
+                      <span className="position-text">
+                        {selection.player.position} - {selection.player.team}
+                      </span>
+                    </>
+                  )}
+                </div>
               </Col>
             ))}
           </Row>

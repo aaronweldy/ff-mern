@@ -42,10 +42,7 @@ export const PlayerSelectionBox = () => {
     const fuse = new Fuse(filteredList, {
       keys: ["team", "fullName", "position"],
     });
-    return fuse
-      .search(searchText)
-      .map((player) => player.item)
-      .sort(playerSorter);
+    return fuse.search(searchText).map((player) => player.item);
   }, [draftState, selectedFilter, searchText]);
   const onFilterChange = (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>

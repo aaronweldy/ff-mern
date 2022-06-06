@@ -1,6 +1,7 @@
 .team-logo-bubble {
   position: relative;
   top: 0.05em;
+  overflow: hidden;
   display: flex;
   justify-content: center;
   border-radius: 50px;

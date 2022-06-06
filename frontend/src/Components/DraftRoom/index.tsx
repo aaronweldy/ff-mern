@@ -15,7 +15,6 @@ export const DraftRoom = () => {
     draftState: store.state,
     player: store.player,
   }));
-  console.log(draftState);
   useDraftSocket();
   useEffect(() => {
     socket?.emit("join room", roomId);
@@ -35,7 +34,7 @@ export const DraftRoom = () => {
           <PlayerSelectionBox />
         </Col>
       </Row>
-      {player && <PickConfirmationFooter />}
+      {player && <PickConfirmationFooter draftId={roomId} />}
     </Container>
   );
 };
