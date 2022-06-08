@@ -7,6 +7,7 @@ import {
   ProjectedPlayer,
   DraftPick,
   getCurrentPickInfo,
+  ChatMessage,
 } from "@ff-mern/ff-types";
 import { DecodedIdToken } from "firebase-admin/auth";
 import { Server, Socket } from "socket.io";
@@ -44,6 +45,9 @@ export class DraftSocket {
     socket.on("join room", async (room) => this.onJoinRoom(room));
     socket.on("leave room", (room) => this.onLeaveRoom(room));
     socket.on("draftPick", (pick, room) => this.onDraftPick(pick, room));
+    socket.on("sendMessage", (message, room) =>
+      this.onChatMessage(message, room)
+    );
   }
 
   syncToDb(roomId: string, draftPick?: DraftPick) {
@@ -79,11 +83,16 @@ export class DraftSocket {
     }
     let draftState = activeDrafts[room];
     if (!draftState) {
-      const { draftState, availablePlayers, selections } =
-        await rebuildPlayersAndSelections(room);
-      draftState.availablePlayers = availablePlayers;
-      draftState.selections = selections;
-      activeDrafts[room] = { ...draftState, availablePlayers, selections };
+      try {
+        const { draftState, availablePlayers, selections } =
+          await rebuildPlayersAndSelections(room);
+        draftState.availablePlayers = availablePlayers;
+        draftState.selections = selections;
+        activeDrafts[room] = { ...draftState, availablePlayers, selections };
+      } catch (e) {
+        console.error(e);
+        return;
+      }
     }
     activeRooms[room][this.uid] = {};
     console.info("user", connectedUsers[this.uid]?.email, "joined room", room);
@@ -92,7 +101,7 @@ export class DraftSocket {
       userEmail: connectedUsers[this.uid]?.email,
       type: "connect",
     });
-    this.socket.emit("sync", draftState);
+    this.socket.emit("sync", activeDrafts[room]);
   }
 
   onLeaveRoom(room: string) {
@@ -120,9 +129,30 @@ export class DraftSocket {
       );
       draftState.currentPick += 1;
       activeDrafts[room] = draftState;
-      this.io.to(room).emit("sync", draftState);
+      const pickMessage: ChatMessage = {
+        sender: "system",
+        message: `Pick ${selection.pick}: ${
+          connectedUsers[this.uid]?.email
+        } selects ${selection.player.fullName}, ${selection.player.position}, ${
+          selection.player.team
+        }`,
+        timestamp: new Date().toISOString(),
+        type: "draft",
+      };
+      this.io.to(room).emit("sync", draftState, pickMessage);
       this.syncToDb(room, selection);
     }
+  }
+
+  onChatMessage(message: string, room: string) {
+    console.log("room", room, "received message", message);
+    const newMessage: ChatMessage = {
+      sender: connectedUsers[this.uid]?.email,
+      message,
+      timestamp: new Date().toISOString(),
+      type: "chat",
+    };
+    this.io.to(room).emit("newMessage", newMessage);
   }
 }
 

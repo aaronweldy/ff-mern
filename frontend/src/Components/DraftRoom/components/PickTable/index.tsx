@@ -1,5 +1,6 @@
 import { getCurrentPickInfo } from "@ff-mern/ff-types";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import e from "cors";
+import { useCallback, useMemo } from "react";
 import { Col, Row } from "react-bootstrap";
 import { useTeams } from "../../../../hooks/query/useTeams";
 import { TeamLogoBubble } from "../../../shared/TeamLogoBubble";
@@ -8,22 +9,21 @@ import "./style.css";
 
 export const PickTable = () => {
   const draftState = useStore((store) => store.state);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
   const curPick = useMemo(() => {
     if (draftState) {
       return getCurrentPickInfo(draftState);
     }
   }, [draftState]);
-  useLayoutEffect(() => {
-    const div = scrollRef.current;
-    if (div && draftState) {
-      div.scrollIntoView({
+  const elRef = useCallback((el: HTMLDivElement | null) => {
+    if (el) {
+      el.scrollIntoView({
         behavior: "smooth",
         block: "center",
         inline: "center",
       });
     }
-  }, [draftState, scrollRef]);
+  }, []);
+
   const { query: teamsQuery } = useTeams(draftState?.leagueId || "");
   if (!draftState || !teamsQuery.isSuccess) {
     return <div>Loading draft...</div>;
@@ -47,7 +47,7 @@ export const PickTable = () => {
                   curPick &&
                   curPick.round === parseInt(round) &&
                   curPick.pickInRound === pInR
-                    ? scrollRef
+                    ? elRef
                     : null
                 }
               >
@@ -60,7 +60,9 @@ export const PickTable = () => {
                     <>
                       <div className="pick-body-row">
                         <TeamLogoBubble team={selection.player.team} />
-                        <span>{selection.player.fullName}</span>
+                        <span className="text-center">
+                          {selection.player.fullName}
+                        </span>
                       </div>
                       <span className="position-text">
                         {selection.player.position} - {selection.player.team}

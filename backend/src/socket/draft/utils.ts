@@ -26,6 +26,8 @@ export const rebuildPlayersAndSelections = async (roomId: string) => {
     players.forEach((playerRef) => {
       availablePlayers.push(playerRef.data() as ProjectedPlayer);
     });
+    return { draftState, availablePlayers, selections };
+  } else {
+    throw new Error("Draft does not exist");
   }
-  return { draftState, availablePlayers, selections };
 };

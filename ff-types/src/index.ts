@@ -8,3 +8,4 @@ export * from "./Constants";
 export * from "./Trade";
 export * from "./Socket";
 export * from "./Draft";
+export * from "./Chat";

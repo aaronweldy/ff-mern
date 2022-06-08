@@ -33,7 +33,10 @@ export const rebuildPlayersAndSelections = (roomId) => __awaiter(void 0, void 0,
         players.forEach((playerRef) => {
             availablePlayers.push(playerRef.data());
         });
+        return { draftState, availablePlayers, selections };
     }
-    return { draftState, availablePlayers, selections };
+    else {
+        throw new Error("Draft does not exist");
+    }
 });
 //# sourceMappingURL=utils.js.map

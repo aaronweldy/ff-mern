@@ -33,6 +33,7 @@ export class DraftSocket {
         socket.on("join room", (room) => __awaiter(this, void 0, void 0, function* () { return this.onJoinRoom(room); }));
         socket.on("leave room", (room) => this.onLeaveRoom(room));
         socket.on("draftPick", (pick, room) => this.onDraftPick(pick, room));
+        socket.on("sendMessage", (message, room) => this.onChatMessage(message, room));
     }
     syncToDb(roomId, draftPick) {
         const draftState = activeDrafts[roomId];
@@ -67,10 +68,16 @@ export class DraftSocket {
             }
             let draftState = activeDrafts[room];
             if (!draftState) {
-                const { draftState, availablePlayers, selections } = yield rebuildPlayersAndSelections(room);
-                draftState.availablePlayers = availablePlayers;
-                draftState.selections = selections;
-                activeDrafts[room] = Object.assign(Object.assign({}, draftState), { availablePlayers, selections });
+                try {
+                    const { draftState, availablePlayers, selections } = yield rebuildPlayersAndSelections(room);
+                    draftState.availablePlayers = availablePlayers;
+                    draftState.selections = selections;
+                    activeDrafts[room] = Object.assign(Object.assign({}, draftState), { availablePlayers, selections });
+                }
+                catch (e) {
+                    console.error(e);
+                    return;
+                }
             }
             activeRooms[room][this.uid] = {};
             console.info("user", (_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email, "joined room", room);
@@ -79,7 +86,7 @@ export class DraftSocket {
                 userEmail: (_b = connectedUsers[this.uid]) === null || _b === void 0 ? void 0 : _b.email,
                 type: "connect",
             });
-            this.socket.emit("sync", draftState);
+            this.socket.emit("sync", activeDrafts[room]);
         });
     }
     onLeaveRoom(room) {
@@ -94,6 +101,7 @@ export class DraftSocket {
         });
     }
     onDraftPick(selection, room) {
+        var _a;
         console.log("room", room, "received pick", selection);
         let draftState = activeDrafts[room];
         if (draftState) {
@@ -102,9 +110,26 @@ export class DraftSocket {
             draftState.availablePlayers.splice(draftState.availablePlayers.findIndex((p) => p.sanitizedName === selection.player.sanitizedName), 1);
             draftState.currentPick += 1;
             activeDrafts[room] = draftState;
-            this.io.to(room).emit("sync", draftState);
+            const pickMessage = {
+                sender: "system",
+                message: `Pick ${selection.pick}: ${(_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email} selects ${selection.player.fullName}, ${selection.player.position}, ${selection.player.team}`,
+                timestamp: new Date().toISOString(),
+                type: "draft",
+            };
+            this.io.to(room).emit("sync", draftState, pickMessage);
             this.syncToDb(room, selection);
         }
+    }
+    onChatMessage(message, room) {
+        var _a;
+        console.log("room", room, "received message", message);
+        const newMessage = {
+            sender: (_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email,
+            message,
+            timestamp: new Date().toISOString(),
+            type: "chat",
+        };
+        this.io.to(room).emit("newMessage", newMessage);
     }
 }
 export const initSocket = (io) => {

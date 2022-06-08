@@ -5,6 +5,7 @@ import { useSocket } from "../../Context/SocketContext";
 import { PickConfirmationFooter } from "./components/PickConfirmationFooter";
 import { PickTable } from "./components/PickTable";
 import { PlayerSelectionBox } from "./components/PlayerSelectionBox";
+import { DraftTabs } from "./components/DraftTabs";
 import { useDraftSocket } from "./hooks/useDraftSocket";
 import { useStore } from "./store";
 
@@ -17,7 +18,9 @@ export const DraftRoom = () => {
   }));
   useDraftSocket();
   useEffect(() => {
-    socket?.emit("join room", roomId);
+    socket?.on("connect", () => {
+      socket.emit("join room", roomId);
+    });
     socket?.on("disconnect", (reason) => {
       if (reason === "io server disconnect") {
         socket?.connect();
@@ -26,6 +29,8 @@ export const DraftRoom = () => {
     return () => {
       if (socket) {
         socket.emit("leave room", roomId);
+        socket.off("disconnect");
+        socket.off("connect");
       }
     };
   }, [roomId, socket]);
@@ -36,7 +41,7 @@ export const DraftRoom = () => {
           <PickTable />
         </Col>
         <Col xl={4}>
-          <PlayerSelectionBox />
+          <DraftTabs />
         </Col>
       </Row>
       {player && <PickConfirmationFooter draftId={roomId} />}
