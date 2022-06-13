@@ -4,15 +4,28 @@ import {
   InterServerEvents,
   SocketData,
   DraftState,
-  ProjectedPlayer,
   DraftPick,
   getCurrentPickInfo,
   ChatMessage,
+  League,
+  TeamRoster,
 } from "@ff-mern/ff-types";
 import { DecodedIdToken } from "firebase-admin/auth";
 import { Server, Socket } from "socket.io";
 import { auth, db } from "../../config/firebase-config.js";
-import { rebuildPlayersAndSelections } from "./utils.js";
+import {
+  addPlayerToTeam,
+  buildPlayersByTeam,
+  linearizeSelections,
+  rebuildPlayersAndSelections,
+} from "./utils.js";
+
+type ServerState = {
+  league: League;
+  draftState: DraftState;
+  chatMessages: ChatMessage[];
+  playersByTeam: Record<string, TeamRoster>;
+};
 
 type ServerType = Server<
   ClientToServerEvents,
@@ -30,12 +43,13 @@ type SocketType = Socket<
 type UserRoomData = {};
 const connectedUsers: Record<string, DecodedIdToken> = {};
 const activeRooms: Record<string, Record<string, UserRoomData>> = {};
-const activeDrafts: Record<string, DraftState> = {};
+const activeDrafts: Record<string, ServerState> = {};
 
 export class DraftSocket {
   io: ServerType;
   socket: SocketType;
   uid: string;
+  league: League;
 
   constructor(socket: SocketType, io: ServerType, user: DecodedIdToken) {
     this.io = io;
@@ -51,8 +65,10 @@ export class DraftSocket {
   }
 
   syncToDb(roomId: string, draftPick?: DraftPick) {
-    const draftState = activeDrafts[roomId];
-    const draftRef = db.collection("drafts").doc(draftState.settings.draftId);
+    const state = activeDrafts[roomId];
+    const draftRef = db
+      .collection("drafts")
+      .doc(state.draftState.settings.draftId);
     if (draftPick) {
       draftRef
         .collection("selections")
@@ -63,7 +79,7 @@ export class DraftSocket {
         .doc(draftPick.player.fullName)
         .delete();
     }
-    const { availablePlayers, selections, ...rest } = draftState;
+    const { availablePlayers, selections, ...rest } = state.draftState;
     db.collection("drafts").doc(roomId).set(rest);
   }
 
@@ -81,14 +97,23 @@ export class DraftSocket {
     if (!activeRooms[room]) {
       activeRooms[room] = {};
     }
-    let draftState = activeDrafts[room];
-    if (!draftState) {
+    let state = activeDrafts[room];
+    if (!state) {
       try {
-        const { draftState, availablePlayers, selections } =
+        const { draftState, availablePlayers, selections, league } =
           await rebuildPlayersAndSelections(room);
         draftState.availablePlayers = availablePlayers;
         draftState.selections = selections;
-        activeDrafts[room] = { ...draftState, availablePlayers, selections };
+        activeDrafts[room] = {
+          league,
+          chatMessages: [],
+          playersByTeam: buildPlayersByTeam(
+            league.lineupSettings,
+            draftState.settings.draftOrder,
+            linearizeSelections(draftState.selections)
+          ),
+          draftState: { ...draftState, availablePlayers, selections },
+        };
       } catch (e) {
         console.error(e);
         return;
@@ -101,7 +126,9 @@ export class DraftSocket {
       userEmail: connectedUsers[this.uid]?.email,
       type: "connect",
     });
-    this.socket.emit("sync", activeDrafts[room]);
+    this.socket.emit("sync", activeDrafts[room].draftState, {
+      playersByTeam: activeDrafts[room].playersByTeam,
+    });
   }
 
   onLeaveRoom(room: string) {
@@ -117,18 +144,18 @@ export class DraftSocket {
 
   onDraftPick(selection: DraftPick, room: string) {
     console.log("room", room, "received pick", selection);
-    let draftState = activeDrafts[room];
-    if (draftState) {
-      const { round, pickInRound } = getCurrentPickInfo(draftState);
-      draftState.selections[round][pickInRound] = selection;
-      draftState.availablePlayers.splice(
-        draftState.availablePlayers.findIndex(
+    let state = activeDrafts[room];
+    if (state) {
+      const { round, pickInRound } = getCurrentPickInfo(state.draftState);
+      state.draftState.selections[round][pickInRound] = selection;
+      state.draftState.availablePlayers.splice(
+        state.draftState.availablePlayers.findIndex(
           (p) => p.sanitizedName === selection.player.sanitizedName
         ),
         1
       );
-      draftState.currentPick += 1;
-      activeDrafts[room] = draftState;
+      addPlayerToTeam(state.playersByTeam, selection);
+      state.draftState.currentPick += 1;
       const pickMessage: ChatMessage = {
         sender: "system",
         message: `Pick ${selection.pick}: ${
@@ -139,7 +166,11 @@ export class DraftSocket {
         timestamp: new Date().toISOString(),
         type: "draft",
       };
-      this.io.to(room).emit("sync", draftState, pickMessage);
+      this.io.to(room).emit("sync", state.draftState, {
+        message: pickMessage,
+        draftPick: selection,
+        playersByTeam: state.playersByTeam,
+      });
       this.syncToDb(room, selection);
     }
   }
@@ -156,7 +187,7 @@ export class DraftSocket {
   }
 }
 
-export const initSocket = (io: ServerType) => {
+export const initSocket = async (io: ServerType) => {
   io.use((socket: SocketType, next: Function) => {
     const token = socket.handshake.auth.token;
     if (!token) {
@@ -173,16 +204,29 @@ export const initSocket = (io: ServerType) => {
         next(error);
       });
   });
+  db.collection("drafts")
+    .where("phase", "==", "live")
+    .get()
+    .then((liveDrafts) => {
+      liveDrafts.forEach(async (doc) => {
+        const draftData = doc.data() as DraftState;
+        const leagueForDraft = (
+          await db.collection("leagues").doc(draftData.leagueId).get()
+        ).data() as League;
+        activeDrafts[doc.id] = {
+          league: leagueForDraft,
+          draftState: draftData as DraftState,
+          chatMessages: [],
+          playersByTeam: buildPlayersByTeam(
+            leagueForDraft.lineupSettings,
+            draftData.settings.draftOrder,
+            linearizeSelections(draftData.selections)
+          ),
+        };
+      });
+    });
   io.on("connection", (socket) => {
     connectedUsers[socket.data.user.uid] = socket.data.user;
-    db.collection("drafts")
-      .where("phase", "==", "live")
-      .get()
-      .then((liveDrafts) => {
-        liveDrafts.forEach((doc) => {
-          activeDrafts[doc.id] = doc.data() as DraftState;
-        });
-      });
     new DraftSocket(socket, io, socket.data.user);
   });
 };

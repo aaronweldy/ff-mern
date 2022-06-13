@@ -1,5 +1,6 @@
 import { SinglePosition, ScoringCategory, StatKey } from "..";
 import { AbbreviatedNflTeam } from "../Constants";
+import { Position } from "../Player";
 
 export const sanitizePlayerName = (name: string) =>
   name.replace(/\./g, "").toLowerCase();
@@ -154,4 +155,20 @@ export const getCurrentSeason = () => {
     return curYear - 1;
   }
   return curYear;
+};
+
+export const lineupOrder = {
+  QB: 1,
+  RB: 2,
+  WR: 3,
+  TE: 4,
+  K: 5,
+  "WR/RB": 6,
+  "WR/RB/TE": 7,
+  "QB/WR/RB/TE": 8,
+  bench: 9,
+};
+
+export const lineupSorter = (a: Position, b: Position) => {
+  return lineupOrder[a] - lineupOrder[b];
 };

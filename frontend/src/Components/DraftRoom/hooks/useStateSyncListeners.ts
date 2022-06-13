@@ -1,29 +1,33 @@
-import { ChatMessage, DraftState } from "@ff-mern/ff-types";
+import { ChatMessage, DraftState, SyncAction } from "@ff-mern/ff-types";
 import { useEffect } from "react";
 import { SocketType } from "../../../Context/SocketContext";
 import { useStore } from "../store";
 
 export const useStateSyncListeners = (socket: SocketType) => {
-  const { setDraftState, addMessage } = useStore((store) => ({
+  const { setDraftState, addMessage, setPlayersByTeam } = useStore((store) => ({
     setDraftState: store.setDraftState,
     addMessage: store.addMessage,
+    setPlayersByTeam: store.setPlayersByTeam,
   }));
 
   useEffect(() => {
     if (socket) {
-      const handleDraftState = (
+      const handleSync = (
         draftState: DraftState,
-        message?: ChatMessage
+        action: Partial<SyncAction>
       ) => {
-        console.log(draftState, message);
+        console.log(draftState, action);
         setDraftState(draftState);
-        if (message) {
-          addMessage(message);
+        if (action.message) {
+          addMessage(action.message);
+        }
+        if (action.playersByTeam) {
+          setPlayersByTeam(action.playersByTeam);
         }
       };
-      socket.on("sync", handleDraftState);
+      socket.on("sync", handleSync);
       return () => {
-        socket.off("sync", handleDraftState);
+        socket.off("sync", handleSync);
       };
     }
   });

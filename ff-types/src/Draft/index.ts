@@ -1,5 +1,5 @@
-import { mapTeamsToIds, Team } from "../Team";
-import { ProjectedPlayer } from "../API";
+import { mapTeamsToIds, SimplifiedTeamInfo, Team } from "../Team";
+import { ProjectedPlayer } from "../Player";
 import { getNumPlayersFromLineupSettings, LineupSettings } from "../League";
 
 export type DraftType = "mock" | "official";
@@ -12,14 +12,6 @@ export type DraftSettings = {
   // List of team IDs in the order of the draft
   draftOrder: string[];
   pickOrder: PickOrder;
-};
-
-// All of the team information we need in the draft.
-type SimplifiedTeamInfo = {
-  owner: string;
-  ownerName: string;
-  name: string;
-  id: string;
 };
 
 export type DraftPick = {

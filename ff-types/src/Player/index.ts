@@ -1,4 +1,4 @@
-import { AbbreviatedNflTeam } from "..";
+import { AbbreviatedNflTeam, Week } from "..";
 import { sanitizePlayerName } from "../Utils";
 
 export const setPlayerName = (
@@ -8,6 +8,13 @@ export const setPlayerName = (
   player.fullName = name;
   player.sanitizedName = sanitizePlayerName(name);
 };
+
+export const createEmptyPlayer = (): NflPlayer => ({
+  fullName: "",
+  sanitizedName: "",
+  position: "QB",
+  team: "None",
+});
 
 export interface NflPlayer {
   // Used in most places -- correctly capitalized version of name.
@@ -38,6 +45,10 @@ export class FinalizedPlayer implements NflPlayer {
     this.lineup = lineup;
     this.team = team;
   }
+
+  createEmptyPlayer = () => {
+    return new FinalizedPlayer("", "QB", "None", "bench");
+  };
 }
 
 export class RosteredPlayer implements NflPlayer {
@@ -52,6 +63,32 @@ export class RosteredPlayer implements NflPlayer {
     this.position = pos;
     this.team = team;
   }
+
+  static createEmptyPlayer = () => {
+    return new FinalizedPlayer("", "QB", "None", "bench");
+  };
+}
+
+export class ProjectedPlayer implements NflPlayer {
+  fullName: string;
+  sanitizedName: string;
+  position: SinglePosition;
+  team: AbbreviatedNflTeam | "None";
+  byeWeek: Week;
+  positionRank: string;
+  overall: number;
+  average: number;
+
+  static createEmptyPlayer = (): ProjectedPlayer => ({
+    fullName: "",
+    sanitizedName: "",
+    position: "QB",
+    team: "None",
+    byeWeek: "1",
+    positionRank: "",
+    overall: 500,
+    average: 500,
+  });
 }
 
 export type SinglePosition = "QB" | "RB" | "WR" | "TE" | "K";

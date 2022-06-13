@@ -12,8 +12,8 @@ import {
   TeamFantasyPositionPerformance,
   TeamToSchedule,
   Week,
+  lineupSorter,
 } from "@ff-mern/ff-types";
-import { lineupSorter } from "../../../constants";
 import { NflRankedText } from "../NflRankedText";
 import { InlineTeamTile } from "../InlineTeamTile";
 

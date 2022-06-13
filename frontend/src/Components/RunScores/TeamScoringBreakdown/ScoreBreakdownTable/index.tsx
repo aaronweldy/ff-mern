@@ -5,9 +5,9 @@ import {
   ScoringSetting,
   SinglePosition,
   StoredPlayerInformation,
+  lineupSorter,
 } from "@ff-mern/ff-types";
 import { Table } from "react-bootstrap";
-import { lineupSorter } from "../../../../constants";
 import { InlineTeamTile } from "../../../shared/InlineTeamTile";
 import { ScoringToggleType } from "../../../shared/StatTypeToggleButton";
 import styles from "./TableStyles.module.css";

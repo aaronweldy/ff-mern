@@ -91,17 +91,6 @@ export type ScrapedADPData = {
   K?: string;
 };
 
-export class ProjectedPlayer implements NflPlayer {
-  fullName: string;
-  sanitizedName: string;
-  position: SinglePosition;
-  team: AbbreviatedNflTeam | "None";
-  byeWeek: Week;
-  positionRank: string;
-  overall: number;
-  average: number;
-}
-
 export type CreateDraftRequest = {
   leagueId: string;
   draftSettings: DraftSettings;

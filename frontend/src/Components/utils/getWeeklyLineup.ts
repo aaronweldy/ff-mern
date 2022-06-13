@@ -6,8 +6,8 @@ import {
   FinalizedPlayer,
   FinalizedLineup,
   AbbreviatedNflTeam,
+  lineupSorter,
 } from "@ff-mern/ff-types";
-import { lineupSorter } from "../../constants";
 
 const getBench = (team: Team, notBenched: Set<string>) =>
   team.rosteredPlayers.reduce((acc, player) => {

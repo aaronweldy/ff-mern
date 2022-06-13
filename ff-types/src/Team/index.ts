@@ -1,4 +1,16 @@
-import { RosteredPlayer, Position, FinalizedPlayer } from "..";
+import { RosteredPlayer, Position, FinalizedPlayer, lineupSorter } from "..";
+import { NflPlayer } from "../Player";
+import { lineupOrder } from "../Utils";
+
+export type TeamRoster = Record<Position, NflPlayer[]>;
+
+// Commonly used team information to save space.
+export type SimplifiedTeamInfo = {
+  owner: string;
+  ownerName: string;
+  name: string;
+  id: string;
+};
 
 export class Team {
   public id: string;
@@ -51,6 +63,15 @@ export class Team {
     }
     return team.weekInfo[week].addedPoints + team.weekInfo[week].weekScore;
   }
+
+  static generateSimplifiedInfo(team: Team): SimplifiedTeamInfo {
+    return {
+      owner: team.owner,
+      ownerName: team.ownerName,
+      name: team.name,
+      id: team.id,
+    };
+  }
 }
 
 export type TeamWeekInfo = {
@@ -60,15 +81,25 @@ export type TeamWeekInfo = {
   isSuperflex: boolean;
 };
 
-export type FinalizedLineup = Record<Position, FinalizedPlayer[]>;
+export type FinalizedLineup<T = void> = T extends void
+  ? Record<Position, FinalizedPlayer[]>
+  : Record<Extract<Position, keyof T>, FinalizedPlayer[]>;
 
-export const lineupToIterable = (lineup: FinalizedLineup) => {
-  return Object.keys(lineup).reduce((acc: FinalizedPlayer[], pos) => {
-    lineup[pos as Position].forEach((player) => {
-      acc.push(player);
-    });
-    return acc;
-  }, []);
+export type IterablePlayer = NflPlayer & { lineup: Position };
+
+export const lineupToIterable = (lineup: TeamRoster) => {
+  return Object.keys(lineup)
+    .reduce<IterablePlayer[]>((acc, pos) => {
+      lineup[pos as Position].forEach((player) => {
+        const itPlayer = {
+          ...player,
+          lineup: pos as Position,
+        };
+        acc.push(itPlayer);
+      });
+      return acc;
+    }, [])
+    .sort((a, b) => lineupOrder[a.lineup] - lineupOrder[b.lineup]);
 };
 
 export const mapTeamsToIds = (teams: Team[]) => {

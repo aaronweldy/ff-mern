@@ -1,7 +1,61 @@
 import { DecodedIdToken } from 'firebase-admin/auth';
 
+declare const setPlayerName: (player: FinalizedPlayer | RosteredPlayer, name: string) => void;
+declare const createEmptyPlayer: () => NflPlayer;
+interface NflPlayer {
+    fullName: string;
+    sanitizedName: string;
+    position: SinglePosition;
+    team: AbbreviatedNflTeam | "None";
+}
+declare class FinalizedPlayer implements NflPlayer {
+    fullName: string;
+    sanitizedName: string;
+    position: SinglePosition;
+    team: AbbreviatedNflTeam | "None";
+    lineup: Position;
+    backup: string;
+    constructor(name: string, position: SinglePosition, team: AbbreviatedNflTeam | "None", lineup: Position);
+    createEmptyPlayer: () => FinalizedPlayer;
+}
+declare class RosteredPlayer implements NflPlayer {
+    fullName: string;
+    sanitizedName: string;
+    position: SinglePosition;
+    team: AbbreviatedNflTeam;
+    constructor(name: string, team: AbbreviatedNflTeam, pos: SinglePosition);
+    static createEmptyPlayer: () => FinalizedPlayer;
+}
+declare class ProjectedPlayer implements NflPlayer {
+    fullName: string;
+    sanitizedName: string;
+    position: SinglePosition;
+    team: AbbreviatedNflTeam | "None";
+    byeWeek: Week;
+    positionRank: string;
+    overall: number;
+    average: number;
+    static createEmptyPlayer: () => ProjectedPlayer;
+}
+declare type SinglePosition = "QB" | "RB" | "WR" | "TE" | "K";
+declare type Position = "QB" | "RB" | "WR" | "TE" | "K" | "WR/RB" | "WR/RB/TE" | "QB/WR/RB/TE" | "bench";
+declare type PositionInfo = Record<Position, number>;
+declare const positionTypes: Position[];
+declare const singlePositionTypes: SinglePosition[];
+declare const emptyDefaultPositions: PositionInfo;
+declare type CumulativePlayerScore = {
+    position: SinglePosition;
+    totalPointsInSeason: number;
+    pointsByWeek: number[];
+    team: AbbreviatedNflTeam;
+};
+declare type CumulativePlayerScores = Record<string, CumulativePlayerScore>;
+
 declare type LineupSettings = Record<Position, number>;
 declare const getNumPlayersFromLineupSettings: (settings: LineupSettings) => number;
+declare const getEmptyLineupFromSettings: <T extends NflPlayer>(settings: LineupSettings, format: {
+    createEmptyPlayer: () => T;
+}) => Record<Position, T[]>;
 declare class League {
     name: string;
     logo: string;
@@ -44,43 +98,13 @@ declare class ScoringError {
 declare type StatKey = "20+" | "ATT" | "CMP" | "Y/CMP" | "FL" | "FPTS" | "FPTS/G" | "G" | "LG" | "Player" | "REC" | "ROST" | "Rank" | "TD" | "TD_2" | "TGT" | "Y/R" | "YDS" | "YDS_2" | "ATT_2" | "Y/A" | "PCT" | "INT" | "1-19" | "20-29" | "30-39" | "40-49" | "50+" | "XPT" | "team" | "position" | "snaps";
 declare type DatabasePlayer = Record<StatKey, string>;
 
-declare const setPlayerName: (player: FinalizedPlayer | RosteredPlayer, name: string) => void;
-interface NflPlayer {
-    fullName: string;
-    sanitizedName: string;
-    position: SinglePosition;
-    team: AbbreviatedNflTeam | "None";
-}
-declare class FinalizedPlayer implements NflPlayer {
-    fullName: string;
-    sanitizedName: string;
-    position: SinglePosition;
-    team: AbbreviatedNflTeam | "None";
-    lineup: Position;
-    backup: string;
-    constructor(name: string, position: SinglePosition, team: AbbreviatedNflTeam | "None", lineup: Position);
-}
-declare class RosteredPlayer implements NflPlayer {
-    fullName: string;
-    sanitizedName: string;
-    position: SinglePosition;
-    team: AbbreviatedNflTeam;
-    constructor(name: string, team: AbbreviatedNflTeam, pos: SinglePosition);
-}
-declare type SinglePosition = "QB" | "RB" | "WR" | "TE" | "K";
-declare type Position = "QB" | "RB" | "WR" | "TE" | "K" | "WR/RB" | "WR/RB/TE" | "QB/WR/RB/TE" | "bench";
-declare type PositionInfo = Record<Position, number>;
-declare const positionTypes: Position[];
-declare const singlePositionTypes: SinglePosition[];
-declare const emptyDefaultPositions: PositionInfo;
-declare type CumulativePlayerScore = {
-    position: SinglePosition;
-    totalPointsInSeason: number;
-    pointsByWeek: number[];
-    team: AbbreviatedNflTeam;
+declare type TeamRoster = Record<Position, NflPlayer[]>;
+declare type SimplifiedTeamInfo = {
+    owner: string;
+    ownerName: string;
+    name: string;
+    id: string;
 };
-declare type CumulativePlayerScores = Record<string, CumulativePlayerScore>;
-
 declare class Team {
     name: string;
     leagueName: string;
@@ -97,6 +121,7 @@ declare class Team {
     constructor(name: string, leagueName: string, ownerName: string, isCommissioner: boolean, numWeeks: number);
     static updateNumWeeks(team: Team, numWeeks: number): void;
     static sumWeekScore(team: Team, week: number): number;
+    static generateSimplifiedInfo(team: Team): SimplifiedTeamInfo;
 }
 declare type TeamWeekInfo = {
     weekScore: number;
@@ -104,8 +129,11 @@ declare type TeamWeekInfo = {
     finalizedLineup: FinalizedLineup;
     isSuperflex: boolean;
 };
-declare type FinalizedLineup = Record<Position, FinalizedPlayer[]>;
-declare const lineupToIterable: (lineup: FinalizedLineup) => FinalizedPlayer[];
+declare type FinalizedLineup<T = void> = T extends void ? Record<Position, FinalizedPlayer[]> : Record<Extract<Position, keyof T>, FinalizedPlayer[]>;
+declare type IterablePlayer = NflPlayer & {
+    lineup: Position;
+};
+declare const lineupToIterable: (lineup: TeamRoster) => IterablePlayer[];
 declare const mapTeamsToIds: (teams: Team[]) => Record<string, Team>;
 
 declare type DraftType = "mock" | "official";
@@ -116,12 +144,6 @@ declare type DraftSettings = {
     numRounds: number;
     draftOrder: string[];
     pickOrder: PickOrder;
-};
-declare type SimplifiedTeamInfo = {
-    owner: string;
-    ownerName: string;
-    name: string;
-    id: string;
 };
 declare type DraftPick = {
     pick: number;
@@ -208,16 +230,6 @@ declare type ScrapedADPData = {
     TE?: string;
     K?: string;
 };
-declare class ProjectedPlayer implements NflPlayer {
-    fullName: string;
-    sanitizedName: string;
-    position: SinglePosition;
-    team: AbbreviatedNflTeam | "None";
-    byeWeek: Week;
-    positionRank: string;
-    overall: number;
-    average: number;
-}
 declare type CreateDraftRequest = {
     leagueId: string;
     draftSettings: DraftSettings;
@@ -234,6 +246,18 @@ declare const playerTeamIsNflAbbreviation: (team: string) => team is Abbreviated
 declare const convertedScoringTypes: Record<SinglePosition, Partial<Record<ScoringCategory, StatKey>>>;
 declare const scoringTypes: string[];
 declare const getCurrentSeason: () => number;
+declare const lineupOrder: {
+    QB: number;
+    RB: number;
+    WR: number;
+    TE: number;
+    K: number;
+    "WR/RB": number;
+    "WR/RB/TE": number;
+    "QB/WR/RB/TE": number;
+    bench: number;
+};
+declare const lineupSorter: (a: Position, b: Position) => number;
 
 declare type PlayerInTrade = {
     player: RosteredPlayer;
@@ -265,9 +289,14 @@ declare type ConnectionAction = {
     userEmail: string;
     type: "connect" | "disconnect";
 };
+declare type SyncAction = {
+    message: ChatMessage;
+    playersByTeam: Record<string, TeamRoster>;
+    draftPick: DraftPick;
+};
 declare type ServerToClientEvents = {
     "user connection": (action: ConnectionAction) => void;
-    sync: (state: DraftState, message?: ChatMessage) => void;
+    sync: (state: DraftState, action: Partial<SyncAction>) => void;
     newMessage: (message: ChatMessage) => void;
 };
 declare type ClientToServerEvents = {
@@ -281,4 +310,4 @@ declare type SocketData = {
     user: DecodedIdToken;
 };
 
-export { AbbreviatedNflTeam, AbbreviationToFullTeam, ChatMessage, ClientToServerEvents, ConnectionAction, CreateDraftRequest, CumulativePlayerScore, CumulativePlayerScores, CurrentPick, DatabasePlayer, DraftPhase, DraftPick, DraftSettings, DraftState, DraftType, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, League, LeagueAPIResponse, LineupSettings, MessageType, NflPlayer, PickOrder, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, ProjectedPlayer, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedADPData, ScrapedPlayerProjection, ServerToClientEvents, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, Team, TeamFantasyPositionPerformance, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, createDraftStateForLeague, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getNumPlayersFromLineupSettings, lineupToIterable, mapTeamsToIds, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
+export { AbbreviatedNflTeam, AbbreviationToFullTeam, ChatMessage, ClientToServerEvents, ConnectionAction, CreateDraftRequest, CumulativePlayerScore, CumulativePlayerScores, CurrentPick, DatabasePlayer, DraftPhase, DraftPick, DraftSettings, DraftState, DraftType, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, IterablePlayer, League, LeagueAPIResponse, LineupSettings, MessageType, NflPlayer, PickOrder, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, ProjectedPlayer, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedADPData, ScrapedPlayerProjection, ServerToClientEvents, SimplifiedTeamInfo, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, SyncAction, Team, TeamFantasyPositionPerformance, TeamRoster, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, createDraftStateForLeague, createEmptyPlayer, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getEmptyLineupFromSettings, getNumPlayersFromLineupSettings, lineupOrder, lineupSorter, lineupToIterable, mapTeamsToIds, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };

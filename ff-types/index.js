@@ -3,6 +3,12 @@ import { v4 } from 'uuid';
 const getNumPlayersFromLineupSettings = (settings) => {
     return Object.values(settings).reduce((acc, num) => acc + num, 0);
 };
+const getEmptyLineupFromSettings = (settings, format) => {
+    return Object.keys(settings).reduce((acc, pos) => {
+        acc[pos] = new Array(settings[pos]).fill(format.createEmptyPlayer());
+        return acc;
+    }, {});
+};
 class League {
     constructor(name, commissioners, numWeeks, lineupSettings, logo) {
         this.name = name;
@@ -163,13 +169,36 @@ const getCurrentSeason = () => {
     }
     return curYear;
 };
+const lineupOrder = {
+    QB: 1,
+    RB: 2,
+    WR: 3,
+    TE: 4,
+    K: 5,
+    "WR/RB": 6,
+    "WR/RB/TE": 7,
+    "QB/WR/RB/TE": 8,
+    bench: 9,
+};
+const lineupSorter = (a, b) => {
+    return lineupOrder[a] - lineupOrder[b];
+};
 
 const setPlayerName = (player, name) => {
     player.fullName = name;
     player.sanitizedName = sanitizePlayerName(name);
 };
+const createEmptyPlayer = () => ({
+    fullName: "",
+    sanitizedName: "",
+    position: "QB",
+    team: "None",
+});
 class FinalizedPlayer {
     constructor(name, position, team, lineup) {
+        this.createEmptyPlayer = () => {
+            return new FinalizedPlayer("", "QB", "None", "bench");
+        };
         this.fullName = name;
         this.sanitizedName = sanitizePlayerName(name);
         this.position = position;
@@ -185,6 +214,21 @@ class RosteredPlayer {
         this.team = team;
     }
 }
+RosteredPlayer.createEmptyPlayer = () => {
+    return new FinalizedPlayer("", "QB", "None", "bench");
+};
+class ProjectedPlayer {
+}
+ProjectedPlayer.createEmptyPlayer = () => ({
+    fullName: "",
+    sanitizedName: "",
+    position: "QB",
+    team: "None",
+    byeWeek: "1",
+    positionRank: "",
+    overall: 500,
+    average: 500,
+});
 const positionTypes = [
     "QB",
     "RB",
@@ -245,14 +289,25 @@ class Team {
         }
         return team.weekInfo[week].addedPoints + team.weekInfo[week].weekScore;
     }
+    static generateSimplifiedInfo(team) {
+        return {
+            owner: team.owner,
+            ownerName: team.ownerName,
+            name: team.name,
+            id: team.id,
+        };
+    }
 }
 const lineupToIterable = (lineup) => {
-    return Object.keys(lineup).reduce((acc, pos) => {
+    return Object.keys(lineup)
+        .reduce((acc, pos) => {
         lineup[pos].forEach((player) => {
-            acc.push(player);
+            const itPlayer = Object.assign(Object.assign({}, player), { lineup: pos });
+            acc.push(itPlayer);
         });
         return acc;
-    }, []);
+    }, [])
+        .sort((a, b) => lineupOrder[a.lineup] - lineupOrder[b.lineup]);
 };
 const mapTeamsToIds = (teams) => {
     return teams.reduce((acc, team) => {
@@ -260,9 +315,6 @@ const mapTeamsToIds = (teams) => {
         return acc;
     }, {});
 };
-
-class ProjectedPlayer {
-}
 
 const AbbreviationToFullTeam = {
     ARI: "arizona cardinals",
@@ -389,4 +441,4 @@ const createDraftStateForLeague = (lineupSettings, leagueId, teams, availablePla
     };
 };
 
-export { AbbreviationToFullTeam, FinalizedPlayer, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, createDraftStateForLeague, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getNumPlayersFromLineupSettings, lineupToIterable, mapTeamsToIds, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
+export { AbbreviationToFullTeam, FinalizedPlayer, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, createDraftStateForLeague, createEmptyPlayer, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getEmptyLineupFromSettings, getNumPlayersFromLineupSettings, lineupOrder, lineupSorter, lineupToIterable, mapTeamsToIds, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };

@@ -1,10 +1,24 @@
 import { Position } from "..";
 import { ScoringSetting } from "..";
+import { createEmptyPlayer, NflPlayer } from "../Player";
 
 export type LineupSettings = Record<Position, number>;
 
 export const getNumPlayersFromLineupSettings = (settings: LineupSettings) => {
   return Object.values(settings).reduce((acc, num) => acc + num, 0);
+};
+
+export const getEmptyLineupFromSettings = <T extends NflPlayer>(
+  settings: LineupSettings,
+  format: { createEmptyPlayer: () => T }
+) => {
+  return Object.keys(settings).reduce<Record<Position, T[]>>(
+    (acc, pos: Position) => {
+      acc[pos] = new Array<T>(settings[pos]).fill(format.createEmptyPlayer());
+      return acc;
+    },
+    {} as Record<Position, T[]>
+  );
 };
 
 export class League {

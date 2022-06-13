@@ -1,0 +1,23 @@
+.roster-container {
+  height: 80vh;
+  overflow: scroll;
+}
+
+.current-roster-box {
+  background-color: #f5f5f5;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.rostered-player-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.rostered-player-position {
+  font-weight: bold;
+}
