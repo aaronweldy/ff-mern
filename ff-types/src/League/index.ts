@@ -12,13 +12,15 @@ export const getEmptyLineupFromSettings = <T extends NflPlayer>(
   settings: LineupSettings,
   format: { createEmptyPlayer: () => T }
 ) => {
-  return Object.keys(settings).reduce<Record<Position, T[]>>(
+  const lineup = Object.keys(settings).reduce<Record<Position, T[]>>(
     (acc, pos: Position) => {
       acc[pos] = new Array<T>(settings[pos]).fill(format.createEmptyPlayer());
       return acc;
     },
     {} as Record<Position, T[]>
   );
+  lineup["bench"] = [];
+  return lineup;
 };
 
 export class League {

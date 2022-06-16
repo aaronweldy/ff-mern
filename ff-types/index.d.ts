@@ -162,7 +162,7 @@ declare type CurrentPick = {
     round: number;
     pickInRound: number;
 };
-declare const getCurrentPickInfo: (state: DraftState) => {
+declare const getCurrentPickInfo: (state: DraftState, specificPick?: number) => {
     round: number;
     pickInRound: number;
 };
@@ -298,12 +298,15 @@ declare type ServerToClientEvents = {
     "user connection": (action: ConnectionAction) => void;
     sync: (state: DraftState, action: Partial<SyncAction>) => void;
     newMessage: (message: ChatMessage) => void;
+    isCommissioner: () => void;
 };
 declare type ClientToServerEvents = {
     "join room": (room: string) => void;
     "leave room": (room: string) => void;
     draftPick: (pick: DraftPick, room: string) => void;
     sendMessage: (message: string, room: string) => void;
+    updateDraftPhase: (phase: DraftPhase, room: string) => void;
+    undoLastPick: (room: string) => void;
 };
 declare type InterServerEvents = {};
 declare type SocketData = {

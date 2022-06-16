@@ -7,7 +7,7 @@
 }
 
 .pick-container {
-  max-height: 85vh;
+  max-height: 80vh;
   font-size: 0.95rem;
   overflow-y: scroll;
   padding: 0.5em;

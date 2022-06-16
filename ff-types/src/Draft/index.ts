@@ -35,10 +35,16 @@ export type CurrentPick = {
   pickInRound: number;
 };
 
-export const getCurrentPickInfo = (state: DraftState) => {
+export const getCurrentPickInfo = (
+  state: DraftState,
+  specificPick?: number
+) => {
   const { settings, currentPick } = state;
-  const round = Math.floor(currentPick / settings.draftOrder.length);
-  const pickInRound = currentPick % settings.draftOrder.length;
+  if (!specificPick) {
+    specificPick = currentPick;
+  }
+  const round = Math.floor(specificPick / settings.draftOrder.length);
+  const pickInRound = specificPick % settings.draftOrder.length;
   return {
     round,
     pickInRound,

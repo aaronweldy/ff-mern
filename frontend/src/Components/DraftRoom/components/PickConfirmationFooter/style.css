@@ -20,6 +20,11 @@
   color: white;
 }
 
+.footer-bubble {
+  position: relative;
+  top: 12%;
+}
+
 .player-selection-text {
   font-size: 1.5rem;
   font-weight: bold;

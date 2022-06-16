@@ -8,6 +8,7 @@ import { PlayerSelectionBox } from "./components/PlayerSelectionBox";
 import { DraftTabs } from "./components/DraftTabs";
 import { useDraftSocket } from "./hooks/useDraftSocket";
 import { useStore } from "./store";
+import { DraftHeader } from "./DraftHeader";
 
 export const DraftRoom = () => {
   const { id: roomId } = useParams() as { id: string };
@@ -36,6 +37,7 @@ export const DraftRoom = () => {
   }, [roomId, socket]);
   return (
     <Container fluid>
+      <DraftHeader />
       <Row className="mt-3">
         <Col xl={8}>
           <PickTable />

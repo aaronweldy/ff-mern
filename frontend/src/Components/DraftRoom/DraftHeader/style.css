@@ -1,0 +1,26 @@
+.draft-header {
+  display: flex;
+  height: 6em;
+  align-items: center;
+  border-bottom: 2px solid black;
+}
+
+.draft-pick-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-left: 1em;
+}
+
+.draft-pick-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2em;
+  width: 8em;
+}
+
+.pick-row {
+  display: flex;
+  justify-content: space-between;
+}

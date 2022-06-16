@@ -4,9 +4,9 @@
 }
 
 .current-roster-box {
-  background-color: #f5f5f5;
+  background-color: hsl(0, 0%, 96%);
   border-radius: 5px;
-  padding: 10px;
+  padding: 5px;
   margin-bottom: 10px;
 }
 
@@ -15,7 +15,10 @@
   justify-content: space-between;
   align-items: center;
   padding: 5px;
-  border-bottom: 1px solid #f5f5f5;
+}
+
+.rostered-player-row:not(:last-of-type) {
+  border-bottom: 1px solid hsl(0, 0%, 75%);
 }
 
 .rostered-player-position {

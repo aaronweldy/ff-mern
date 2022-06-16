@@ -9,6 +9,7 @@ import {
   ChatMessage,
   League,
   TeamRoster,
+  DraftPhase,
 } from "@ff-mern/ff-types";
 import { DecodedIdToken } from "firebase-admin/auth";
 import { Server, Socket } from "socket.io";
@@ -62,6 +63,10 @@ export class DraftSocket {
     socket.on("sendMessage", (message, room) =>
       this.onChatMessage(message, room)
     );
+    socket.on("updateDraftPhase", (phase, room) =>
+      this.onUpdateDraftPhase(phase, room)
+    );
+    socket.on("undoLastPick", (room) => this.onUndoPick(room));
   }
 
   syncToDb(roomId: string, draftPick?: DraftPick) {
@@ -129,6 +134,9 @@ export class DraftSocket {
     this.socket.emit("sync", activeDrafts[room].draftState, {
       playersByTeam: activeDrafts[room].playersByTeam,
     });
+    if (activeDrafts[room].league.commissioners.includes(this.uid)) {
+      this.socket.emit("isCommissioner");
+    }
   }
 
   onLeaveRoom(room: string) {
@@ -185,6 +193,46 @@ export class DraftSocket {
     };
     this.io.to(room).emit("newMessage", newMessage);
   }
+
+  onUpdateDraftPhase(phase: DraftPhase, room: string) {
+    console.log("room", room, "updated to phase", phase);
+    activeDrafts[room].draftState.phase = phase;
+    this.io.to(room).emit("sync", activeDrafts[room].draftState, {
+      message: {
+        sender: "system",
+        message: `Draft phase updated to ${phase}`,
+        timestamp: new Date().toISOString(),
+        type: "draft",
+      },
+    });
+  }
+
+  onUndoPick(room: string) {
+    console.log("room", room, "undid pick");
+    const state = activeDrafts[room];
+    if (!state || state.draftState.currentPick === 0) {
+      console.error("Pick undone in non-saved state");
+    }
+    const { round, pickInRound } = getCurrentPickInfo(
+      state.draftState,
+      state.draftState.currentPick - 1
+    );
+    const lastSelection = state.draftState.selections[round][pickInRound];
+    state.draftState.availablePlayers.push(lastSelection.player);
+    lastSelection.player = null;
+    state.draftState.currentPick -= 1;
+    const undoMessage: ChatMessage = {
+      sender: "system",
+      message: `Commissioner ${
+        connectedUsers[this.uid]?.email
+      } undid Round ${round}, Pick ${pickInRound}`,
+      timestamp: new Date().toISOString(),
+      type: "draft",
+    };
+    this.io.to(room).emit("sync", state.draftState, {
+      message: undoMessage,
+    });
+  }
 }
 
 export const initSocket = async (io: ServerType) => {
@@ -210,17 +258,20 @@ export const initSocket = async (io: ServerType) => {
     .then((liveDrafts) => {
       liveDrafts.forEach(async (doc) => {
         const draftData = doc.data() as DraftState;
-        const leagueForDraft = (
-          await db.collection("leagues").doc(draftData.leagueId).get()
-        ).data() as League;
+        const stateForDraft = await rebuildPlayersAndSelections(doc.id);
+        const league = stateForDraft.league;
         activeDrafts[doc.id] = {
-          league: leagueForDraft,
-          draftState: draftData as DraftState,
+          league,
+          draftState: {
+            ...stateForDraft.draftState,
+            availablePlayers: stateForDraft.availablePlayers,
+            selections: stateForDraft.selections,
+          },
           chatMessages: [],
           playersByTeam: buildPlayersByTeam(
-            leagueForDraft.lineupSettings,
+            league.lineupSettings,
             draftData.settings.draftOrder,
-            linearizeSelections(draftData.selections)
+            linearizeSelections(stateForDraft.selections)
           ),
         };
       });

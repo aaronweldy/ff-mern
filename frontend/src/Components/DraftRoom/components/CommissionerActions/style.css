@@ -1,0 +1,35 @@
+.commissioner-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: none;
+  padding: 0.5em 1em;
+  border-radius: 5px;
+  margin-bottom: 1em;
+}
+
+.add {
+  background-color: hsl(131, 57%, 72%);
+  color: hsla(0, 0%, 4%, 0.75);
+}
+
+.edit {
+  background-color: hsl(41, 70%, 75%);
+  color: hsla(0, 0%, 4%, 0.75);
+}
+
+.button:disabled {
+  background-color: hsl(0, 0%, 20%, 0.5);
+  color: hsla(0, 0%, 3%, 0.75);
+}
+
+.add:hover:not(:disabled) {
+  background-color: hsl(131, 57%, 50%);
+}
+
+.start-draft-text {
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}

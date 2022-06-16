@@ -62,7 +62,8 @@ export const buildPlayersByTeam = (lineupSettings, teamIds, selections) => {
                     if (remainingAtPos === 0) {
                         continue;
                     }
-                    playersByTeam[teamId][player.position][lineupSettings[pos] - remainingAtPos] = player;
+                    playersByTeam[teamId][pos][lineupSettings[pos] - remainingAtPos] =
+                        player;
                     remainingPlayersByTeam[teamId][pos] -= 1;
                     foundPos = true;
                     break;

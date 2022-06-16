@@ -8,12 +8,16 @@ type ConnectedUser = {
 
 type UserSliceType = {
   connectedUsers: ConnectedUser[];
+  userIsCommissioner: boolean;
+  setIsCommissioner: () => void;
   addUser: (newUser: ConnectionAction) => void;
   removeUser: (user: ConnectionAction) => void;
 };
 
 export const createUserSlice: StoreSlice<UserSliceType> = (set) => ({
   connectedUsers: [],
+  userIsCommissioner: false,
+  setIsCommissioner: () => set(() => ({ userIsCommissioner: true })),
   addUser: (newUser: ConnectionAction) =>
     set((prevState) => ({
       connectedUsers: [

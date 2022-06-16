@@ -47,7 +47,7 @@ export const PickConfirmationFooter = ({
     <div className="footer">
       <div className="footer-row">
         {selectedPlayer && (
-          <div className="mr-3">
+          <div className="mr-3 footer-bubble">
             <TeamLogoBubble team={selectedPlayer.team} />
           </div>
         )}

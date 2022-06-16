@@ -4,10 +4,12 @@ const getNumPlayersFromLineupSettings = (settings) => {
     return Object.values(settings).reduce((acc, num) => acc + num, 0);
 };
 const getEmptyLineupFromSettings = (settings, format) => {
-    return Object.keys(settings).reduce((acc, pos) => {
+    const lineup = Object.keys(settings).reduce((acc, pos) => {
         acc[pos] = new Array(settings[pos]).fill(format.createEmptyPlayer());
         return acc;
     }, {});
+    lineup["bench"] = [];
+    return lineup;
 };
 class League {
     constructor(name, commissioners, numWeeks, lineupSettings, logo) {
@@ -375,10 +377,13 @@ const buildTrade = (playersInvolved, teamIds) => {
     };
 };
 
-const getCurrentPickInfo = (state) => {
+const getCurrentPickInfo = (state, specificPick) => {
     const { settings, currentPick } = state;
-    const round = Math.floor(currentPick / settings.draftOrder.length);
-    const pickInRound = currentPick % settings.draftOrder.length;
+    if (!specificPick) {
+        specificPick = currentPick;
+    }
+    const round = Math.floor(specificPick / settings.draftOrder.length);
+    const pickInRound = specificPick % settings.draftOrder.length;
     return {
         round,
         pickInRound,

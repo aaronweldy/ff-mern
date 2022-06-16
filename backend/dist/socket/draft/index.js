@@ -34,6 +34,8 @@ export class DraftSocket {
         socket.on("leave room", (room) => this.onLeaveRoom(room));
         socket.on("draftPick", (pick, room) => this.onDraftPick(pick, room));
         socket.on("sendMessage", (message, room) => this.onChatMessage(message, room));
+        socket.on("updateDraftPhase", (phase, room) => this.onUpdateDraftPhase(phase, room));
+        socket.on("undoLastPick", (room) => this.onUndoPick(room));
     }
     syncToDb(roomId, draftPick) {
         const state = activeDrafts[roomId];
@@ -96,6 +98,9 @@ export class DraftSocket {
             this.socket.emit("sync", activeDrafts[room].draftState, {
                 playersByTeam: activeDrafts[room].playersByTeam,
             });
+            if (activeDrafts[room].league.commissioners.includes(this.uid)) {
+                this.socket.emit("isCommissioner");
+            }
         });
     }
     onLeaveRoom(room) {
@@ -144,6 +149,40 @@ export class DraftSocket {
         };
         this.io.to(room).emit("newMessage", newMessage);
     }
+    onUpdateDraftPhase(phase, room) {
+        console.log("room", room, "updated to phase", phase);
+        activeDrafts[room].draftState.phase = phase;
+        this.io.to(room).emit("sync", activeDrafts[room].draftState, {
+            message: {
+                sender: "system",
+                message: `Draft phase updated to ${phase}`,
+                timestamp: new Date().toISOString(),
+                type: "draft",
+            },
+        });
+    }
+    onUndoPick(room) {
+        var _a;
+        console.log("room", room, "undid pick");
+        const state = activeDrafts[room];
+        if (!state || state.draftState.currentPick === 0) {
+            console.error("Pick undone in non-saved state");
+        }
+        const { round, pickInRound } = getCurrentPickInfo(state.draftState, state.draftState.currentPick - 1);
+        const lastSelection = state.draftState.selections[round][pickInRound];
+        state.draftState.availablePlayers.push(lastSelection.player);
+        lastSelection.player = null;
+        state.draftState.currentPick -= 1;
+        const undoMessage = {
+            sender: "system",
+            message: `Commissioner ${(_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email} undid Round ${round}, Pick ${pickInRound}`,
+            timestamp: new Date().toISOString(),
+            type: "draft",
+        };
+        this.io.to(room).emit("sync", state.draftState, {
+            message: undoMessage,
+        });
+    }
 }
 export const initSocket = (io) => __awaiter(void 0, void 0, void 0, function* () {
     io.use((socket, next) => {
@@ -168,12 +207,13 @@ export const initSocket = (io) => __awaiter(void 0, void 0, void 0, function* ()
         .then((liveDrafts) => {
         liveDrafts.forEach((doc) => __awaiter(void 0, void 0, void 0, function* () {
             const draftData = doc.data();
-            const leagueForDraft = (yield db.collection("leagues").doc(draftData.leagueId).get()).data();
+            const stateForDraft = yield rebuildPlayersAndSelections(doc.id);
+            const league = stateForDraft.league;
             activeDrafts[doc.id] = {
-                league: leagueForDraft,
-                draftState: draftData,
+                league,
+                draftState: Object.assign(Object.assign({}, stateForDraft.draftState), { availablePlayers: stateForDraft.availablePlayers, selections: stateForDraft.selections }),
                 chatMessages: [],
-                playersByTeam: buildPlayersByTeam(leagueForDraft.lineupSettings, draftData.settings.draftOrder, linearizeSelections(draftData.selections)),
+                playersByTeam: buildPlayersByTeam(league.lineupSettings, draftData.settings.draftOrder, linearizeSelections(stateForDraft.selections)),
             };
         }));
     });

@@ -1,4 +1,4 @@
-import { IterablePlayer, lineupToIterable, NflPlayer } from "@ff-mern/ff-types";
+import { IterablePlayer, lineupToIterable } from "@ff-mern/ff-types";
 import { useEffect, useMemo, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useTeams } from "../../../../hooks/query/useTeams";
@@ -24,12 +24,11 @@ export const RostersByTeam = () => {
         )
       : {};
   }, [playersByTeam]);
-  console.log(iterableLineups);
   useEffect(() => {
     if (teamsQuery.data && !selectedTeam) {
       setSelectedTeam(teamsQuery.data.teams[0].id);
     }
-  });
+  }, [teamsQuery.data, selectedTeam]);
   const updateSelectedTeam = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedTeam(e.target.value);
   };
@@ -37,7 +36,7 @@ export const RostersByTeam = () => {
     return <div>Loading...</div>;
   }
   return (
-    <Container className="roster-container">
+    <Container className="roster-container mt-3">
       <TeamSelectionDropdown
         teams={teamsQuery.data.teams}
         selectedTeam={selectedTeam}
