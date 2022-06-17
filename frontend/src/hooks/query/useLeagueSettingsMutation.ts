@@ -1,7 +1,6 @@
 import { League, ScoringSetting } from "@ff-mern/ff-types";
 import { useMutation, useQueryClient } from "react-query";
 
-// Send a patch request to update the league scoring settings.
 export const useLeagueSettingsMutation = (id: string) => {
   const queryClient = useQueryClient();
   const { mutate, isLoading, isError } = useMutation<

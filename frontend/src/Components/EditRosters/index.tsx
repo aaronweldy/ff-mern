@@ -22,14 +22,18 @@ import { useTeams } from "../../hooks/query/useTeams";
 import { useUpdateTeamsMutation } from "../../hooks/query/useUpdateTeamsMutation";
 import { InlineTeamTile } from "../shared/InlineTeamTile";
 import styles from "./EditRosters.module.css";
+import { ConfirmationModal } from "../shared/ConfirmationModal";
+import { useResetRostersMutation } from "../../hooks/query/useResetRostersMutation";
 
 const EditRosters = () => {
+  const [show, setShow] = useState(false);
   const [redirect, setRedirect] = useState(false);
   const { id } = useParams() as { id: string };
   const { teams, setTeams, query: teamsQuery } = useTeams(id);
   const { mutate: validateTeams } = useUpdateTeamsMutation(id, teams, true);
   const playersQuery = usePlayers();
-
+  const resetRosters = useResetRostersMutation(id);
+  console.log("in component", teams);
   const handleAddPlayer = (idx: number) => {
     const tempTeams = [...teams];
     tempTeams[idx].rosteredPlayers.push(
@@ -91,14 +95,38 @@ const EditRosters = () => {
     setRedirect(true);
   };
 
+  const onResetConfirm = () => {
+    resetRosters.mutate();
+    setShow(false);
+  };
+
   if (redirect) {
     return <Navigate to={`/league/${id}/`} />;
+  } else if (
+    teamsQuery.isLoading ||
+    playersQuery.isLoading ||
+    resetRosters.isLoading
+  ) {
+    return <div className="spinning-loader" />;
   }
   return (
     <Container fluid className="mt-3">
+      <ConfirmationModal
+        show={show}
+        onHide={() => setShow(false)}
+        title="Reset All Rosters"
+        onConfirm={onResetConfirm}
+      />
       <Row className="justify-content-center">
         <Col md={8}>
           <LeagueButton id={id} />
+          <Button
+            className="mt-3"
+            variant="outline-danger"
+            onClick={() => setShow(true)}
+          >
+            Reset All Rosters
+          </Button>
           <Row>
             {teamsQuery.isSuccess
               ? teams.map((team, i) => (
@@ -116,7 +144,6 @@ const EditRosters = () => {
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             handleInfoChange(e, "name", i)
                           }
-                          size="lg"
                           type="text"
                           value={team.name}
                         />

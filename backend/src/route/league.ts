@@ -443,4 +443,14 @@ router.get("/:leagueId/:userId/isCommissioner", (req, res) => {
     });
 });
 
+router.patch("/:leagueId/resetAllRosters/", async (req, res) => {
+  const { leagueId } = req.params;
+  const teams = await getTeamsInLeague(leagueId);
+  teams.forEach(async (team) => {
+    team.rosteredPlayers = [];
+    await db.collection("teams").doc(team.id).update(team);
+  });
+  res.status(200).send({ teams });
+});
+
 export default router;

@@ -389,5 +389,14 @@ router.get("/:leagueId/:userId/isCommissioner", (req, res) => {
         res.status(200).send({ isCommissioner: true });
     });
 });
+router.patch("/:leagueId/resetAllRosters/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { leagueId } = req.params;
+    const teams = yield getTeamsInLeague(leagueId);
+    teams.forEach((team) => __awaiter(void 0, void 0, void 0, function* () {
+        team.rosteredPlayers = [];
+        yield db.collection("teams").doc(team.id).update(team);
+    }));
+    res.status(200).send({ teams });
+}));
 export default router;
 //# sourceMappingURL=league.js.map
