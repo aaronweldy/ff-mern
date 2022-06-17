@@ -18,7 +18,9 @@ router.get("/:id/leagues/", async (req, res) => {
       });
       const resp = { teams, url: "" };
       const urlDoc = await db.collection("users").doc(id).get();
-      if (urlDoc.exists) resp.url = urlDoc.data()!.url;
+      if (urlDoc.exists) {
+        resp.url = urlDoc.data()!.url;
+      }
       res.json(resp).send();
     });
 });

@@ -8,6 +8,7 @@ import { getCurrentPickInfo } from "@ff-mern/ff-types";
 import { auth } from "../../../../firebase-config";
 import { useAuthUser } from "@react-query-firebase/auth";
 import { useSocket } from "../../../../Context/SocketContext";
+import { useMemo } from "react";
 
 type PickConfirmationFooterProps = {
   draftId: string;
@@ -16,32 +17,42 @@ type PickConfirmationFooterProps = {
 export const PickConfirmationFooter = ({
   draftId,
 }: PickConfirmationFooterProps) => {
-  const { draftState, selectedPlayer, setSelectedPlayer } = useStore(
-    (store) => ({
-      draftState: store.state,
-      selectedPlayer: store.player,
-      setSelectedPlayer: store.setSelectedPlayer,
-    }),
-    shallow
-  );
+  const { draftState, selectedPlayer, setSelectedPlayer, userIsCommissioner } =
+    useStore(
+      (store) => ({
+        draftState: store.state,
+        selectedPlayer: store.player,
+        setSelectedPlayer: store.setSelectedPlayer,
+        userIsCommissioner: store.userIsCommissioner,
+      }),
+      shallow
+    );
   const { socket } = useSocket();
   const userQuery = useAuthUser("user", auth);
-
+  const userTeamSelecting = useMemo(() => {
+    if (!draftState || !userQuery.isSuccess) {
+      return false;
+    }
+    const { round, pickInRound } = getCurrentPickInfo(draftState);
+    const curPick = draftState.selections[round][pickInRound];
+    return curPick.selectedBy.owner === userQuery.data?.uid;
+  }, [draftState, userQuery.data]);
   const handlePickConfirmation = () => {
     if (socket && draftState && selectedPlayer && userQuery.isSuccess) {
       const { round, pickInRound } = getCurrentPickInfo(draftState);
       const curPick = draftState.selections[round][pickInRound];
-      const selectingTeam = curPick.selectedBy;
-      //if (selectingTeam?.owner === userQuery.data?.uid) {
       const pick = {
         ...curPick,
         player: selectedPlayer,
       };
       socket.emit("draftPick", pick, draftId);
       setSelectedPlayer(null);
-      //}
     }
   };
+
+  if (!userQuery.data || !draftState) {
+    return null;
+  }
 
   return (
     <div className="footer">
@@ -56,13 +67,17 @@ export const PickConfirmationFooter = ({
           {selectedPlayer?.team}) Selected
         </div>
         <div className="ml-3 d-flex">
-          <button
-            className="confirm-pick-button"
-            onClick={handlePickConfirmation}
-          >
-            <AiOutlineCheck className="mr-1" />
-            Confirm
-          </button>
+          {(userTeamSelecting || userIsCommissioner) && (
+            <button
+              className="confirm-pick-button"
+              onClick={handlePickConfirmation}
+            >
+              <AiOutlineCheck className="mr-1" />
+              {userIsCommissioner && !userTeamSelecting
+                ? "Force Pick"
+                : "Confirm"}
+            </button>
+          )}
           <button
             className="cancel-pick-button"
             onClick={() => setSelectedPlayer(null)}

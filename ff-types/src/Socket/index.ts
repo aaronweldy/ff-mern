@@ -29,6 +29,7 @@ export type ClientToServerEvents = {
   sendMessage: (message: string, room: string) => void;
   updateDraftPhase: (phase: DraftPhase, room: string) => void;
   undoLastPick: (room: string) => void;
+  autoPick: (room: string) => void;
 };
 
 export type InterServerEvents = {};

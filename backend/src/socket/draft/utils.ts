@@ -15,6 +15,7 @@ export const rebuildPlayersAndSelections = async (roomId: string) => {
   let availablePlayers: ProjectedPlayer[] = [];
   let selections: Record<string, DraftPick[]> = {};
   let draftState: DraftState;
+  console.log(roomId);
   const draftRef = db.collection("drafts").doc(roomId);
   const [curState, players, selectionsRef] = await Promise.all([
     draftRef.get(),

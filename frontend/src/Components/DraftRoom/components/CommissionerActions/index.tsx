@@ -1,8 +1,7 @@
-import { Col, Container, Row } from "react-bootstrap";
+import { Button, Col, Container, Row } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../../../../Context/SocketContext";
 import { useStore } from "../../store";
-import { CommissionerButton } from "./CommissionerButton";
 import "./style.css";
 
 export const CommissionerActions = () => {
@@ -13,18 +12,33 @@ export const CommissionerActions = () => {
     <Container className="mt-3">
       <Row className="justify-content-center">
         <Col xl={6} className="d-flex flex-column align-items-center">
-          <CommissionerButton
-            variant="add"
-            onClick={() => socket?.emit("updateDraftPhase", "live", roomId)}
-            disabled={draftState?.phase !== "predraft"}
-            text="Start Draft"
-          />
-          <CommissionerButton
-            variant="edit"
-            onClick={() => socket?.emit("undoLastPick", roomId)}
-            disabled={false}
-            text="Undo Previous Pick"
-          />
+          {draftState?.phase === "predraft" && (
+            <Button
+              variant="success"
+              onClick={() => socket?.emit("updateDraftPhase", "live", roomId)}
+              className="w-100"
+            >
+              Start Draft
+            </Button>
+          )}
+          {draftState?.phase === "live" && (
+            <>
+              <Button
+                variant="warning"
+                onClick={() => socket?.emit("undoLastPick", roomId)}
+                className="w-100"
+              >
+                Undo Previous Pick
+              </Button>
+              <Button
+                variant="info"
+                onClick={() => socket?.emit("autoPick", roomId)}
+                className="w-100 mt-3"
+              >
+                Autoselect
+              </Button>
+            </>
+          )}
         </Col>
       </Row>
     </Container>

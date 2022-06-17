@@ -1,5 +1,4 @@
 import { getCurrentPickInfo } from "@ff-mern/ff-types";
-import e from "cors";
 import { useCallback, useMemo } from "react";
 import { Col, Row } from "react-bootstrap";
 import { useTeams } from "../../../../hooks/query/useTeams";

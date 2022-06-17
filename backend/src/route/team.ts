@@ -142,7 +142,7 @@ router.post("/setLineupFromProjection/", async (req, res) => {
         player.team,
         "bench"
       );
-      return instanceToPlain(newPlayer) as FinalizedPlayer;
+      return JSON.parse(JSON.stringify(newPlayer)) as FinalizedPlayer;
     });
   team.weekInfo[weekNum].finalizedLineup = newLineup;
   await db.collection("teams").doc(team.id).set(team);

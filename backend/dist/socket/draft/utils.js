@@ -13,6 +13,7 @@ export const rebuildPlayersAndSelections = (roomId) => __awaiter(void 0, void 0,
     let availablePlayers = [];
     let selections = {};
     let draftState;
+    console.log(roomId);
     const draftRef = db.collection("drafts").doc(roomId);
     const [curState, players, selectionsRef] = yield Promise.all([
         draftRef.get(),

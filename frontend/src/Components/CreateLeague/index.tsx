@@ -152,7 +152,7 @@ function CreateLeague() {
     </Button>
   );
   return (
-    <Container>
+    <Container className="mt-3">
       <LeagueCreationHeader
         leagueName={leagueName}
         handleSizeChange={handleSizeChange}

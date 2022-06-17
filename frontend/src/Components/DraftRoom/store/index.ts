@@ -10,11 +10,20 @@ export type StoreSlice<T extends object, E extends object = T> = (
   get: GetState<E extends T ? E : E & T>
 ) => T;
 
-const createRootSlice = persist((set: SetState<any>, get: GetState<any>) => ({
-  ...createDraftStateSlice(set, get),
-  ...createUserSlice(set, get),
-  ...createSelectedPlayerSlice(set, get),
-  ...createChatSlice(set, get),
-}));
+const createRootSlice = persist(
+  (set: SetState<any>, get: GetState<any>) => ({
+    ...createDraftStateSlice(set, get),
+    ...createUserSlice(set, get),
+    ...createSelectedPlayerSlice(set, get),
+    ...createChatSlice(set, get),
+  }),
+  {
+    name: "root",
+    partialize: (state) =>
+      Object.fromEntries(
+        Object.entries(state).filter(([key]) => !["draftState"].includes(key))
+      ),
+  }
+);
 
 export const useStore = create(createRootSlice);

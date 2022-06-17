@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom";
 import { useSocket } from "../../Context/SocketContext";
 import { PickConfirmationFooter } from "./components/PickConfirmationFooter";
 import { PickTable } from "./components/PickTable";
-import { PlayerSelectionBox } from "./components/PlayerSelectionBox";
 import { DraftTabs } from "./components/DraftTabs";
 import { useDraftSocket } from "./hooks/useDraftSocket";
 import { useStore } from "./store";

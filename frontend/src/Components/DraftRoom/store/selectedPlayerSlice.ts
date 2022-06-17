@@ -1,7 +1,7 @@
 import { ProjectedPlayer } from "@ff-mern/ff-types";
 import { StoreSlice } from ".";
 
-type SelectedPlayerType = {
+export type SelectedPlayerType = {
   player: ProjectedPlayer | null;
   setSelectedPlayer: (player: ProjectedPlayer | null) => void;
 };

@@ -10,6 +10,8 @@ import {
   League,
   TeamRoster,
   DraftPhase,
+  RosteredPlayer,
+  Position,
 } from "@ff-mern/ff-types";
 import { DecodedIdToken } from "firebase-admin/auth";
 import { Server, Socket } from "socket.io";
@@ -67,6 +69,7 @@ export class DraftSocket {
       this.onUpdateDraftPhase(phase, room)
     );
     socket.on("undoLastPick", (room) => this.onUndoPick(room));
+    socket.on("autoPick", (room) => this.onAutoPick(room));
   }
 
   syncToDb(roomId: string, draftPick?: DraftPick) {
@@ -79,10 +82,12 @@ export class DraftSocket {
         .collection("selections")
         .doc(draftPick.pick.toString())
         .set(draftPick);
-      draftRef
-        .collection("availablePlayers")
-        .doc(draftPick.player.fullName)
-        .delete();
+      if (draftPick.player) {
+        draftRef
+          .collection("availablePlayers")
+          .doc(draftPick.player.fullName)
+          .delete();
+      }
     }
     const { availablePlayers, selections, ...rest } = state.draftState;
     db.collection("drafts").doc(roomId).set(rest);
@@ -150,7 +155,7 @@ export class DraftSocket {
     });
   }
 
-  onDraftPick(selection: DraftPick, room: string) {
+  onDraftPick(selection: DraftPick, room: string, autoPick?: boolean) {
     console.log("room", room, "received pick", selection);
     let state = activeDrafts[room];
     if (state) {
@@ -164,22 +169,31 @@ export class DraftSocket {
       );
       addPlayerToTeam(state.playersByTeam, selection);
       state.draftState.currentPick += 1;
+      const commissionerSelection = this.uid !== selection.selectedBy.owner;
       const pickMessage: ChatMessage = {
         sender: "system",
         message: `Pick ${selection.pick}: ${
-          connectedUsers[this.uid]?.email
-        } selects ${selection.player.fullName}, ${selection.player.position}, ${
-          selection.player.team
-        }`,
+          commissionerSelection ? "Commissioner" : ""
+        } ${connectedUsers[this.uid]?.email} ${autoPick ? "auto" : ""}selects ${
+          selection.player.fullName
+        }, ${selection.player.position}, ${selection.player.team}`,
         timestamp: new Date().toISOString(),
         type: "draft",
       };
+      this.syncToDb(room, selection);
+      if (
+        state.draftState.currentPick ===
+        state.draftState.settings.draftOrder.length *
+          state.draftState.settings.numRounds
+      ) {
+        this.onEndDraft(room, selection);
+        return;
+      }
       this.io.to(room).emit("sync", state.draftState, {
         message: pickMessage,
         draftPick: selection,
         playersByTeam: state.playersByTeam,
       });
-      this.syncToDb(room, selection);
     }
   }
 
@@ -231,6 +245,70 @@ export class DraftSocket {
     };
     this.io.to(room).emit("sync", state.draftState, {
       message: undoMessage,
+      playersByTeam: buildPlayersByTeam(
+        state.league.lineupSettings,
+        state.draftState.settings.draftOrder,
+        linearizeSelections(state.draftState.selections)
+      ),
+    });
+    this.syncToDb(room, lastSelection);
+  }
+
+  onAutoPick(room: string) {
+    const state = activeDrafts[room];
+    if (!state) {
+      console.error("Autopick in non-live draft");
+    }
+    const { round, pickInRound } = getCurrentPickInfo(state.draftState);
+    const selection = state.draftState.selections[round][pickInRound];
+    selection.player = state.draftState.availablePlayers[0];
+    console.log("room", room, "autopicked", selection);
+    this.onDraftPick(selection, room, true);
+  }
+
+  onEndDraft(room: string, lastPick: DraftPick) {
+    console.log("room", room, "ended draft");
+    const state = activeDrafts[room];
+    if (!state) {
+      console.error("End draft in non-live draft");
+      return;
+    }
+    state.draftState.phase = "postdraft";
+    const playersByTeam = buildPlayersByTeam(
+      state.league.lineupSettings,
+      state.draftState.settings.draftOrder,
+      linearizeSelections(state.draftState.selections)
+    );
+    Object.entries(playersByTeam).forEach(([team, lineup]) => {
+      let linearizedLineup: RosteredPlayer[] = [];
+      for (const pos of Object.keys(lineup)) {
+        for (const player of lineup[pos as Position]) {
+          if (player.team !== "None") {
+            const playerToAdd = JSON.parse(
+              JSON.stringify(
+                new RosteredPlayer(
+                  player.fullName,
+                  player.team,
+                  player.position
+                )
+              )
+            );
+            linearizedLineup.push(playerToAdd);
+          }
+        }
+      }
+      db.collection("teams")
+        .doc(team)
+        .update({ rosteredPlayers: linearizedLineup });
+    });
+    this.io.to(room).emit("sync", state.draftState, {
+      message: {
+        sender: "system",
+        message: `Draft complete!`,
+        timestamp: new Date().toISOString(),
+        type: "draft",
+      },
+      draftPick: lastPick,
     });
   }
 }

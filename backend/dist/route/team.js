@@ -8,7 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { FinalizedPlayer, setPlayerName, } from "@ff-mern/ff-types";
-import { instanceToPlain } from "class-transformer";
 import { Router } from "express";
 import admin, { db } from "../config/firebase-config.js";
 import { fetchPlayerProjections } from "../utils/fetchRoutes.js";
@@ -109,7 +108,7 @@ router.post("/setLineupFromProjection/", (req, res) => __awaiter(void 0, void 0,
         .filter((player) => !usedPlayers.has(player.sanitizedName))
         .map((player) => {
         const newPlayer = new FinalizedPlayer(player.fullName, player.position, player.team, "bench");
-        return instanceToPlain(newPlayer);
+        return JSON.parse(JSON.stringify(newPlayer));
     });
     team.weekInfo[weekNum].finalizedLineup = newLineup;
     yield db.collection("teams").doc(team.id).set(team);

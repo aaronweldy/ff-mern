@@ -25,8 +25,9 @@ router.get("/:id/leagues/", (req, res) => __awaiter(void 0, void 0, void 0, func
         });
         const resp = { teams, url: "" };
         const urlDoc = yield db.collection("users").doc(id).get();
-        if (urlDoc.exists)
+        if (urlDoc.exists) {
             resp.url = urlDoc.data().url;
+        }
         res.json(resp).send();
     }));
 }));

@@ -103,16 +103,20 @@ export default function AdjustLineups() {
           <QuicksetAllDropdown mutationFn={updateAllLineups} />
         </Col>
       </Row>
-      <TeamSelectionDropdown
-        teams={teams}
-        selectedTeam={selectedTeamId}
-        updateTeam={updateSelectedTeam}
-      />
+      <Row>
+        <Col xl={3}>
+          <TeamSelectionDropdown
+            teams={teams}
+            selectedTeam={selectedTeamId}
+            updateTeam={updateSelectedTeam}
+          />
+        </Col>
+      </Row>
       {selectedTeam &&
         league &&
         scheduleQuery.isSuccess &&
         defenseStatsQuery.isSuccess && (
-          <Row>
+          <Row className="mt-3">
             <Col sm={2}>
               <h2>{selectedTeam.name}</h2>
             </Col>

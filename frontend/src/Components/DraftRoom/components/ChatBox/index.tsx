@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useSocket } from "../../../../Context/SocketContext";
 import { useStore } from "../../store";
 import "./style.css";
@@ -12,16 +12,25 @@ export const ChatBox = ({ draftId }: ChatBoxProps) => {
   const { socket } = useSocket();
   const [curMessage, setCurMessage] = useState("");
   const messages = useStore((store) => store.messages);
+  const scrollToLatestMessage = useCallback((el: HTMLDivElement | null) => {
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, []);
   return (
     <div className="chatbox">
       <div className="past-messages">
-        {messages.map((message) => {
+        {messages.map((message, idx) => {
           const senderName =
             message.sender.length > 7
               ? message.sender.substring(0, 7) + "..."
               : message.sender;
           return (
-            <div className="message" key={message.timestamp}>
+            <div
+              className="message"
+              key={message.timestamp}
+              ref={idx === messages.length - 1 ? scrollToLatestMessage : null}
+            >
               <div className="message-sender">{senderName}</div>
               <div className="message-text" data-type={message.type}>
                 {message.message}

@@ -54,7 +54,6 @@ const TeamPage = () => {
     () => getWeeklyLineup(week, team, league?.lineupSettings),
     [week, team, league]
   );
-  console.log(lineup);
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
 
   const handleInfoSubmission = (imageUrl: string) => {
@@ -134,7 +133,7 @@ const TeamPage = () => {
               <Col className="mt-3">
                 <ButtonGroup>
                   {(numSuperflexUsed < league.numSuperflex ||
-                    (week >= league.lastScoredWeek &&
+                    (week > league.lastScoredWeek &&
                       team.weekInfo[week].isSuperflex)) && (
                     <Button
                       onClick={() => setShowSuperflexModal(true)}

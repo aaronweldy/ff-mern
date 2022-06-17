@@ -6,7 +6,7 @@ import "./style.css";
 export const DraftHeader = () => {
   const draftState = useStore((store) => store.state);
   const pickInfo = useMemo(() => {
-    if (!draftState) {
+    if (!draftState || draftState.phase !== "live") {
       return null;
     }
     const curPick = getCurrentPickInfo(draftState);
@@ -19,7 +19,9 @@ export const DraftHeader = () => {
     return (
       <div className="draft-header">
         <div className="draft-header-title">
-          {draftState?.phase.toLocaleUpperCase()}
+          <span className="draft-pick-title">
+            {draftState?.phase.toLocaleUpperCase()}
+          </span>
         </div>
       </div>
     );

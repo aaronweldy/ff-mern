@@ -25,10 +25,10 @@ export const RostersByTeam = () => {
       : {};
   }, [playersByTeam]);
   useEffect(() => {
-    if (teamsQuery.data && !selectedTeam) {
+    if (draftState && teamsQuery.data && !selectedTeam) {
       setSelectedTeam(teamsQuery.data.teams[0].id);
     }
-  }, [teamsQuery.data, selectedTeam]);
+  }, [teamsQuery.data, selectedTeam, draftState]);
   const updateSelectedTeam = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedTeam(e.target.value);
   };

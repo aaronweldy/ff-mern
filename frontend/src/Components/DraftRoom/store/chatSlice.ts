@@ -9,5 +9,12 @@ type ChatSliceType = {
 export const createChatSlice: StoreSlice<ChatSliceType> = (set) => ({
   messages: [],
   addMessage: (message: ChatMessage) =>
-    set((state) => ({ messages: [...state.messages, message] })),
+    set((state) => {
+      const curMessages = [...state.messages];
+      if (curMessages.length > 200) {
+        curMessages.shift();
+      }
+      curMessages.push(message);
+      return { messages: curMessages };
+    }),
 });

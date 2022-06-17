@@ -307,6 +307,7 @@ declare type ClientToServerEvents = {
     sendMessage: (message: string, room: string) => void;
     updateDraftPhase: (phase: DraftPhase, room: string) => void;
     undoLastPick: (room: string) => void;
+    autoPick: (room: string) => void;
 };
 declare type InterServerEvents = {};
 declare type SocketData = {
