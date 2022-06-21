@@ -6,6 +6,7 @@ import "./style.css";
 export const DraftHeader = () => {
   const draftState = useStore((store) => store.state);
   const pickInfo = useMemo(() => {
+    console.log(draftState);
     if (!draftState || draftState.phase !== "live") {
       return null;
     }

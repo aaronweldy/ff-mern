@@ -100,3 +100,7 @@
   background-color: var(--k-color-primary);
   color: white;
 }
+
+.cur-pick {
+  box-shadow: 0 0 5px rgba(81, 203, 238, 1);
+}

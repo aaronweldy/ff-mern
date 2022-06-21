@@ -40,7 +40,7 @@ export const getCurrentPickInfo = (
   specificPick?: number
 ) => {
   const { settings, currentPick } = state;
-  if (!specificPick) {
+  if (specificPick === undefined) {
     specificPick = currentPick;
   }
   const round = Math.floor(specificPick / settings.draftOrder.length);

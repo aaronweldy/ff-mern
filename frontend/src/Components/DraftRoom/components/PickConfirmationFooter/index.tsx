@@ -36,7 +36,7 @@ export const PickConfirmationFooter = ({
     const { round, pickInRound } = getCurrentPickInfo(draftState);
     const curPick = draftState.selections[round][pickInRound];
     return curPick.selectedBy.owner === userQuery.data?.uid;
-  }, [draftState, userQuery.data]);
+  }, [draftState, userQuery.data, userQuery.isSuccess]);
   const handlePickConfirmation = () => {
     if (socket && draftState && selectedPlayer && userQuery.isSuccess) {
       const { round, pickInRound } = getCurrentPickInfo(draftState);
@@ -67,17 +67,18 @@ export const PickConfirmationFooter = ({
           {selectedPlayer?.team}) Selected
         </div>
         <div className="ml-3 d-flex">
-          {(userTeamSelecting || userIsCommissioner) && (
-            <button
-              className="confirm-pick-button"
-              onClick={handlePickConfirmation}
-            >
-              <AiOutlineCheck className="mr-1" />
-              {userIsCommissioner && !userTeamSelecting
-                ? "Force Pick"
-                : "Confirm"}
-            </button>
-          )}
+          {(userTeamSelecting || userIsCommissioner) &&
+            draftState.phase === "live" && (
+              <button
+                className="confirm-pick-button"
+                onClick={handlePickConfirmation}
+              >
+                <AiOutlineCheck className="mr-1" />
+                {userIsCommissioner && !userTeamSelecting
+                  ? "Force Pick"
+                  : "Confirm"}
+              </button>
+            )}
           <button
             className="cancel-pick-button"
             onClick={() => setSelectedPlayer(null)}

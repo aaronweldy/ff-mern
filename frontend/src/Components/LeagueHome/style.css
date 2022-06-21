@@ -1,0 +1,11 @@
+.join-draft-row {
+  background-color: hsla(0, 0%, 50%, 0.25);
+  border-radius: 5px;
+  border: 2px solid hsl(0, 0%, 35%);
+  padding: 1em;
+  margin: 1em;
+}
+
+.justify-between {
+  justify-content: space-between;
+}

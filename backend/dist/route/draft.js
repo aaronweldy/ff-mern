@@ -21,6 +21,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 import { createDraftStateForLeague, } from "@ff-mern/ff-types";
 import { Router } from "express";
 import { db } from "../config/firebase-config.js";
+import { activeDrafts } from "../socket/draft/index.js";
 import { getTeamsInLeague } from "../utils/fetchRoutes.js";
 const router = Router();
 router.put("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -50,7 +51,15 @@ router.put("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
     const { availablePlayers, selections } = draftData, rest = __rest(draftData, ["availablePlayers", "selections"]);
     draftRef.set(rest);
+    if (activeDrafts[draftSettings.draftId]) {
+        activeDrafts[draftSettings.draftId].draftState = draftData;
+    }
     res.status(200).send(draftData);
+}));
+router.delete("/:id/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    yield db.collection("drafts").doc(id).delete();
+    res.status(200).send();
 }));
 export default router;
 //# sourceMappingURL=draft.js.map

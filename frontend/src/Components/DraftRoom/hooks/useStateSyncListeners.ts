@@ -1,8 +1,6 @@
-import { ChatMessage, DraftState, SyncAction } from "@ff-mern/ff-types";
-import { useAuthUser } from "@react-query-firebase/auth";
+import { DraftState, SyncAction } from "@ff-mern/ff-types";
 import { useEffect } from "react";
 import { SocketType } from "../../../Context/SocketContext";
-import { auth } from "../../../firebase-config";
 import { useStore } from "../store";
 
 export const useStateSyncListeners = (socket: SocketType) => {

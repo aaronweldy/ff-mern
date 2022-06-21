@@ -23,7 +23,7 @@ import { auth, db } from "../../config/firebase-config.js";
 import { addPlayerToTeam, buildPlayersByTeam, linearizeSelections, rebuildPlayersAndSelections, } from "./utils.js";
 const connectedUsers = {};
 const activeRooms = {};
-const activeDrafts = {};
+export const activeDrafts = {};
 export class DraftSocket {
     constructor(socket, io, user) {
         this.io = io;
@@ -134,13 +134,13 @@ export class DraftSocket {
                 timestamp: new Date().toISOString(),
                 type: "draft",
             };
-            this.syncToDb(room, selection);
             if (state.draftState.currentPick ===
                 state.draftState.settings.draftOrder.length *
                     state.draftState.settings.numRounds) {
                 this.onEndDraft(room, selection);
                 return;
             }
+            this.syncToDb(room, selection);
             this.io.to(room).emit("sync", state.draftState, {
                 message: pickMessage,
                 draftPick: selection,
@@ -177,6 +177,7 @@ export class DraftSocket {
         const state = activeDrafts[room];
         if (!state || state.draftState.currentPick === 0) {
             console.error("Pick undone in non-saved state");
+            return;
         }
         const { round, pickInRound } = getCurrentPickInfo(state.draftState, state.draftState.currentPick - 1);
         const lastSelection = state.draftState.selections[round][pickInRound];
@@ -229,6 +230,7 @@ export class DraftSocket {
                 .doc(team)
                 .update({ rosteredPlayers: linearizedLineup });
         });
+        this.syncToDb(room, lastPick);
         this.io.to(room).emit("sync", state.draftState, {
             message: {
                 sender: "system",

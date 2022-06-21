@@ -46,7 +46,7 @@ type SocketType = Socket<
 type UserRoomData = {};
 const connectedUsers: Record<string, DecodedIdToken> = {};
 const activeRooms: Record<string, Record<string, UserRoomData>> = {};
-const activeDrafts: Record<string, ServerState> = {};
+export const activeDrafts: Record<string, ServerState> = {};
 
 export class DraftSocket {
   io: ServerType;
@@ -180,7 +180,6 @@ export class DraftSocket {
         timestamp: new Date().toISOString(),
         type: "draft",
       };
-      this.syncToDb(room, selection);
       if (
         state.draftState.currentPick ===
         state.draftState.settings.draftOrder.length *
@@ -189,6 +188,7 @@ export class DraftSocket {
         this.onEndDraft(room, selection);
         return;
       }
+      this.syncToDb(room, selection);
       this.io.to(room).emit("sync", state.draftState, {
         message: pickMessage,
         draftPick: selection,
@@ -226,6 +226,7 @@ export class DraftSocket {
     const state = activeDrafts[room];
     if (!state || state.draftState.currentPick === 0) {
       console.error("Pick undone in non-saved state");
+      return;
     }
     const { round, pickInRound } = getCurrentPickInfo(
       state.draftState,
@@ -301,6 +302,7 @@ export class DraftSocket {
         .doc(team)
         .update({ rosteredPlayers: linearizedLineup });
     });
+    this.syncToDb(room, lastPick);
     this.io.to(room).emit("sync", state.draftState, {
       message: {
         sender: "system",

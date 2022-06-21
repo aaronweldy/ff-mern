@@ -12,7 +12,7 @@ import { DraftHeader } from "./DraftHeader";
 export const DraftRoom = () => {
   const { id: roomId } = useParams() as { id: string };
   const { socket } = useSocket();
-  const { draftState, player } = useStore((store) => ({
+  const { player } = useStore((store) => ({
     draftState: store.state,
     player: store.player,
   }));

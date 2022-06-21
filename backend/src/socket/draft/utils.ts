@@ -15,7 +15,7 @@ export const rebuildPlayersAndSelections = async (roomId: string) => {
   let availablePlayers: ProjectedPlayer[] = [];
   let selections: Record<string, DraftPick[]> = {};
   let draftState: DraftState;
-  console.log(roomId);
+  console.log("rebuilding state for", roomId);
   const draftRef = db.collection("drafts").doc(roomId);
   const [curState, players, selectionsRef] = await Promise.all([
     draftRef.get(),
@@ -40,6 +40,7 @@ export const rebuildPlayersAndSelections = async (roomId: string) => {
     players.forEach((playerRef) => {
       availablePlayers.push(playerRef.data() as ProjectedPlayer);
     });
+    console.log(roomId, "state is", draftState);
     return { draftState, availablePlayers, selections, league };
   } else {
     throw new Error("Draft does not exist");
@@ -116,6 +117,9 @@ export const addPlayerToTeam = (
     if (foundPos) {
       break;
     }
+  }
+  if (!foundPos) {
+    playersByTeam[teamId].bench.push(player);
   }
 };
 

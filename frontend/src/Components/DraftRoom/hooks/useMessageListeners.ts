@@ -14,5 +14,5 @@ export const useMessageListeners = (socket: SocketType) => {
         socket.off("newMessage");
       };
     }
-  }, [socket]);
+  }, [socket, addMessage]);
 };

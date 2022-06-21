@@ -398,5 +398,18 @@ router.patch("/:leagueId/resetAllRosters/", (req, res) => __awaiter(void 0, void
     }));
     res.status(200).send({ teams });
 }));
+router.get("/:id/draft/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const draftForLeague = yield db
+        .collection("drafts")
+        .where("leagueId", "==", id)
+        .get();
+    if (draftForLeague.empty) {
+        res.status(200).json({ draft: null });
+        return;
+    }
+    const draft = draftForLeague.docs[0].data();
+    res.status(200).json({ draft: draft });
+}));
 export default router;
 //# sourceMappingURL=league.js.map

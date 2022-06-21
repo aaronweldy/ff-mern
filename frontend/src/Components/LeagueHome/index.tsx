@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { Container, Col, Button, Row } from "react-bootstrap";
 import { useLeague } from "../../hooks/query/useLeague";
@@ -15,6 +15,12 @@ import { LeagueDeletionModal } from "./LeagueDeletionModal";
 import { LeagueName } from "./LeagueName";
 import { CommissionerOptions } from "./CommissionerOptions";
 import { useCreateDraft } from "../../hooks/query/useCreateDraftMutation";
+import { CreateDraftModal, DraftFormState } from "./CreateDraftModal";
+import { useDraftForLeague } from "../../hooks/query/useDraftForLeague";
+import "./style.css";
+import { LiveDraftRow } from "./LiveDraftRow";
+import { ConfirmationModal } from "../shared/ConfirmationModal";
+import { useDeleteDraftMutation } from "../../hooks/query/useDeleteDraftMutation";
 
 export const LeagueHome = () => {
   const { id } = useParams() as { id: string };
@@ -25,8 +31,19 @@ export const LeagueHome = () => {
   const [showDelete, setDelete] = useState(false);
   const [redirect, setRedirect] = useState(false);
   const [imgUrl, setImgUrl] = useState("");
+  const [showDraftModal, setShowModal] = useState(false);
+  const [showDeleteDraftModal, setShowDeleteDraft] = useState(false);
+  const draftQuery = useDraftForLeague(id);
   const user = useAuthUser("user", auth);
-  const createDraftMutation = useCreateDraft(id, teams, league);
+  const deleteDraftMutation = useDeleteDraftMutation(
+    id,
+    draftQuery.data?.draft?.settings.draftId || ""
+  );
+  const createDraftMutation = useCreateDraft(
+    id,
+    draftQuery.data?.draft,
+    league
+  );
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (newUser) => {
       if (newUser && league) {
@@ -47,10 +64,32 @@ export const LeagueHome = () => {
     });
     return () => unsub();
   }, [id, user, league, initTeams]);
-
+  const liveDraftExists = useMemo(() => {
+    return (
+      draftQuery.isSuccess &&
+      (draftQuery.data.draft?.phase === "predraft" ||
+        draftQuery.data.draft?.phase === "live")
+    );
+  }, [draftQuery.isSuccess, draftQuery.data]);
+  const userIsCommissioner = useMemo(() => {
+    if (user.isSuccess && league) {
+      return league.commissioners.includes(user.data?.uid || "");
+    }
+    return false;
+  }, [user.isSuccess, user.data, league]);
   const deleteLeague = () => {
     deleteLeagueQuery.mutate();
     setRedirect(true);
+  };
+
+  const createDraft = (draftState: DraftFormState) => {
+    createDraftMutation.mutate(draftState);
+    setShowModal(false);
+  };
+
+  const deleteDraft = () => {
+    deleteDraftMutation.mutate();
+    setShowDeleteDraft(false);
   };
 
   if (redirect && deleteLeagueQuery.isSuccess) {
@@ -58,6 +97,30 @@ export const LeagueHome = () => {
   }
   return (
     <Container fluid>
+      {draftQuery.isSuccess && liveDraftExists && (
+        <LiveDraftRow
+          userIsCommissioner={userIsCommissioner}
+          liveDraftExists={liveDraftExists}
+          draft={draftQuery.data.draft}
+          onEdit={() => setShowModal(true)}
+          onDelete={() => setShowDeleteDraft(true)}
+        />
+      )}
+      {league && (
+        <CreateDraftModal
+          show={showDraftModal}
+          league={league}
+          onHide={() => setShowModal(false)}
+          onConfirm={createDraft}
+          existingDraft={draftQuery.data?.draft || undefined}
+        />
+      )}
+      <ConfirmationModal
+        show={showDeleteDraftModal}
+        onHide={() => setShowDeleteDraft(false)}
+        onConfirm={deleteDraft}
+        title="Delete Draft"
+      />
       <LeagueDeletionModal
         showDelete={showDelete}
         setDelete={setDelete}
@@ -68,9 +131,7 @@ export const LeagueHome = () => {
         <LeagueName leagueName={league?.name} imgUrl={imgUrl} />
       </Row>
       <Row className="mb-3 mt-3 justify-content-center">
-        {user.isSuccess &&
-        league &&
-        league.commissioners.includes(user.data?.uid || "") ? (
+        {userIsCommissioner ? (
           <CommissionerOptions leagueId={id} setDelete={setDelete} />
         ) : (
           ""
@@ -86,7 +147,7 @@ export const LeagueHome = () => {
       <Row className="justify-content-center mb-3">
         {user.isSuccess && league && (
           <Button variant="primary" href={`/league/${id}/runScores/`}>
-            {league.commissioners.includes(user.data?.uid || "")
+            {userIsCommissioner
               ? "Run Scores"
               : "View Weekly Scoring Breakdown"}
           </Button>
@@ -105,15 +166,18 @@ export const LeagueHome = () => {
         >
           Trade Center
         </Button>
-        {league && (
-          <Button
-            className="ml-3"
-            onClick={() => createDraftMutation.mutate()}
-            variant="primary"
-          >
-            Create Draft
-          </Button>
-        )}
+        {league &&
+          draftQuery.isSuccess &&
+          !draftQuery.data.draft &&
+          userIsCommissioner && (
+            <Button
+              className="ml-3"
+              onClick={() => setShowModal(true)}
+              variant="primary"
+            >
+              Create Draft
+            </Button>
+          )}
       </Row>
     </Container>
   );

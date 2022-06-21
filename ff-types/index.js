@@ -379,7 +379,7 @@ const buildTrade = (playersInvolved, teamIds) => {
 
 const getCurrentPickInfo = (state, specificPick) => {
     const { settings, currentPick } = state;
-    if (!specificPick) {
+    if (specificPick === undefined) {
         specificPick = currentPick;
     }
     const round = Math.floor(specificPick / settings.draftOrder.length);

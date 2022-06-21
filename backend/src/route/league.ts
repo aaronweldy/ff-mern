@@ -12,6 +12,7 @@ import {
   CumulativePlayerScores,
   playerTeamIsNflAbbreviation,
   getCurrentSeason,
+  DraftState,
 } from "@ff-mern/ff-types";
 import {
   fetchPlayers,
@@ -451,6 +452,20 @@ router.patch("/:leagueId/resetAllRosters/", async (req, res) => {
     await db.collection("teams").doc(team.id).update(team);
   });
   res.status(200).send({ teams });
+});
+
+router.get("/:id/draft/", async (req, res) => {
+  const { id } = req.params;
+  const draftForLeague = await db
+    .collection("drafts")
+    .where("leagueId", "==", id)
+    .get();
+  if (draftForLeague.empty) {
+    res.status(200).json({ draft: null });
+    return;
+  }
+  const draft = draftForLeague.docs[0].data() as DraftState;
+  res.status(200).json({ draft: draft });
 });
 
 export default router;

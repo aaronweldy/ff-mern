@@ -7,7 +7,6 @@ import {
   Team,
   Week,
 } from "@ff-mern/ff-types";
-import { instanceToPlain } from "class-transformer";
 import { Router } from "express";
 import admin, { db } from "../config/firebase-config.js";
 import { fetchPlayerProjections } from "../utils/fetchRoutes.js";

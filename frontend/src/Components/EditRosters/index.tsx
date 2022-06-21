@@ -33,7 +33,6 @@ const EditRosters = () => {
   const { mutate: validateTeams } = useUpdateTeamsMutation(id, teams, true);
   const playersQuery = usePlayers();
   const resetRosters = useResetRostersMutation(id);
-  console.log("in component", teams);
   const handleAddPlayer = (idx: number) => {
     const tempTeams = [...teams];
     tempTeams[idx].rosteredPlayers.push(

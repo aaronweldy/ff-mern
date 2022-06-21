@@ -1,12 +1,12 @@
 import {
   CreateDraftRequest,
   createDraftStateForLeague,
-  DraftState,
   League,
   ProjectedPlayer,
 } from "@ff-mern/ff-types";
 import { Router } from "express";
 import { db } from "../config/firebase-config.js";
+import { activeDrafts } from "../socket/draft/index.js";
 import { getTeamsInLeague } from "../utils/fetchRoutes.js";
 
 const router = Router();
@@ -49,7 +49,16 @@ router.put("/create/", async (req, res) => {
   }
   const { availablePlayers, selections, ...rest } = draftData;
   draftRef.set(rest);
+  if (activeDrafts[draftSettings.draftId]) {
+    activeDrafts[draftSettings.draftId].draftState = draftData;
+  }
   res.status(200).send(draftData);
+});
+
+router.delete("/:id/", async (req, res) => {
+  const { id } = req.params;
+  await db.collection("drafts").doc(id).delete();
+  res.status(200).send();
 });
 
 export default router;

@@ -1,0 +1,26 @@
+.draggable-card {
+  display: flex;
+  border-radius: 5px;
+  border: 2px solid #ccc;
+  align-items: center;
+  justify-content: space-around;
+  padding: 1em;
+  overflow: hidden;
+  cursor: pointer;
+  border-collapse: collapse;
+  margin: 0.5em 0;
+}
+
+.dragging {
+  opacity: 0.5;
+  background-color: #ccc;
+}
+
+.draggable-card:hover {
+  background-color: #f5f5f5;
+}
+
+.wrappable-name {
+  white-space: normal;
+  word-wrap: break-word;
+}
