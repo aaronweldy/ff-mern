@@ -119,7 +119,7 @@ router.post("/create/", async (req, res) => {
           commissioners: comms,
           scoringSettings:
             scoring === "Custom"
-              ? {}
+              ? []
               : defaultScoringSettings[scoring as LeagueScoringDefault],
         })
         .then(() => {

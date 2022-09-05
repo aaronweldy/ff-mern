@@ -108,7 +108,7 @@ router.post("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function
             .update({
             commissioners: comms,
             scoringSettings: scoring === "Custom"
-                ? {}
+                ? []
                 : defaultScoringSettings[scoring],
         })
             .then(() => {

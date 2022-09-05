@@ -131,11 +131,6 @@ export class DraftSocket {
     }
     activeRooms[room][this.uid] = {};
     console.info("user", connectedUsers[this.uid]?.email, "joined room", room);
-    this.io.to(room).emit("user connection", {
-      userId: this.uid,
-      userEmail: connectedUsers[this.uid]?.email,
-      type: "connect",
-    });
     this.socket.emit("sync", activeDrafts[room].draftState, {
       playersByTeam: activeDrafts[room].playersByTeam,
     });
