@@ -67,7 +67,7 @@ export class DraftSocket {
         delete connectedUsers[this.uid];
     }
     onJoinRoom(room) {
-        var _a, _b;
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             this.socket.join(room);
             if (!activeRooms[room]) {
@@ -93,11 +93,6 @@ export class DraftSocket {
             }
             activeRooms[room][this.uid] = {};
             console.info("user", (_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email, "joined room", room);
-            this.io.to(room).emit("user connection", {
-                userId: this.uid,
-                userEmail: (_b = connectedUsers[this.uid]) === null || _b === void 0 ? void 0 : _b.email,
-                type: "connect",
-            });
             this.socket.emit("sync", activeDrafts[room].draftState, {
                 playersByTeam: activeDrafts[room].playersByTeam,
             });
@@ -107,15 +102,10 @@ export class DraftSocket {
         });
     }
     onLeaveRoom(room) {
-        var _a, _b;
+        var _a;
         this.socket.leave(room);
         delete activeRooms[room][this.uid];
         console.info("user", (_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email, "left room", room);
-        this.io.to(room).emit("user connection", {
-            userId: this.uid,
-            userEmail: (_b = connectedUsers[this.uid]) === null || _b === void 0 ? void 0 : _b.email,
-            type: "disconnect",
-        });
     }
     onDraftPick(selection, room, autoPick) {
         var _a;
