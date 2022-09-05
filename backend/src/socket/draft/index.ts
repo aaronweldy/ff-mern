@@ -143,11 +143,6 @@ export class DraftSocket {
     this.socket.leave(room);
     delete activeRooms[room][this.uid];
     console.info("user", connectedUsers[this.uid]?.email, "left room", room);
-    this.io.to(room).emit("user connection", {
-      userId: this.uid,
-      userEmail: connectedUsers[this.uid]?.email,
-      type: "disconnect",
-    });
   }
 
   onDraftPick(selection: DraftPick, room: string, autoPick?: boolean) {
