@@ -57,9 +57,10 @@ export const fetchPlayers = () => {
             const url = `https://www.fantasypros.com/nfl/projections/${pos}.php`;
             const tableData = yield scraper.get(url);
             for (const player of tableData[0]) {
-                if (player.Player !== "") {
-                    const team = sliceTeamFromName(sanitizePlayerName(player.Player));
-                    const name = player.Player.slice(0, player.PLayer.lastIndexOf(" "));
+                console.log(player);
+                if (player.Player) {
+                    const team = player.Player.slice(player.Player.lastIndexOf(" ") + 1);
+                    const name = player.Player.slice(0, player.Player.lastIndexOf(" "));
                     players.push(new RosteredPlayer(name, team, pos.toUpperCase()));
                 }
             }

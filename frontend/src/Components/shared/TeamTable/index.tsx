@@ -74,7 +74,7 @@ export const TeamTable = ({
       return acc;
     }, [])
     .sort(lineupSorter);
-
+  console.log(week);
   return (
     <div className="team-table-wrapper">
       <Table striped bordered hover className="w-auto left-scrollable-table">
