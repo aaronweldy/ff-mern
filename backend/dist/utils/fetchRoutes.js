@@ -54,11 +54,13 @@ export const fetchPlayers = () => {
     return new Promise((resolve, _) => __awaiter(void 0, void 0, void 0, function* () {
         let players = [];
         for (const pos of positions) {
-            const url = `https://www.fantasypros.com/nfl/reports/leaders/${pos}.php`;
+            const url = `https://www.fantasypros.com/nfl/projections/${pos}.php`;
             const tableData = yield scraper.get(url);
             for (const player of tableData[0]) {
                 if (player.Player !== "") {
-                    players.push(new RosteredPlayer(player.Player, player.Team, pos.toUpperCase()));
+                    const team = sliceTeamFromName(sanitizePlayerName(player.Player));
+                    const name = player.Player.slice(0, player.PLayer.lastIndexOf(" "));
+                    players.push(new RosteredPlayer(name, team, pos.toUpperCase()));
                 }
             }
         }

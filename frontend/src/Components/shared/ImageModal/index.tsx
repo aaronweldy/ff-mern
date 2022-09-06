@@ -47,7 +47,7 @@ const ImageModal = ({
         <Modal.Title>Set Team Info</Modal.Title>
       </Modal.Header>
       <ModalBody>
-        {name && (
+        {name !== undefined && (
           <Row>
             <Col>
               <Form.Label>Team Name</Form.Label>

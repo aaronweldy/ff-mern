@@ -133,7 +133,7 @@ const TeamPage = () => {
               <Col className="mt-3">
                 <ButtonGroup>
                   {(numSuperflexUsed < league.numSuperflex ||
-                    (week > league.lastScoredWeek &&
+                    (week >= league.lastScoredWeek &&
                       team.weekInfo[week].isSuperflex)) && (
                     <Button
                       onClick={() => setShowSuperflexModal(true)}
@@ -148,7 +148,7 @@ const TeamPage = () => {
                   >
                     Change/Set Team Logo
                   </Button>
-                  {week > league.lastScoredWeek && (
+                  {week >= league.lastScoredWeek && (
                     <QuicksetDropdown
                       week={week}
                       mutationFn={setHighestProjectedLineupMutation}
@@ -170,7 +170,7 @@ const TeamPage = () => {
             <TeamTable
               isOwner={
                 user.data?.uid === team.owner &&
-                week > (league.lastScoredWeek || -1)
+                week >= (league.lastScoredWeek || -1)
               }
               players={lineup}
               positionsInTable={league.lineupSettings}
@@ -189,7 +189,7 @@ const TeamPage = () => {
             <TeamTable
               isOwner={
                 user.data?.uid === team.owner &&
-                week > (league.lastScoredWeek || -1)
+                week >= (league.lastScoredWeek || -1)
               }
               players={lineup}
               positionsInTable={{ bench: 1 } as LineupSettings}
