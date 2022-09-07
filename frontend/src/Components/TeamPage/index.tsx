@@ -56,10 +56,17 @@ const TeamPage = () => {
   );
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
 
-  const handleInfoSubmission = (imageUrl: string) => {
+  const handleInfoSubmission = (imageUrl: string, teamName?: string) => {
+    if (!team) {
+      return;
+    }
+    const tempTeam = { ...team };
+    if (teamName && teamName !== tempTeam.name) {
+      tempTeam.name = teamName;
+      updateTeamMutation.mutate(tempTeam);
+    }
     if (
-      team &&
-      imageUrl !== team!.logo &&
+      imageUrl !== team.logo &&
       imageUrl !== process.env.REACT_APP_DEFAULT_LOGO
     ) {
       uploadString(ref(storage, `${team.id}/logo`), imageUrl, "data_url").then(
@@ -68,6 +75,9 @@ const TeamPage = () => {
             setShowImageModal(false);
             const tempTeam = { ...team };
             tempTeam.logo = url;
+            if (teamName) {
+              tempTeam.name = teamName;
+            }
             updateTeamMutation.mutate(tempTeam);
           });
         }
@@ -146,7 +156,7 @@ const TeamPage = () => {
                     onClick={() => setShowImageModal(true)}
                     className="mr-2"
                   >
-                    Change/Set Team Logo
+                    Change/Set Team Info
                   </Button>
                   {week >= league.lastScoredWeek && (
                     <QuicksetDropdown

@@ -17,7 +17,7 @@ type ImageModalProps = {
   id?: string;
   show: boolean;
   handleHide: () => void;
-  handleInfoSubmission: (imageUrl: string) => void;
+  handleInfoSubmission: (imageUrl: string, teamName?: string) => void;
 };
 
 const ImageModal = ({
@@ -76,7 +76,7 @@ const ImageModal = ({
       <Modal.Footer className="d-flex justify-content-start">
         <Button
           variant="success"
-          onClick={() => handleInfoSubmission(imageUrl)}
+          onClick={() => handleInfoSubmission(imageUrl, name)}
         >
           Submit Info
         </Button>

@@ -21,10 +21,7 @@ import { load } from "cheerio";
 import scraper from "table-scraper";
 
 export type ScrapedPlayer = Record<string, string>;
-export type TableScraperStatsResponse = Omit<
-  DatabasePlayer,
-  "CP%" | "Y/A" | "Y/CMP"
->;
+export type TableScraperStatsResponse = Omit<DatabasePlayer, "CP%" | "Y/CMP">;
 export type PlayerSnapCountsResponse = {
   1: Week;
   2: Week;
@@ -188,14 +185,8 @@ export const fetchWeeklyStats = async (week: number) => {
                   ...player,
                   team,
                   position: pos,
-                  PCT: (
-                    Number.parseFloat(player["CMP"]) /
-                    Number.parseFloat(player["ATT"])
-                  ).toString(),
-                  "Y/A": (
-                    Number.parseFloat(player["YDS"]) /
-                    Number.parseFloat(player["ATT"])
-                  ).toString(),
+                  PCT: player["PCT"],
+                  "Y/A": player["Y/A"],
                   "Y/CMP": (
                     Number.parseFloat(player["YDS"]) /
                     Number.parseFloat(player["CMP"])

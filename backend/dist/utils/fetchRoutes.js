@@ -63,7 +63,6 @@ export const fetchPlayers = () => {
             const url = `https://www.fantasypros.com/nfl/depth-chart/${fullTeam
                 .split(" ")
                 .join("-")}.php`;
-            console.log(url);
             const tableData = yield scraper.get(url);
             for (let i = 0; i < longPositions.length; ++i) {
                 console.log(tableData[i]);
