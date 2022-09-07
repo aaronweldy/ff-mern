@@ -12,6 +12,7 @@ import {
   Week,
   ScrapedPlayerProjection,
   getCurrentSeason,
+  AbbreviationToFullTeam,
 } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
 import fetch from "node-fetch";
@@ -49,6 +50,12 @@ export type PlayerSnapCountsResponse = {
   AVG: string;
 };
 export const positions = ["qb", "rb", "wr", "te", "k"];
+export const longPositions = [
+  "Quarterbacks",
+  "Running Backs",
+  "Wide Receivers",
+  "Tight Ends",
+];
 
 const sliceTeamFromName = (name: string) => {
   const lastSpace = name.lastIndexOf(" ");
@@ -86,18 +93,22 @@ export const fetchPlayerProjections = async (week: Week) => {
 export const fetchPlayers = () => {
   return new Promise<RosteredPlayer[]>(async (resolve, _) => {
     let players: RosteredPlayer[] = [];
-    for (const pos of positions) {
-      const url = `https://www.fantasypros.com/nfl/projections/${pos}.php`;
+    for (const [abbrevTeam, fullTeam] of Object.entries(
+      AbbreviationToFullTeam
+    )) {
+      const url = `https://www.fantasypros.com/nfl/depth-chart/${fullTeam
+        .split(" ")
+        .join("-")}.php`;
       const tableData = await scraper.get(url);
-      for (const player of tableData[0] as ScrapedPlayer[]) {
-        console.log(player);
-        if (player.Player) {
-          const team = player.Player.slice(
-            player.Player.lastIndexOf(" ") + 1
-          ) as AbbreviatedNflTeam;
-          const name = player.Player.slice(0, player.Player.lastIndexOf(" "));
+      for (let i = 0; i < longPositions.length; ++i) {
+        console.log(tableData[i]);
+        for (const player of tableData[i]) {
           players.push(
-            new RosteredPlayer(name, team, pos.toUpperCase() as SinglePosition)
+            new RosteredPlayer(
+              player[longPositions[i]],
+              abbrevTeam as AbbreviatedNflTeam,
+              positions[i] as SinglePosition
+            )
           );
         }
       }

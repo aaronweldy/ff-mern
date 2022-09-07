@@ -14,13 +14,19 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
     function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
     function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
 };
-import { convertedScoringTypes, RosteredPlayer, sanitizePlayerName, getCurrentSeason, } from "@ff-mern/ff-types";
+import { convertedScoringTypes, RosteredPlayer, sanitizePlayerName, getCurrentSeason, AbbreviationToFullTeam, } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
 import fetch from "node-fetch";
 import { load } from "cheerio";
 // @ts-ignore
 import scraper from "table-scraper";
 export const positions = ["qb", "rb", "wr", "te", "k"];
+export const longPositions = [
+    "Quarterbacks",
+    "Running Backs",
+    "Wide Receivers",
+    "Tight Ends",
+];
 const sliceTeamFromName = (name) => {
     const lastSpace = name.lastIndexOf(" ");
     return name.substring(0, lastSpace);
@@ -53,15 +59,16 @@ export const fetchPlayerProjections = (week) => __awaiter(void 0, void 0, void 0
 export const fetchPlayers = () => {
     return new Promise((resolve, _) => __awaiter(void 0, void 0, void 0, function* () {
         let players = [];
-        for (const pos of positions) {
-            const url = `https://www.fantasypros.com/nfl/projections/${pos}.php`;
+        for (const [abbrevTeam, fullTeam] of Object.entries(AbbreviationToFullTeam)) {
+            const url = `https://www.fantasypros.com/nfl/depth-chart/${fullTeam
+                .split(" ")
+                .join("-")}.php`;
+            console.log(url);
             const tableData = yield scraper.get(url);
-            for (const player of tableData[0]) {
-                console.log(player);
-                if (player.Player) {
-                    const team = player.Player.slice(player.Player.lastIndexOf(" ") + 1);
-                    const name = player.Player.slice(0, player.Player.lastIndexOf(" "));
-                    players.push(new RosteredPlayer(name, team, pos.toUpperCase()));
+            for (let i = 0; i < longPositions.length; ++i) {
+                console.log(tableData[i]);
+                for (const player of tableData[i]) {
+                    players.push(new RosteredPlayer(player[longPositions[i]], abbrevTeam, positions[i]));
                 }
             }
         }
