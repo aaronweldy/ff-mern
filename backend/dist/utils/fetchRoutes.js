@@ -65,9 +65,8 @@ export const fetchPlayers = () => {
                 .join("-")}.php`;
             const tableData = yield scraper.get(url);
             for (let i = 0; i < longPositions.length; ++i) {
-                console.log(tableData[i]);
                 for (const player of tableData[i]) {
-                    players.push(new RosteredPlayer(player[longPositions[i]], abbrevTeam, positions[i]));
+                    players.push(new RosteredPlayer(player[longPositions[i]], abbrevTeam, positions[i].toUpperCase()));
                 }
             }
         }
@@ -131,9 +130,7 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
                             .toUpperCase();
                         usableStats[sanitizePlayerName(hashedName.slice(0, hashedName.indexOf("(") - 1))] =
                             pos === "QB"
-                                ? Object.assign(Object.assign({}, player), { team, position: pos, PCT: (Number.parseFloat(player["CMP"]) /
-                                        Number.parseFloat(player["ATT"])).toString(), "Y/A": (Number.parseFloat(player["YDS"]) /
-                                        Number.parseFloat(player["ATT"])).toString(), "Y/CMP": (Number.parseFloat(player["YDS"]) /
+                                ? Object.assign(Object.assign({}, player), { team, position: pos, PCT: player["PCT"], "Y/A": player["Y/A"], "Y/CMP": (Number.parseFloat(player["YDS"]) /
                                         Number.parseFloat(player["CMP"])).toString() }) : Object.assign(Object.assign({}, player), { team, position: pos, PCT: "0", "Y/A": "0", "Y/CMP": "0" });
                     }
                 }

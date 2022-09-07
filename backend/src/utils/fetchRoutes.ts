@@ -98,13 +98,12 @@ export const fetchPlayers = () => {
         .join("-")}.php`;
       const tableData = await scraper.get(url);
       for (let i = 0; i < longPositions.length; ++i) {
-        console.log(tableData[i]);
         for (const player of tableData[i]) {
           players.push(
             new RosteredPlayer(
               player[longPositions[i]],
               abbrevTeam as AbbreviatedNflTeam,
-              positions[i] as SinglePosition
+              positions[i].toUpperCase() as SinglePosition
             )
           );
         }
