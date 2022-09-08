@@ -179,7 +179,7 @@ export const fetchWeeklyStats = async (week: number) => {
           usableStats[
             sanitizePlayerName(hashedName.slice(0, hashedName.indexOf("(") - 1))
           ] =
-            pos === "QB"
+            pos === "qb"
               ? {
                   ...player,
                   team,
