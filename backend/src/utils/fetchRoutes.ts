@@ -196,7 +196,7 @@ export const fetchWeeklyStats = async (week: number) => {
                   team,
                   position: pos,
                   PCT: "0",
-                  "Y/A": "0",
+                  "Y/A": player["Y/A"],
                   "Y/CMP": "0",
                 };
         }
