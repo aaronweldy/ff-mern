@@ -90,6 +90,14 @@ export const fetchPlayerProjections = async (week: Week) => {
 export const fetchPlayers = () => {
   return new Promise<RosteredPlayer[]>(async (resolve, _) => {
     let players: RosteredPlayer[] = [];
+    const kickerUrl = "https://www.fantasypros.com/nfl/projections/k.php";
+    const kickerData = await scraper.get(kickerUrl);
+    for (const player of kickerData[0]) {
+      const lastSpaceIndex = player["Player"].lastIndexOf(" ");
+      const name = player["Player"].slice(0, lastSpaceIndex);
+      const team = player["Player"].slice(lastSpaceIndex + 1);
+      players.push(new RosteredPlayer(name, team, "K"));
+    }
     for (const [abbrevTeam, fullTeam] of Object.entries(
       AbbreviationToFullTeam
     )) {
@@ -186,19 +194,23 @@ export const fetchWeeklyStats = async (week: number) => {
                   ...player,
                   team,
                   position: pos,
-                  PCT: player["PCT"],
-                  "Y/A": player["Y/A"],
+                  PCT: Number.parseFloat(player["PCT"]).toFixed(2).toString(),
+                  "Y/A":
+                    Number.parseFloat(player["Y/A"]).toFixed(2).toString() ||
+                    "0",
                   "Y/CMP": (
                     Number.parseFloat(player["YDS"]) /
                     Number.parseFloat(player["CMP"])
-                  ).toString(),
+                  )
+                    .toFixed(2)
+                    .toString(),
                 }
               : {
                   ...player,
                   team,
                   position: pos,
                   PCT: "0",
-                  "Y/A": player["Y/A"],
+                  "Y/A": player["Y/A"] || "0",
                   "Y/CMP": "0",
                 };
         }

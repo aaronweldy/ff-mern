@@ -59,6 +59,14 @@ export const fetchPlayerProjections = (week) => __awaiter(void 0, void 0, void 0
 export const fetchPlayers = () => {
     return new Promise((resolve, _) => __awaiter(void 0, void 0, void 0, function* () {
         let players = [];
+        const kickerUrl = "https://www.fantasypros.com/nfl/projections/k.php";
+        const kickerData = yield scraper.get(kickerUrl);
+        for (const player of kickerData[0]) {
+            const lastSpaceIndex = player["Player"].lastIndexOf(" ");
+            const name = player["Player"].slice(0, lastSpaceIndex);
+            const team = player["Player"].slice(lastSpaceIndex + 1);
+            players.push(new RosteredPlayer(name, team, "K"));
+        }
         for (const [abbrevTeam, fullTeam] of Object.entries(AbbreviationToFullTeam)) {
             const url = `https://www.fantasypros.com/nfl/depth-chart/${fullTeam
                 .split(" ")
@@ -80,6 +88,7 @@ export const fetchLatestFantasyProsScoredWeek = (targetWeek) => __awaiter(void 0
 });
 export const fetchWeeklySnapCount = (week) => __awaiter(void 0, void 0, void 0, function* () {
     const year = getCurrentSeason();
+    console.log(year);
     let curStats = (yield db
         .collection("weekStats")
         .doc(year + "week" + week)
@@ -106,6 +115,7 @@ export const fetchWeeklySnapCount = (week) => __awaiter(void 0, void 0, void 0, 
 export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, function* () {
     var e_1, _a;
     const year = getCurrentSeason();
+    console.log("season is: ", year);
     const latestScoredWeek = yield fetchLatestFantasyProsScoredWeek(week.toString());
     let usableStats = {};
     if (latestScoredWeek < week) {
@@ -129,9 +139,12 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
                             .slice(hashedName.indexOf("(") + 1, hashedName.indexOf(")"))
                             .toUpperCase();
                         usableStats[sanitizePlayerName(hashedName.slice(0, hashedName.indexOf("(") - 1))] =
-                            pos === "QB"
-                                ? Object.assign(Object.assign({}, player), { team, position: pos, PCT: player["PCT"], "Y/A": player["Y/A"], "Y/CMP": (Number.parseFloat(player["YDS"]) /
-                                        Number.parseFloat(player["CMP"])).toString() }) : Object.assign(Object.assign({}, player), { team, position: pos, PCT: "0", "Y/A": "0", "Y/CMP": "0" });
+                            pos === "qb"
+                                ? Object.assign(Object.assign({}, player), { team, position: pos, PCT: Number.parseFloat(player["PCT"]).toFixed(2).toString(), "Y/A": Number.parseFloat(player["Y/A"]).toFixed(2).toString() ||
+                                        "0", "Y/CMP": (Number.parseFloat(player["YDS"]) /
+                                        Number.parseFloat(player["CMP"]))
+                                        .toFixed(2)
+                                        .toString() }) : Object.assign(Object.assign({}, player), { team, position: pos, PCT: "0", "Y/A": player["Y/A"] || "0", "Y/CMP": "0" });
                     }
                 }
             }
