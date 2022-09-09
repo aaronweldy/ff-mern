@@ -125,6 +125,7 @@ export const fetchLatestFantasyProsScoredWeek = async (targetWeek: string) => {
 
 export const fetchWeeklySnapCount = async (week: Week) => {
   const year = getCurrentSeason();
+  console.log(year);
   let curStats = (
     await db
       .collection("weekStats")
@@ -153,6 +154,7 @@ export const fetchWeeklySnapCount = async (week: Week) => {
 
 export const fetchWeeklyStats = async (week: number) => {
   const year = getCurrentSeason();
+  console.log("season is: ", year);
   const latestScoredWeek = await fetchLatestFantasyProsScoredWeek(
     week.toString()
   );
