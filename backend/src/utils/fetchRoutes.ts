@@ -171,60 +171,48 @@ export const fetchWeeklyStats = async (week: number) => {
     console.log("No stats for week " + week + " available");
     return usableStats;
   }
-  let statsAtt = await db
-    .collection("weekStats")
-    .doc(year + "week" + week)
-    .get();
-
-  if (!statsAtt.exists) {
-    for await (const pos of positions) {
-      const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${year}&week=${week}&range=week`;
-      const table: TableScraperStatsResponse[][] = await scraper.get(url);
-      for (const player of table[0]) {
-        const hashedName = sanitizePlayerName(player["Player"]);
-        if (hashedName) {
-          const team = hashedName
-            .slice(hashedName.indexOf("(") + 1, hashedName.indexOf(")"))
-            .toUpperCase() as AbbreviatedNflTeam;
-          usableStats[
-            sanitizePlayerName(hashedName.slice(0, hashedName.indexOf("(") - 1))
-          ] =
-            pos === "qb"
-              ? {
-                  ...player,
-                  team,
-                  position: pos,
-                  PCT: Number.parseFloat(player["PCT"]).toFixed(2).toString(),
-                  "Y/A":
-                    Number.parseFloat(player["Y/A"]).toFixed(2).toString() ||
-                    "0",
-                  "Y/CMP": (
-                    Number.parseFloat(player["YDS"]) /
-                    Number.parseFloat(player["CMP"])
-                  )
-                    .toFixed(2)
-                    .toString(),
-                }
-              : {
-                  ...player,
-                  team,
-                  position: pos,
-                  PCT: "0",
-                  "Y/A": player["Y/A"] || "0",
-                  "Y/CMP": "0",
-                };
-        }
+  for await (const pos of positions) {
+    const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${year}&week=${week}&range=week`;
+    const table: TableScraperStatsResponse[][] = await scraper.get(url);
+    for (const player of table[0]) {
+      const hashedName = sanitizePlayerName(player["Player"]);
+      if (hashedName) {
+        const team = hashedName
+          .slice(hashedName.indexOf("(") + 1, hashedName.indexOf(")"))
+          .toUpperCase() as AbbreviatedNflTeam;
+        usableStats[
+          sanitizePlayerName(hashedName.slice(0, hashedName.indexOf("(") - 1))
+        ] =
+          pos === "qb"
+            ? {
+                ...player,
+                team,
+                position: pos,
+                PCT: Number.parseFloat(player["PCT"]).toFixed(2).toString(),
+                "Y/A":
+                  Number.parseFloat(player["Y/A"]).toFixed(2).toString() || "0",
+                "Y/CMP": (
+                  Number.parseFloat(player["YDS"]) /
+                  (Number.parseFloat(player["CMP"]) || 1)
+                )
+                  .toFixed(2)
+                  .toString(),
+              }
+            : {
+                ...player,
+                team,
+                position: pos,
+                PCT: "0",
+                "Y/A": player["Y/A"] || "0",
+                "Y/CMP": "0",
+              };
       }
     }
-    await db
-      .collection("weekStats")
-      .doc(year + "week" + week)
-      .set({ playerMap: usableStats });
-  } else {
-    usableStats = (
-      statsAtt.data() as { playerMap: Record<string, DatabasePlayer> }
-    ).playerMap;
   }
+  await db
+    .collection("weekStats")
+    .doc(year + "week" + week)
+    .set({ playerMap: usableStats });
   return usableStats;
 };
 
