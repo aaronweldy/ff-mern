@@ -122,48 +122,41 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
         console.log("No stats for week " + week + " available");
         return usableStats;
     }
-    let statsAtt = yield db
-        .collection("weekStats")
-        .doc(year + "week" + week)
-        .get();
-    if (!statsAtt.exists) {
-        try {
-            for (var positions_1 = __asyncValues(positions), positions_1_1; positions_1_1 = yield positions_1.next(), !positions_1_1.done;) {
-                const pos = positions_1_1.value;
-                const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${year}&week=${week}&range=week`;
-                const table = yield scraper.get(url);
-                for (const player of table[0]) {
-                    const hashedName = sanitizePlayerName(player["Player"]);
-                    if (hashedName) {
-                        const team = hashedName
-                            .slice(hashedName.indexOf("(") + 1, hashedName.indexOf(")"))
-                            .toUpperCase();
-                        usableStats[sanitizePlayerName(hashedName.slice(0, hashedName.indexOf("(") - 1))] =
-                            pos === "qb"
-                                ? Object.assign(Object.assign({}, player), { team, position: pos, PCT: Number.parseFloat(player["PCT"]).toFixed(2).toString(), "Y/A": Number.parseFloat(player["Y/A"]).toFixed(2).toString() ||
-                                        "0", "Y/CMP": (Number.parseFloat(player["YDS"]) /
-                                        Number.parseFloat(player["CMP"]))
-                                        .toFixed(2)
-                                        .toString() }) : Object.assign(Object.assign({}, player), { team, position: pos, PCT: "0", "Y/A": player["Y/A"] || "0", "Y/CMP": "0" });
-                    }
+    try {
+        for (var positions_1 = __asyncValues(positions), positions_1_1; positions_1_1 = yield positions_1.next(), !positions_1_1.done;) {
+            const pos = positions_1_1.value;
+            const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${year}&week=${week}&range=week`;
+            const table = yield scraper.get(url);
+            for (const player of table[0]) {
+                const hashedName = sanitizePlayerName(player["Player"]);
+                if (hashedName) {
+                    const team = hashedName
+                        .slice(hashedName.indexOf("(") + 1, hashedName.indexOf(")"))
+                        .toUpperCase();
+                    usableStats[sanitizePlayerName(hashedName.slice(0, hashedName.indexOf("(") - 1))] =
+                        pos === "qb"
+                            ? Object.assign(Object.assign({}, player), { team, position: pos, PCT: Number.parseFloat(player["PCT"]).toFixed(2).toString(), "Y/A": Number.parseFloat(player["Y/A"]).toFixed(2).toString() || "0", "Y/A_2": (Number.parseFloat(player["YDS_2"]) /
+                                    (Number.parseFloat(player["ATT_2"]) || 1))
+                                    .toFixed(2)
+                                    .toString(), "Y/CMP": (Number.parseFloat(player["YDS"]) /
+                                    (Number.parseFloat(player["CMP"]) || 1))
+                                    .toFixed(2)
+                                    .toString() }) : Object.assign(Object.assign({}, player), { team, position: pos, PCT: "0", "Y/A": player["Y/A"] || "0", "Y/CMP": "0" });
                 }
             }
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (positions_1_1 && !positions_1_1.done && (_a = positions_1.return)) yield _a.call(positions_1);
-            }
-            finally { if (e_1) throw e_1.error; }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (positions_1_1 && !positions_1_1.done && (_a = positions_1.return)) yield _a.call(positions_1);
         }
-        yield db
-            .collection("weekStats")
-            .doc(year + "week" + week)
-            .set({ playerMap: usableStats });
+        finally { if (e_1) throw e_1.error; }
     }
-    else {
-        usableStats = statsAtt.data().playerMap;
-    }
+    yield db
+        .collection("weekStats")
+        .doc(year + "week" + week)
+        .set({ playerMap: usableStats });
     return usableStats;
 });
 export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, void 0, void 0, function* () {

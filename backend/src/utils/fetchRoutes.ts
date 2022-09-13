@@ -191,6 +191,12 @@ export const fetchWeeklyStats = async (week: number) => {
                 PCT: Number.parseFloat(player["PCT"]).toFixed(2).toString(),
                 "Y/A":
                   Number.parseFloat(player["Y/A"]).toFixed(2).toString() || "0",
+                "Y/A_2": (
+                  Number.parseFloat(player["YDS_2"]) /
+                  (Number.parseFloat(player["ATT_2"]) || 1)
+                )
+                  .toFixed(2)
+                  .toString(),
                 "Y/CMP": (
                   Number.parseFloat(player["YDS"]) /
                   (Number.parseFloat(player["CMP"]) || 1)

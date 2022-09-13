@@ -94,6 +94,7 @@ export type StatKey =
   | "YDS_2"
   | "ATT_2"
   | "Y/A"
+  | "Y/A_2"
   | "PCT"
   | "INT"
   | "1-19"

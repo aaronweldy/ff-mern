@@ -83,6 +83,7 @@ const convertedScoringTypes = {
         "RUSH YD": "YDS_2",
         "YD PER COMPLETION": "Y/CMP",
         CARRIES: "ATT_2",
+        "YD PER CARRY": "Y/A_2",
         "PASS TD": "TD",
         "RUSH TD": "TD_2",
         "YD PER ATT": "Y/A",
