@@ -55,6 +55,17 @@ const TeamPage = () => {
     [week, team, league]
   );
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
+  const canEditRoster = useMemo(() => {
+    if (!league) {
+      return false;
+    }
+    const day = new Date().getDay();
+    console.log(week, league.lastScoredWeek, day);
+    return (
+      week > league.lastScoredWeek ||
+      (week === league.lastScoredWeek && (day < 1 || day > 4))
+    );
+  }, [league, week]);
 
   const handleInfoSubmission = (imageUrl: string, teamName?: string) => {
     if (!team) {
@@ -142,9 +153,7 @@ const TeamPage = () => {
             {user.data?.uid === team.owner ? (
               <Col className="mt-3">
                 <ButtonGroup>
-                  {(numSuperflexUsed < league.numSuperflex ||
-                    (week >= league.lastScoredWeek &&
-                      team.weekInfo[week].isSuperflex)) && (
+                  {numSuperflexUsed < league.numSuperflex && canEditRoster && (
                     <Button
                       onClick={() => setShowSuperflexModal(true)}
                       className="mr-2"
@@ -158,7 +167,7 @@ const TeamPage = () => {
                   >
                     Change/Set Team Info
                   </Button>
-                  {week >= league.lastScoredWeek && (
+                  {canEditRoster && (
                     <QuicksetDropdown
                       week={week}
                       mutationFn={setHighestProjectedLineupMutation}
@@ -178,10 +187,7 @@ const TeamPage = () => {
           </Row>
           <Row>
             <TeamTable
-              isOwner={
-                user.data?.uid === team.owner &&
-                week >= (league.lastScoredWeek || -1)
-              }
+              isOwner={user.data?.uid === team.owner && canEditRoster}
               players={lineup}
               positionsInTable={league.lineupSettings}
               nflSchedule={nflScheduleQuery?.data?.schedule}
@@ -197,10 +203,7 @@ const TeamPage = () => {
           </Row>
           <Row>
             <TeamTable
-              isOwner={
-                user.data?.uid === team.owner &&
-                week >= (league.lastScoredWeek || -1)
-              }
+              isOwner={user.data?.uid === team.owner && canEditRoster}
               players={lineup}
               positionsInTable={{ bench: 1 } as LineupSettings}
               nflSchedule={nflScheduleQuery?.data?.schedule}
