@@ -21,6 +21,7 @@ export const handleNonKickerBackupResolution = (
     player.lineup !== "bench" &&
     snaps === 0
   ) {
+    console.log("processing backup for", player);
     const curInd = team.weekInfo[week].finalizedLineup[player.lineup].findIndex(
       (p) => p.fullName === player.fullName
     );
@@ -56,6 +57,7 @@ export const handleKickerBackupResolution = (
     curDay < 4 &&
     data[player.sanitizedName].scoring.totalPoints === 0
   ) {
+    console.log("processing kicker backup for", player);
     const playerRef = team.weekInfo[week].finalizedLineup[player.lineup].find(
       (p) => p.fullName === player.fullName
     );

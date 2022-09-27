@@ -160,13 +160,14 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
     return usableStats;
 });
 export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, void 0, void 0, function* () {
-    const players = yield fetchPlayers();
-    yield fetchWeeklyStats(week);
-    const stats = yield fetchWeeklySnapCount(week.toString());
     const data = {};
-    players
-        .filter((player) => player.sanitizedName in stats)
-        .forEach((player) => {
+    const statsAtt = yield fetchWeeklyStats(week);
+    if (Object.keys(statsAtt).length === 0) {
+        return data;
+    }
+    const stats = yield fetchWeeklySnapCount(week.toString());
+    const players = Object.values(stats).map((player) => new RosteredPlayer(player.Player.slice(0, player.Player.indexOf("(") - 1), player.team, player.position.toUpperCase()));
+    players.forEach((player) => {
         const catPoints = league.scoringSettings
             .filter((set) => set.position.indexOf(player.position) >= 0)
             .map((category) => {

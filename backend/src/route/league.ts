@@ -301,6 +301,10 @@ router.post("/:leagueId/runScores/", async (req, res) => {
   }
   const errors: ScoringError[] = [];
   const data = await scoreAllPlayers(league, leagueId, week);
+  if (Object.keys(data).length === 0) {
+    res.status(400).send("No stats exist for week.");
+    return;
+  }
   teams.forEach(async (team) => {
     team.weekInfo[week].weekScore = 0;
     Object.values(team.weekInfo[week].finalizedLineup).forEach((players) => {
