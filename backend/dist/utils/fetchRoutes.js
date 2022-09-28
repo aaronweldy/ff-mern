@@ -198,7 +198,7 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
                 }
                 const successMins = category.minimums.filter((min) => {
                     const statNumber = Number.parseFloat(stats[player.sanitizedName][convertedScoringTypes[player.position][min.statType]]);
-                    return statNumber > min.threshold;
+                    return statNumber >= min.threshold;
                 });
                 let retObj = {};
                 retObj[hashVal] =

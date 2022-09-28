@@ -1,10 +1,9 @@
 import { sanitizePlayerName, setPlayerName, } from "@ff-mern/ff-types";
 export const handleNonKickerBackupResolution = (team, player, week, snaps) => {
     const curDay = new Date().getDay();
-    if (
-    /*curDay > 1 &&
-    curDay < 4 &&*/
-    player.backup &&
+    if (curDay > 1 &&
+        curDay < 4 &&
+        player.backup &&
         player.backup !== "None" &&
         player.lineup !== "bench" &&
         snaps === 0) {
@@ -22,10 +21,9 @@ export const handleNonKickerBackupResolution = (team, player, week, snaps) => {
 };
 export const handleKickerBackupResolution = (team, player, week, data) => {
     const curDay = new Date().getDay();
-    if (
-    /* curDay > 1 &&
-    curDay < 4 &&*/
-    data[player.sanitizedName].scoring.totalPoints === 0) {
+    if (curDay > 1 &&
+        curDay < 4 &&
+        data[player.sanitizedName].scoring.totalPoints === 0) {
         console.log("processing kicker backup for", player);
         const playerRef = team.weekInfo[week].finalizedLineup[player.lineup].find((p) => p.fullName === player.fullName);
         const backupCheck = Object.entries(data).find(([_, altPlayer]) => altPlayer.position === "K" &&

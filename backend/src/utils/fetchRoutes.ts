@@ -281,7 +281,7 @@ export const scoreAllPlayers = async (
                 convertedScoringTypes[player.position][min.statType] as StatKey
               ]
             );
-            return statNumber > min.threshold;
+            return statNumber >= min.threshold;
           });
           let retObj: Record<string, number> = {};
           retObj[hashVal] =
