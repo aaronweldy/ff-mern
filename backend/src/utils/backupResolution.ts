@@ -10,7 +10,8 @@ export const handleNonKickerBackupResolution = (
   team: Team,
   player: FinalizedPlayer,
   week: number,
-  snaps: number
+  snaps: number,
+  points: number
 ) => {
   const curDay = new Date().getDay();
   if (
@@ -19,6 +20,7 @@ export const handleNonKickerBackupResolution = (
     player.backup &&
     player.backup !== "None" &&
     player.lineup !== "bench" &&
+    points === 0 &&
     snaps === 0
   ) {
     console.log("processing backup for", player);

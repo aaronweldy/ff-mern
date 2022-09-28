@@ -1,11 +1,12 @@
 import { sanitizePlayerName, setPlayerName, } from "@ff-mern/ff-types";
-export const handleNonKickerBackupResolution = (team, player, week, snaps) => {
+export const handleNonKickerBackupResolution = (team, player, week, snaps, points) => {
     const curDay = new Date().getDay();
     if (curDay > 1 &&
         curDay < 4 &&
         player.backup &&
         player.backup !== "None" &&
         player.lineup !== "bench" &&
+        points === 0 &&
         snaps === 0) {
         console.log("processing backup for", player);
         const curInd = team.weekInfo[week].finalizedLineup[player.lineup].findIndex((p) => p.fullName === player.fullName);

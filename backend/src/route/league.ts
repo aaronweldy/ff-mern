@@ -321,7 +321,8 @@ router.post("/:leagueId/runScores/", async (req, res) => {
               team,
               player,
               week,
-              parseInt(data[sanitizedPlayerName].statistics.snaps || "0")
+              parseInt(data[sanitizedPlayerName].statistics.snaps || "0"),
+              data[sanitizedPlayerName].scoring.totalPoints
             );
           } else {
             sanitizedPlayerName = handleKickerBackupResolution(
