@@ -69,7 +69,11 @@ export const handleKickerBackupResolution = (
     );
     // If a backup is found, the kicker didn't play, so score the player from the same team.
     if (backupCheck) {
-      setPlayerName(playerRef, backupCheck[0]);
+      const newName = backupCheck[0]
+        .split(" ")
+        .map((name) => name[0].toUpperCase() + name.slice(1))
+        .join(" ");
+      setPlayerName(playerRef, newName);
       return sanitizePlayerName(backupCheck[0]);
     }
   }
