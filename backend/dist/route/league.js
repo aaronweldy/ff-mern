@@ -272,6 +272,10 @@ router.post("/:leagueId/runScores/", (req, res) => __awaiter(void 0, void 0, voi
     const errors = [];
     const data = yield scoreAllPlayers(league, leagueId, week);
     if (Object.keys(data).length === 0) {
+        yield db
+            .collection("leagues")
+            .doc(leagueId)
+            .update({ lastScoredWeek: week });
         res.status(400).send("No stats exist for week.");
         return;
     }

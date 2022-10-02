@@ -302,6 +302,10 @@ router.post("/:leagueId/runScores/", async (req, res) => {
   const errors: ScoringError[] = [];
   const data = await scoreAllPlayers(league, leagueId, week);
   if (Object.keys(data).length === 0) {
+    await db
+      .collection("leagues")
+      .doc(leagueId)
+      .update({ lastScoredWeek: week });
     res.status(400).send("No stats exist for week.");
     return;
   }
