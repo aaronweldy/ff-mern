@@ -56,6 +56,8 @@ export const LeagueHome = () => {
         if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
           getDownloadURL(ref(storage, `logos/${league.logo}`)).then((url) => {
             setImgUrl(url);
+          }).catch((err) => {
+            console.log(err);
           });
         } else {
           setImgUrl(league.logo);

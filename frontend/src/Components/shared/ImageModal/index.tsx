@@ -32,7 +32,7 @@ const ImageModal = ({
   useEffect(() => {
     getDownloadURL(ref(storage, `${id}/logo`)).then((url) => setImageUrl(url));
   }, [name, id]);
-  const onDrop = useCallback((acceptedFiles) => {
+  const onDrop = useCallback(<T extends File>(acceptedFiles: T[]) => {
     const reader = new FileReader();
     reader.onload = (url) => {
       setImageUrl(url!.target!.result as string);

@@ -2,8 +2,13 @@
   "extends": "@tsconfig/create-react-app/tsconfig.json",
   "compilerOptions": {
     "strictPropertyInitialization": false,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "react": [ "./node_modules/@types/react" ]
+    },
   },
+
   "references": [
     {
       "path" : "../ff-types"

@@ -72,34 +72,41 @@ router.post("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function
         lastScoredWeek: 0,
     })
         .then(() => __awaiter(void 0, void 0, void 0, function* () {
-        var e_1, _a;
+        var _a, e_1, _b, _c;
         let comms = [];
         try {
-            for (var teams_1 = __asyncValues(teams), teams_1_1; teams_1_1 = yield teams_1.next(), !teams_1_1.done;) {
-                const team = teams_1_1.value;
-                const teamId = v4();
-                yield admin
-                    .auth()
-                    .getUserByEmail(team.ownerName)
-                    .then((user) => __awaiter(void 0, void 0, void 0, function* () {
-                    db.collection("teams")
-                        .doc(teamId)
-                        .set(Object.assign(Object.assign({}, team), { owner: user.uid, id: teamId, isCommissioner: team.isCommissioner || comms.includes(user.uid), league: leagueId, leagueLogo: logo }));
-                    if (team.isCommissioner)
-                        comms.push(user.uid);
-                }))
-                    .catch((err) => __awaiter(void 0, void 0, void 0, function* () {
-                    console.log(err);
-                    db.collection("teams")
-                        .doc(teamId)
-                        .set(Object.assign(Object.assign({}, team), { name: team.name, owner: "default", ownerName: "default", id: teamId, isCommissioner: false, league: leagueId, leagueLogo: logo }));
-                }));
+            for (var _d = true, teams_1 = __asyncValues(teams), teams_1_1; teams_1_1 = yield teams_1.next(), _a = teams_1_1.done, !_a;) {
+                _c = teams_1_1.value;
+                _d = false;
+                try {
+                    const team = _c;
+                    const teamId = v4();
+                    yield admin
+                        .auth()
+                        .getUserByEmail(team.ownerName)
+                        .then((user) => __awaiter(void 0, void 0, void 0, function* () {
+                        db.collection("teams")
+                            .doc(teamId)
+                            .set(Object.assign(Object.assign({}, team), { owner: user.uid, id: teamId, isCommissioner: team.isCommissioner || comms.includes(user.uid), league: leagueId, leagueLogo: logo }));
+                        if (team.isCommissioner)
+                            comms.push(user.uid);
+                    }))
+                        .catch((err) => __awaiter(void 0, void 0, void 0, function* () {
+                        console.log(err);
+                        db.collection("teams")
+                            .doc(teamId)
+                            .set(Object.assign(Object.assign({}, team), { name: team.name, owner: "default", ownerName: "default", id: teamId, isCommissioner: false, league: leagueId, leagueLogo: logo }));
+                    }));
+                }
+                finally {
+                    _d = true;
+                }
             }
         }
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (teams_1_1 && !teams_1_1.done && (_a = teams_1.return)) yield _a.call(teams_1);
+                if (!_d && !_a && (_b = teams_1.return)) yield _b.call(teams_1);
             }
             finally { if (e_1) throw e_1.error; }
         }

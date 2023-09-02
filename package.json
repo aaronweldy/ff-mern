@@ -6,7 +6,7 @@
     "ff-types",
     "functions"
   ],
-  "packageManager": "yarn@3.1.1",
+  "packageManager": "yarn@3.6.3",
   "dependencies": {
     "react-query": "^3.34.16"
   },

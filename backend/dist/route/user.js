@@ -28,7 +28,7 @@ router.get("/:id/leagues/", (req, res) => __awaiter(void 0, void 0, void 0, func
         if (urlDoc.exists) {
             resp.url = urlDoc.data().url;
         }
-        res.json(resp).send();
+        res.json(resp);
     }));
 }));
 router.get("/:id/trades/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

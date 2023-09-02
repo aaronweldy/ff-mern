@@ -45,6 +45,7 @@ export const getCurrentPickInfo = (
   }
   const round = Math.floor(specificPick / settings.draftOrder.length);
   const pickInRound = specificPick % settings.draftOrder.length;
+  console.log(round, pickInRound, specificPick);
   return {
     round,
     pickInRound,

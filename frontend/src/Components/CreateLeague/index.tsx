@@ -44,7 +44,7 @@ function CreateLeague() {
     numSuperflex: parseInt(superflexLineups),
   });
 
-  const onDrop = useCallback((acceptedFiles) => {
+  const onDrop = useCallback(<T extends File>(acceptedFiles: T[]) => {
     const reader = new FileReader();
     reader.onload = (url) => {
       setImageUrl(url?.target?.result as string);

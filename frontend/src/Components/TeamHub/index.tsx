@@ -26,6 +26,10 @@ const TeamHub = () => {
                 };
               });
             }
+          ).catch(
+            (err) => {
+              console.log(err);
+            }
           );
         }
       });

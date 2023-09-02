@@ -21,7 +21,7 @@ router.get("/:id/leagues/", async (req, res) => {
       if (urlDoc.exists) {
         resp.url = urlDoc.data()!.url;
       }
-      res.json(resp).send();
+      res.json(resp);
     });
 });
 
