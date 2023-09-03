@@ -55,6 +55,8 @@ function EditLeagueSettings() {
       if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
         getDownloadURL(ref(storage, `logos/${league.logo}`)).then((url) => {
           setImageUrl(url);
+        }).catch((err) => {
+          console.log(err);
         });
       }
       setLeagueName(league.name);

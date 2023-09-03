@@ -406,9 +406,18 @@ router.get("/:leagueId/:userId/isCommissioner", (req, res) => {
 });
 router.patch("/:leagueId/resetAllRosters/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { leagueId } = req.params;
+    const league = (yield db.collection("leagues").doc(leagueId).get()).data();
     const teams = yield getTeamsInLeague(leagueId);
+    yield db.collection("cumulativePlayerScores").doc(leagueId).delete();
     teams.forEach((team) => __awaiter(void 0, void 0, void 0, function* () {
         team.rosteredPlayers = [];
+        team.weekInfo = [
+            ...Array(league.numWeeks + 1).fill({
+                weekScore: 0,
+                addedPoints: 0,
+                finalizedLineup: {},
+            }),
+        ];
         yield db.collection("teams").doc(team.id).update(team);
     }));
     res.status(200).send({ teams });
