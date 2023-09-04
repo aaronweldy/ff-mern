@@ -128,7 +128,7 @@ export const fetchLatestFantasyProsScoredWeek = async (targetWeek: string) => {
     )
   ).text();
   const $ = load(data);
-  return parseInt($("#single-week").attr("value"));
+  return [parseInt($(".select-links").eq(0).find(":selected").text()), parseInt($("#single-week").attr("value"))];
 };
 
 export const fetchWeeklySnapCount = async (week: Week) => {
@@ -163,12 +163,13 @@ export const fetchWeeklySnapCount = async (week: Week) => {
 export const fetchWeeklyStats = async (week: number) => {
   const year = getCurrentSeason();
   console.log("season is: ", year);
-  const latestScoredWeek = await fetchLatestFantasyProsScoredWeek(
+  const [season, latestScoredWeek] = await fetchLatestFantasyProsScoredWeek(
     week.toString()
   );
+  console.log("Parsed season: " + season);
   let usableStats: Record<string, DatabasePlayer> = {};
-  if (latestScoredWeek < week) {
-    console.log("No stats for week " + week + " available");
+  if (latestScoredWeek < week || season < year) {
+    console.log("No stats for " + season + " week " + week + " available");
     return usableStats;
   }
   for await (const pos of positions) {

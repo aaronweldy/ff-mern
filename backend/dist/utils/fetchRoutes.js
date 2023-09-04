@@ -84,7 +84,7 @@ export const fetchPlayers = () => {
 export const fetchLatestFantasyProsScoredWeek = (targetWeek) => __awaiter(void 0, void 0, void 0, function* () {
     const data = yield (yield fetch(`https://www.fantasypros.com/nfl/stats/qb.php?week=${targetWeek}&range=week`)).text();
     const $ = load(data);
-    return parseInt($("#single-week").attr("value"));
+    return [parseInt($(".select-links").eq(0).find(":selected").text()), parseInt($("#single-week").attr("value"))];
 });
 export const fetchWeeklySnapCount = (week) => __awaiter(void 0, void 0, void 0, function* () {
     const year = getCurrentSeason();
@@ -116,10 +116,11 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
     var _a, e_1, _b, _c;
     const year = getCurrentSeason();
     console.log("season is: ", year);
-    const latestScoredWeek = yield fetchLatestFantasyProsScoredWeek(week.toString());
+    const [season, latestScoredWeek] = yield fetchLatestFantasyProsScoredWeek(week.toString());
+    console.log("Parsed season: " + season);
     let usableStats = {};
-    if (latestScoredWeek < week) {
-        console.log("No stats for week " + week + " available");
+    if (latestScoredWeek < week || season < year) {
+        console.log("No stats for " + season + " week " + week + " available");
         return usableStats;
     }
     try {

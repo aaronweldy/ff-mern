@@ -59,9 +59,13 @@ const TeamPage = () => {
     if (!league) {
       return false;
     }
+    if (league.lastScoredWeek <= 1) {
+      return true;
+    }
     const day = new Date().getDay();
     console.log(week, league.lastScoredWeek, day);
     return (
+      
       week > league.lastScoredWeek ||
       (week === league.lastScoredWeek && (day < 1 || day > 4))
     );

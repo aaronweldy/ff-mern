@@ -24,6 +24,7 @@ const RunScores = () => {
     playerData,
     isLoading: leagueDataLoading,
   } = useLeagueScoringData(id);
+  console.log(playerData)
   const [selectedTeamId, setSelectedTeamId] = useState<string>();
   const { team: selectedTeam, isLoading: teamLoading } =
     useSingleTeam(selectedTeamId);
