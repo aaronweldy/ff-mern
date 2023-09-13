@@ -64,11 +64,7 @@ const TeamPage = () => {
     }
     const day = new Date().getDay();
     console.log(week, league.lastScoredWeek, day);
-    return (
-      
-      week > league.lastScoredWeek ||
-      (week === league.lastScoredWeek && (day < 1 || day > 4))
-    );
+    return week >= league.lastScoredWeek;
   }, [league, week]);
 
   const handleInfoSubmission = (imageUrl: string, teamName?: string) => {
