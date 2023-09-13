@@ -129,6 +129,7 @@ const TeamPage = () => {
 
   return (
     <Container>
+      {updateTeamMutation.isLoading || setHighestProjectedLineupMutation.isLoading ? <div className="spinning-loader"></div> : null}
       <ImageModal
         show={showImageModal}
         origName={(team && team!.name) || ""}
