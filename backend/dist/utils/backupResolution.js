@@ -9,7 +9,7 @@ export const handleNonKickerBackupResolution = (team, player, week, snaps, point
         player.lineup !== "bench" &&
         points === 0 &&
         snaps === 0) {
-        console.log("processing backup for", player);
+        console.log("Replacing " + player.fullName + " with backup " + player.backup);
         const curInd = team.weekInfo[week].finalizedLineup[player.lineup].findIndex((p) => p.fullName === player.fullName);
         let curPlayerRef = team.weekInfo[week].finalizedLineup[player.lineup][curInd];
         const backupInd = team.weekInfo[week].finalizedLineup.bench.findIndex((p) => p.fullName === player.backup);
@@ -27,7 +27,6 @@ export const handleKickerBackupResolution = (team, player, week, data) => {
     if (curDay > 1 &&
         curDay < 4 &&
         data[player.sanitizedName].scoring.totalPoints === 0) {
-        console.log("processing kicker backup for", player);
         const playerRef = team.weekInfo[week].finalizedLineup[player.lineup].find((p) => p.fullName === player.fullName);
         const backupCheck = Object.entries(data).find(([_, altPlayer]) => altPlayer.position === "K" &&
             altPlayer.team === player.team &&
@@ -38,6 +37,7 @@ export const handleKickerBackupResolution = (team, player, week, data) => {
                 .split(" ")
                 .map((name) => name[0].toUpperCase() + name.slice(1))
                 .join(" ");
+            console.log("Replacing kicker " + player.fullName + " with backup " + backupCheck[0]);
             setPlayerName(playerRef, newName);
             return sanitizePlayerName(backupCheck[0]);
         }
