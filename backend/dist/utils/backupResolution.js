@@ -1,6 +1,7 @@
 import { sanitizePlayerName, setPlayerName, } from "@ff-mern/ff-types";
 export const handleNonKickerBackupResolution = (team, player, week, snaps, points) => {
-    const curDay = new Date().getDay();
+    const datePST = new Date().toLocaleString('en-US', { timeZone: "America/Los_Angeles" });
+    const curDay = new Date(datePST).getDay();
     if (curDay > 1 &&
         curDay < 4 &&
         player.backup &&
@@ -21,7 +22,8 @@ export const handleNonKickerBackupResolution = (team, player, week, snaps, point
     return player.sanitizedName;
 };
 export const handleKickerBackupResolution = (team, player, week, data) => {
-    const curDay = new Date().getDay();
+    const datePST = new Date().toLocaleString('en-US', { timeZone: "America/Los_Angeles" });
+    const curDay = new Date(datePST).getDay();
     if (curDay > 1 &&
         curDay < 4 &&
         data[player.sanitizedName].scoring.totalPoints === 0) {

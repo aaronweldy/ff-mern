@@ -286,6 +286,9 @@ router.post("/:leagueId/runScores/", (req, res) => __awaiter(void 0, void 0, voi
         res.status(400).send("No stats exist for week.");
         return;
     }
+    const datePST = new Date().toLocaleString('en-US', { timeZone: "America/Los_Angeles" });
+    const curDay = new Date(datePST).getDay();
+    console.log("Processing lineups for teams in week " + week + " on day " + curDay);
     teams.forEach((team) => __awaiter(void 0, void 0, void 0, function* () {
         team.weekInfo[week].weekScore = 0;
         Object.values(team.weekInfo[week].finalizedLineup).forEach((players) => {

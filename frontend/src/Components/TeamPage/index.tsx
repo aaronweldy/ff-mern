@@ -62,7 +62,10 @@ const TeamPage = () => {
     if (league.lastScoredWeek <= 1) {
       return true;
     }
-    const day = new Date().getDay();
+    const datePST = new Date().toLocaleDateString("en-US", {
+      timeZone: "America/Los Angeles",
+    });
+    const day = new Date(datePST).getDay();
     console.log(week, league.lastScoredWeek, day);
     return week >= league.lastScoredWeek;
   }, [league, week]);

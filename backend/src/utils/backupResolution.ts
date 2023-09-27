@@ -13,7 +13,8 @@ export const handleNonKickerBackupResolution = (
   snaps: number,
   points: number
 ) => {
-  const curDay = new Date().getDay();
+  const datePST = new Date().toLocaleString('en-US', { timeZone: "America/Los_Angeles" });
+  const curDay = new Date(datePST).getDay();
   if (
     curDay > 1 &&
     curDay < 4 &&
@@ -53,7 +54,8 @@ export const handleKickerBackupResolution = (
   week: number,
   data: PlayerScoreData
 ) => {
-  const curDay = new Date().getDay();
+  const datePST = new Date().toLocaleString('en-US', { timeZone: "America/Los_Angeles" });
+  const curDay = new Date(datePST).getDay();
   if (
     curDay > 1 &&
     curDay < 4 &&
