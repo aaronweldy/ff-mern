@@ -42,7 +42,7 @@ router.post("/updateTeams/", (req, res) => {
 });
 router.put("/updateSingleTeam/", (req, res) => {
     const { team } = req.body;
-    console.log("Updating team: " + team.name + ". New lineup: " + team.finalizedLineup);
+    console.log("Updating team: " + team.name + ". New lineup: " + team.weekInfo);
     try {
         const doc = db.collection("teams").doc(team.id);
         doc
