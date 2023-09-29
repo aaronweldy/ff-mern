@@ -42,6 +42,7 @@ router.post("/updateTeams/", (req, res) => {
     res.status(200).send({ teams });
 });
 router.put("/updateSingleTeam/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
     const { team } = req.body;
     console.log("Updating team: " + team.name);
     try {
@@ -51,7 +52,7 @@ router.put("/updateSingleTeam/", (req, res) => __awaiter(void 0, void 0, void 0,
         for (const diff of lineupDiff) {
             console.log("Changes: ");
             console.log("Week: " + diff.week + ", "
-                + diff.oldPlayer.fullName + " -> " + diff.newPlayer.fullName
+                + ((_b = (_a = diff === null || diff === void 0 ? void 0 : diff.oldPlayer) === null || _a === void 0 ? void 0 : _a.fullName) !== null && _b !== void 0 ? _b : "(Empty)") + " -> " + ((_d = (_c = diff === null || diff === void 0 ? void 0 : diff.newPlayer) === null || _c === void 0 ? void 0 : _c.fullName) !== null && _d !== void 0 ? _d : "(Empty)")
                 + " at position " + diff.position);
         }
         doc

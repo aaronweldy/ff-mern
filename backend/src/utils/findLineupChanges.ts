@@ -2,8 +2,8 @@ import { FinalizedPlayer, Position, TeamWeekInfo, Week } from "@ff-mern/ff-types
 
 export type LineupDiff = {
     week: Week;
-    newPlayer: FinalizedPlayer;
-    oldPlayer: FinalizedPlayer;
+    newPlayer?: FinalizedPlayer;
+    oldPlayer?: FinalizedPlayer;
     position: Position;
 }
 
@@ -15,9 +15,30 @@ export const findLineupChanges = (prevWeekInfo: TeamWeekInfo[], newWeekInfo: Tea
         const newWeeklyLineup = newWeekInfo[i].finalizedLineup;
         // Flatten the lineups & iterate over each position to find differences.
         Object.keys(prevWeeklyLineup).forEach((pos: Position) => {
+            if (pos === 'bench') {
+                return;
+            }
             for (let j = 0; j < prevWeeklyLineup[pos].length; j++) {
                 const prevPlayer = prevWeeklyLineup[pos][j];
                 const newPlayer = newWeeklyLineup[pos][j];
+                if (!prevPlayer) {
+                    diff.push({
+                        week: String(i) as Week,
+                        newPlayer: newPlayer,
+                        oldPlayer: undefined,
+                        position: pos as Position,
+                    });
+                    continue;
+                }
+                if (!newPlayer) {
+                    diff.push({
+                        week: String(i) as Week,
+                        newPlayer: undefined,
+                        oldPlayer: prevPlayer,
+                        position: pos as Position,
+                    });
+                    continue;
+                }
                 if (prevPlayer.fullName !== newPlayer.fullName) {
                     diff.push({
                         week: String(i) as Week,

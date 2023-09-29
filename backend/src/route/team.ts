@@ -63,7 +63,7 @@ router.put("/updateSingleTeam/", async (req, res) => {
       console.log("Changes: ");
       console.log(
         "Week: " + diff.week + ", "
-        + diff.oldPlayer.fullName + " -> " + diff.newPlayer.fullName
+        + (diff?.oldPlayer?.fullName ?? "(Empty)") + " -> " + (diff?.newPlayer?.fullName ?? "(Empty)")
         + " at position " + diff.position
       );
     }
