@@ -63,7 +63,7 @@ const TeamPage = () => {
       return true;
     }
     const datePST = new Date().toLocaleDateString("en-US", {
-      timeZone: "America/Los Angeles",
+      timeZone: "America/Los_Angeles",
     });
     const day = new Date(datePST).getDay();
     console.log(week, league.lastScoredWeek, day);

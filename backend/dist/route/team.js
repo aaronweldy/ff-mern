@@ -11,6 +11,7 @@ import { FinalizedPlayer, setPlayerName, } from "@ff-mern/ff-types";
 import { Router } from "express";
 import admin, { db } from "../config/firebase-config.js";
 import { fetchPlayerProjections } from "../utils/fetchRoutes.js";
+import { findLineupChanges } from "../utils/findLineupChanges.js";
 const router = Router();
 router.post("/validateTeams/", (req, res) => {
     const { teams } = req.body;
@@ -40,11 +41,19 @@ router.post("/updateTeams/", (req, res) => {
     }
     res.status(200).send({ teams });
 });
-router.put("/updateSingleTeam/", (req, res) => {
+router.put("/updateSingleTeam/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { team } = req.body;
-    console.log("Updating team: " + team.name + ". New lineup: " + team.weekInfo);
+    console.log("Updating team: " + team.name);
     try {
         const doc = db.collection("teams").doc(team.id);
+        const prevData = (yield doc.get()).data();
+        const lineupDiff = findLineupChanges(prevData.weekInfo, team.weekInfo);
+        for (const diff of lineupDiff) {
+            console.log("Changes: ");
+            console.log("Week: " + diff.week + ", "
+                + diff.oldPlayer.fullName + " -> " + diff.newPlayer.fullName
+                + " at position " + diff.position);
+        }
         doc
             .set(Object.assign(Object.assign({}, team), { lastUpdated: new Date().toLocaleString() }))
             .then(() => __awaiter(void 0, void 0, void 0, function* () {
@@ -56,7 +65,7 @@ router.put("/updateSingleTeam/", (req, res) => {
         console.log(e);
         res.status(500).send();
     }
-});
+}));
 router.get("/:id/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const team = yield db.collection("teams").doc(req.params.id).get();
     res.status(200).json({
