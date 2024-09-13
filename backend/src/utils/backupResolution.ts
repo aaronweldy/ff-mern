@@ -15,14 +15,15 @@ export const handleNonKickerBackupResolution = (
 ) => {
   const datePST = new Date().toLocaleString('en-US', { timeZone: "America/Los_Angeles" });
   const curDay = new Date(datePST).getDay();
+  console.log('Handling non-kicker backup resolution for ' + player.fullName + `with details ${snaps} ${points} on day ` + curDay);
   if (
     curDay > 1 &&
-    curDay < 4 &&
+    curDay < 5 &&
     player.backup &&
     player.backup !== "None" &&
     player.lineup !== "bench" &&
     points === 0 &&
-    snaps === 0
+    (isNaN(snaps) || snaps === 0)
   ) {
     console.log("Replacing " + player.fullName + " with backup " + player.backup);
     const curInd = team.weekInfo[week].finalizedLineup[player.lineup].findIndex(

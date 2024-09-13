@@ -19,7 +19,7 @@ import { db } from "../config/firebase-config.js";
 import fetch from "node-fetch";
 import { load } from "cheerio";
 // @ts-ignore
-import scraper from "table-scraper";
+import { get } from './tableScraper.js';
 export const positions = ["qb", "rb", "wr", "te", "k"];
 export const longPositions = [
     "Quarterbacks",
@@ -43,7 +43,7 @@ export const fetchPlayerProjections = (week) => __awaiter(void 0, void 0, void 0
     let scrapedProjections = {};
     for (const pos of positions) {
         const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=${week}`;
-        const tableData = yield scraper.get(url);
+        const tableData = yield get(url);
         for (const player of tableData[0]) {
             if (player.Player !== "") {
                 scrapedProjections[sliceTeamFromName(sanitizePlayerName(player.Player))] = parseFloat(player.FPTS);
@@ -60,7 +60,7 @@ export const fetchPlayers = () => {
     return new Promise((resolve, _) => __awaiter(void 0, void 0, void 0, function* () {
         let players = [];
         const kickerUrl = "https://www.fantasypros.com/nfl/projections/k.php";
-        const kickerData = yield scraper.get(kickerUrl);
+        const kickerData = yield get(kickerUrl);
         for (const player of kickerData[0]) {
             const lastSpaceIndex = player["Player"].lastIndexOf(" ");
             const name = player["Player"].slice(0, lastSpaceIndex);
@@ -71,7 +71,7 @@ export const fetchPlayers = () => {
             const url = `https://www.fantasypros.com/nfl/depth-chart/${fullTeam
                 .split(" ")
                 .join("-")}.php`;
-            const tableData = yield scraper.get(url);
+            const tableData = yield get(url);
             for (let i = 0; i < longPositions.length; ++i) {
                 for (const player of tableData[i]) {
                     players.push(new RosteredPlayer(player[longPositions[i]], abbrevTeam, positions[i].toUpperCase()));
@@ -95,7 +95,7 @@ export const fetchWeeklySnapCount = (week) => __awaiter(void 0, void 0, void 0, 
         .get()).data().playerMap;
     for (const pos of positions.slice(0, 4)) {
         const url = `https://www.fantasypros.com/nfl/reports/snap-counts/${pos}.php`;
-        const tableData = yield scraper.get(url);
+        const tableData = yield get(url);
         const players = tableData[0];
         for (const player of players) {
             if (player.Player !== "") {
@@ -130,7 +130,7 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
             try {
                 const pos = _c;
                 const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${year}&week=${week}&range=week`;
-                const table = yield scraper.get(url);
+                const table = yield get(url);
                 for (const player of table[0]) {
                     const hashedName = sanitizePlayerName(player["Player"]);
                     if (hashedName) {
@@ -194,7 +194,6 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
                         points = (statNumber / cat.threshold) * category.points;
                         break;
                     case "greater than":
-                        //console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
                         if (statNumber >= cat.threshold)
                             points = category.points;
                         break;

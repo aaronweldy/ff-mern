@@ -1,0 +1,74 @@
+[debug] [2024-09-13T03:06:42.960Z] ----------------------------------------------------------------------
+[debug] [2024-09-13T03:06:42.961Z] Command:       /usr/local/bin/firebase /home/aweldy/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase serve
+[debug] [2024-09-13T03:06:42.962Z] CLI Version:   12.5.2
+[debug] [2024-09-13T03:06:42.962Z] Platform:      linux
+[debug] [2024-09-13T03:06:42.962Z] Node Version:  v16.16.0
+[debug] [2024-09-13T03:06:42.966Z] Time:          Thu Sep 12 2024 20:06:42 GMT-0700 (Pacific Daylight Time)
+[debug] [2024-09-13T03:06:42.966Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2024-09-13T03:06:42.968Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2024-09-13T03:06:43.015Z] Object ".functions" in "firebase.json" has unknown property: {"additionalProperty":"rewrites"}
+[debug] [2024-09-13T03:06:43.016Z] Field ".functions" in "firebase.json" is possibly invalid: should be array
+[debug] [2024-09-13T03:06:43.016Z] Field ".functions" in "firebase.json" is possibly invalid: should match some schema in anyOf
+[debug] [2024-09-13T03:06:43.018Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2024-09-13T03:06:43.018Z] > authorizing via signed-in user (aaronweldy2@gmail.com)
+[debug] [2024-09-13T03:06:43.018Z] [iam] checking project ff-mern for permissions ["firebase.projects.get"]
+[debug] [2024-09-13T03:06:43.019Z] > refreshing access token with scopes: []
+[debug] [2024-09-13T03:06:43.019Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2024-09-13T03:06:43.019Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2024-09-13T03:06:43.178Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2024-09-13T03:06:43.178Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2024-09-13T03:06:43.203Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2024-09-13T03:06:43.203Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2024-09-13T03:06:43.203Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/ff-mern:testIamPermissions [none]
+[debug] [2024-09-13T03:06:43.203Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/ff-mern:testIamPermissions x-goog-quota-user=projects/ff-mern
+[debug] [2024-09-13T03:06:43.203Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/ff-mern:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2024-09-13T03:06:43.272Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/ff-mern:testIamPermissions 401
+[debug] [2024-09-13T03:06:43.272Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/ff-mern:testIamPermissions {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"ACCESS_TOKEN_TYPE_UNSUPPORTED","metadata":{"method":"google.cloudresourcemanager.v1.Projects.TestIamPermissions","service":"cloudresourcemanager.googleapis.com"}}]}}
+[debug] [2024-09-13T03:06:43.272Z] [iam] error while checking permissions, command may fail: FirebaseError: HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2024-09-13T03:06:43.273Z] > refreshing access token with scopes: []
+[debug] [2024-09-13T03:06:43.273Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2024-09-13T03:06:43.273Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2024-09-13T03:06:43.376Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2024-09-13T03:06:43.377Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2024-09-13T03:06:43.377Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/ff-mern [none]
+[debug] [2024-09-13T03:06:43.473Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/ff-mern 401
+[debug] [2024-09-13T03:06:43.474Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/ff-mern {"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED"}}
+[debug] [2024-09-13T03:06:43.475Z] HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2024-09-13T03:06:43.531Z] FirebaseError: HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+    at responseToError (/home/aweldy/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/responseToError.js:49:12)
+    at RetryOperation._fn (/home/aweldy/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/apiv2.js:285:77)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+[error] 
+[error] Error: Failed to get Firebase project ff-mern. Please make sure the project exists and your account has permission to access it.
+[debug] [2024-09-13T03:06:57.859Z] ----------------------------------------------------------------------
+[debug] [2024-09-13T03:06:57.860Z] Command:       /usr/local/bin/firebase /home/aweldy/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase init
+[debug] [2024-09-13T03:06:57.860Z] CLI Version:   12.5.2
+[debug] [2024-09-13T03:06:57.860Z] Platform:      linux
+[debug] [2024-09-13T03:06:57.860Z] Node Version:  v16.16.0
+[debug] [2024-09-13T03:06:57.861Z] Time:          Thu Sep 12 2024 20:06:57 GMT-0700 (Pacific Daylight Time)
+[debug] [2024-09-13T03:06:57.861Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2024-09-13T03:06:57.893Z] Object ".functions" in "firebase.json" has unknown property: {"additionalProperty":"rewrites"}
+[debug] [2024-09-13T03:06:57.893Z] Field ".functions" in "firebase.json" is possibly invalid: should be array
+[debug] [2024-09-13T03:06:57.894Z] Field ".functions" in "firebase.json" is possibly invalid: should match some schema in anyOf
+[debug] [2024-09-13T03:06:57.895Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2024-09-13T03:06:57.895Z] > authorizing via signed-in user (aaronweldy2@gmail.com)
+[debug] [2024-09-13T03:06:57.896Z] Object ".functions" in "firebase.json" has unknown property: {"additionalProperty":"rewrites"}
+[debug] [2024-09-13T03:06:57.896Z] Field ".functions" in "firebase.json" is possibly invalid: should be array
+[debug] [2024-09-13T03:06:57.896Z] Field ".functions" in "firebase.json" is possibly invalid: should match some schema in anyOf
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/aweldy/ff-mern/backend
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+

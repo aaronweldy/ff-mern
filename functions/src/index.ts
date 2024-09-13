@@ -148,7 +148,8 @@ export const fetchNflSchedule = functions.pubsub
   });
 
 export const runScoresForAllLeagues = functions.pubsub
-  .schedule("every 12 hours")
+  .schedule("0 2,22 * * *")
+  .timeZone("America/Los_Angeles")
   .onRun(async () => {
     const allLeagues = await db.collection("leagues").get();
     const latestWeek = parseInt((await getWeekFromPuppeteer()) || "1");

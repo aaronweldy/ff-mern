@@ -18,7 +18,7 @@ import { db } from "../config/firebase-config.js";
 import fetch from "node-fetch";
 import { load } from "cheerio";
 // @ts-ignore
-import scraper from "table-scraper";
+import { get } from './tableScraper.js';
 
 export type ScrapedPlayer = Record<string, string>;
 export type TableScraperStatsResponse = Omit<DatabasePlayer, "CP%" | "Y/CMP">;
@@ -71,7 +71,7 @@ export const fetchPlayerProjections = async (week: Week) => {
   let scrapedProjections: Record<string, number> = {};
   for (const pos of positions) {
     const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=${week}`;
-    const tableData = await scraper.get(url);
+    const tableData = await get(url);
     for (const player of tableData[0] as ScrapedPlayerProjection[]) {
       if (player.Player !== "") {
         scrapedProjections[
@@ -91,7 +91,7 @@ export const fetchPlayers = () => {
   return new Promise<RosteredPlayer[]>(async (resolve, _) => {
     let players: RosteredPlayer[] = [];
     const kickerUrl = "https://www.fantasypros.com/nfl/projections/k.php";
-    const kickerData = await scraper.get(kickerUrl);
+    const kickerData = await get(kickerUrl);
     for (const player of kickerData[0]) {
       const lastSpaceIndex = player["Player"].lastIndexOf(" ");
       const name = player["Player"].slice(0, lastSpaceIndex);
@@ -104,7 +104,7 @@ export const fetchPlayers = () => {
       const url = `https://www.fantasypros.com/nfl/depth-chart/${fullTeam
         .split(" ")
         .join("-")}.php`;
-      const tableData = await scraper.get(url);
+      const tableData = await get(url);
       for (let i = 0; i < longPositions.length; ++i) {
         for (const player of tableData[i]) {
           players.push(
@@ -142,7 +142,7 @@ export const fetchWeeklySnapCount = async (week: Week) => {
   ).data().playerMap as Record<string, DatabasePlayer>;
   for (const pos of positions.slice(0, 4)) {
     const url = `https://www.fantasypros.com/nfl/reports/snap-counts/${pos}.php`;
-    const tableData = await scraper.get(url);
+    const tableData = await get(url);
     const players = tableData[0] as PlayerSnapCountsResponse[];
     for (const player of players) {
       if (player.Player !== "") {
@@ -174,7 +174,7 @@ export const fetchWeeklyStats = async (week: number) => {
   }
   for await (const pos of positions) {
     const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${year}&week=${week}&range=week`;
-    const table: TableScraperStatsResponse[][] = await scraper.get(url);
+    const table: TableScraperStatsResponse[][] = await get(url);
     for (const player of table[0]) {
       const hashedName = sanitizePlayerName(player["Player"]);
       if (hashedName) {
@@ -186,33 +186,33 @@ export const fetchWeeklyStats = async (week: number) => {
         ] =
           pos === "qb"
             ? {
-                ...player,
-                team,
-                position: pos,
-                PCT: Number.parseFloat(player["PCT"]).toFixed(2).toString(),
-                "Y/A":
-                  Number.parseFloat(player["Y/A"]).toFixed(2).toString() || "0",
-                "Y/A_2": (
-                  Number.parseFloat(player["YDS_2"]) /
-                  (Number.parseFloat(player["ATT_2"]) || 1)
-                )
-                  .toFixed(2)
-                  .toString(),
-                "Y/CMP": (
-                  Number.parseFloat(player["YDS"]) /
-                  (Number.parseFloat(player["CMP"]) || 1)
-                )
-                  .toFixed(2)
-                  .toString(),
-              }
+              ...player,
+              team,
+              position: pos,
+              PCT: Number.parseFloat(player["PCT"]).toFixed(2).toString(),
+              "Y/A":
+                Number.parseFloat(player["Y/A"]).toFixed(2).toString() || "0",
+              "Y/A_2": (
+                Number.parseFloat(player["YDS_2"]) /
+                (Number.parseFloat(player["ATT_2"]) || 1)
+              )
+                .toFixed(2)
+                .toString(),
+              "Y/CMP": (
+                Number.parseFloat(player["YDS"]) /
+                (Number.parseFloat(player["CMP"]) || 1)
+              )
+                .toFixed(2)
+                .toString(),
+            }
             : {
-                ...player,
-                team,
-                position: pos,
-                PCT: "0",
-                "Y/A": player["Y/A"] || "0",
-                "Y/CMP": "0",
-              };
+              ...player,
+              team,
+              position: pos,
+              PCT: "0",
+              "Y/A": player["Y/A"] || "0",
+              "Y/CMP": "0",
+            };
       }
     }
   }
@@ -255,7 +255,7 @@ export const scoreAllPlayers = async (
         try {
           const statNumber = Number.parseFloat(
             stats[player.sanitizedName][
-              convertedScoringTypes[player.position][cat.statType] as StatKey
+            convertedScoringTypes[player.position][cat.statType] as StatKey
             ]
           );
           if (isNaN(statNumber)) return { hashVal: 0 };
@@ -265,7 +265,6 @@ export const scoreAllPlayers = async (
               points = (statNumber / cat.threshold) * category.points;
               break;
             case "greater than":
-              //console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
               if (statNumber >= cat.threshold) points = category.points;
               break;
             case "between":
@@ -279,7 +278,7 @@ export const scoreAllPlayers = async (
           const successMins = category.minimums.filter((min) => {
             const statNumber = Number.parseFloat(
               stats[player.sanitizedName][
-                convertedScoringTypes[player.position][min.statType] as StatKey
+              convertedScoringTypes[player.position][min.statType] as StatKey
               ]
             );
             return statNumber >= min.threshold;
