@@ -1,7 +1,6 @@
-import * as functions from "firebase-functions";
+import { onSchedule } from "firebase-functions/scheduler";
+import { onRequest } from "firebase-functions/https";
 import admin from "firebase-admin";
-//@ts-ignore
-import scraper from "table-scraper";
 import {
   AbbreviatedNflTeam,
   AbbreviationToFullTeam,
@@ -20,6 +19,41 @@ import { load } from "cheerio";
 
 admin.initializeApp();
 const db = admin.firestore();
+import request from 'request';
+import xray from 'x-ray';
+import { tabletojson } from 'tabletojson';
+var x = xray();
+/**
+ * Retrieve a web page and extract all tables from the HTML.
+ * @param {string} url The URL of the page to retrieve.
+ * @returns {Promise<Array<any>>} A promise that resolves to an array of table data.
+ */
+export const get = async (url: string): Promise<Array<any>> => {
+  return new Promise<Array<any>>((resolve, reject) => {
+    request.get(url, (err, response, body) => {
+      if (err) {
+        return reject(err);
+      }
+      if (response.statusCode >= 400) {
+        return reject(new Error('The website requested returned an error!'));
+      }
+      x(body, ['table@html'])(async (conversionError, tableHtmlList) => {
+        if (conversionError) {
+          return reject(conversionError);
+        }
+        const data = await Promise.all(tableHtmlList.map((table: string) => {
+          // xray returns the html inside each table tag, and tabletojson
+          // expects a valid html table, so we need to re-wrap the table.
+          // Returning the first element in the converted array because
+          // we should only ever be parsing one table at a time within this map.
+          return tabletojson.convert('<table>' + table + '</table>')[0];
+        }));
+        resolve(data);
+      });
+    });
+  });
+};
+
 
 type ScrapedTeamData = {
   Team: string;
@@ -39,7 +73,7 @@ type ScrapedTeamData = {
 
 const fetchTeamDefensePerformance = async () => {
   const url = "https://www.fantasypros.com/nfl/points-allowed.php";
-  const data = await scraper.get(url);
+  const data = await get(url);
   let updateData: TeamFantasyPositionPerformance =
     {} as TeamFantasyPositionPerformance;
   (data[0] as ScrapedTeamData[]).forEach((teamData) => {
@@ -80,7 +114,7 @@ const parsePlayerFromScrapedData = (playerString: string) => {
 const fetchSeasonProjections = async () => {
   let playerAvgAdp: Record<string, number> = {};
   const overallUrl = "https://www.fantasypros.com/nfl/adp/overall.php";
-  const overallData = (await scraper.get(overallUrl))[0] as {
+  const overallData = (await get(overallUrl))[0] as {
     "Player Team (Bye)": string;
     AVG: string;
   }[];
@@ -94,7 +128,7 @@ const fetchSeasonProjections = async () => {
   }
   for (const pos of singlePositionTypes) {
     const url = `https://www.fantasypros.com/nfl/adp/${pos.toLowerCase()}.php`;
-    const data = (await scraper.get(url))[0] as ScrapedADPData[];
+    const data = (await get(url))[0] as ScrapedADPData[];
     data.forEach((playerData) => {
       if (playerData["Player Team (Bye)"]) {
         const parsedData = parsePlayerFromScrapedData(
@@ -123,19 +157,17 @@ const fetchSeasonProjections = async () => {
   }
 };
 
-export const fetchRankings = functions.pubsub
-  .schedule("every day 00:00")
-  .onRun(async () => {
+export const fetchRankings = onSchedule("every day 00:00",
+  async () => {
     await fetchTeamDefensePerformance();
     await fetchSeasonProjections();
   });
 
-export const fetchNflSchedule = functions.pubsub
-  .schedule("1st thursday of month 00:00")
-  .onRun(async () => {
+export const fetchNflSchedule =
+  onSchedule("1st thursday of month 00:00", async () => {
     const url = "http://www.espn.com/nfl/schedulegrid/_/";
     const data: Record<Week | "0", AbbreviatedNflTeam | "WSH">[] = (
-      await scraper.get(url)
+      await get(url)
     )[0];
     const dbUpdate: TeamToSchedule = {} as TeamToSchedule;
     for (let i = 2; i < data.length; i++) {
@@ -147,10 +179,9 @@ export const fetchNflSchedule = functions.pubsub
     db.collection("nflTeamSchedules").doc("dist").set(dbUpdate);
   });
 
-export const runScoresForAllLeagues = functions.pubsub
-  .schedule("0 2,22 * * *")
-  .timeZone("America/Los_Angeles")
-  .onRun(async () => {
+export const runScoresForAllLeagues = onSchedule(
+  "0 2,22 * * *",
+  async () => {
     const allLeagues = await db.collection("leagues").get();
     const latestWeek = parseInt((await getWeekFromPuppeteer()) || "1");
     allLeagues.forEach((league) => {
@@ -177,9 +208,9 @@ const getWeekFromPuppeteer = async () => {
   return $("#single-week").attr("value");
 };
 
-export const fetchLatestFantasyProsScoredWeek = functions
-  .runWith({ timeoutSeconds: 60 })
-  .https.onCall(async () => {
+export const fetchLatestFantasyProsScoredWeek = onRequest(
+  { timeoutSeconds: 60 },
+  async (req, res) => {
     const week = await getWeekFromPuppeteer();
-    return { week: parseInt(week || "1") };
+    res.status(200).json({ week: parseInt(week || "1") })
   });
