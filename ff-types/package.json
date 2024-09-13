@@ -19,6 +19,6 @@
   "dependencies": {
     "class-transformer": "^0.5.1",
     "cross-env": "^7.0.3",
-    "firebase-admin": "^10.2.0"
+    "firebase-admin": "^12.5.0"
   }
 }

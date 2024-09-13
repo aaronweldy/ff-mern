@@ -15,10 +15,9 @@ export const handleNonKickerBackupResolution = (
 ) => {
   const datePST = new Date().toLocaleString('en-US', { timeZone: "America/Los_Angeles" });
   const curDay = new Date(datePST).getDay();
-  console.log('Handling non-kicker backup resolution for ' + player.fullName + `with details ${snaps} ${points} on day ` + curDay);
   if (
     curDay > 1 &&
-    curDay < 5 &&
+    curDay < 4 &&
     player.backup &&
     player.backup !== "None" &&
     player.lineup !== "bench" &&
