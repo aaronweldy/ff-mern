@@ -8,7 +8,7 @@ export const handleNonKickerBackupResolution = (team, player, week, snaps, point
         player.backup !== "None" &&
         player.lineup !== "bench" &&
         points === 0 &&
-        (isNaN(snaps) || snaps === 0)) {
+        ((week == 1 && isNaN(snaps)) || snaps === 0)) {
         console.log("Replacing " + player.fullName + " with backup " + player.backup);
         const curInd = team.weekInfo[week].finalizedLineup[player.lineup].findIndex((p) => p.fullName === player.fullName);
         let curPlayerRef = team.weekInfo[week].finalizedLineup[player.lineup][curInd];
