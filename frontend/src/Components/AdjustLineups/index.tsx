@@ -136,7 +136,7 @@ export default function AdjustLineups() {
                 positionsInTable={league.lineupSettings}
                 name="starters"
                 nflDefenseStats={defenseStatsQuery.data?.data}
-                nflSchedule={scheduleQuery.data?.schedule}
+                nflSchedule={scheduleQuery.data}
                 week={week.toString() as Week}
                 handleBenchPlayer={onBench}
                 handlePlayerChange={onPlayerChange}
@@ -153,7 +153,7 @@ export default function AdjustLineups() {
                 positionsInTable={{ bench: 1 } as LineupSettings}
                 name="bench"
                 nflDefenseStats={defenseStatsQuery.data?.data}
-                nflSchedule={scheduleQuery.data?.schedule}
+                nflSchedule={scheduleQuery.data}
                 week={week.toString() as Week}
                 handleBenchPlayer={onBench}
                 handlePlayerChange={onPlayerChange}

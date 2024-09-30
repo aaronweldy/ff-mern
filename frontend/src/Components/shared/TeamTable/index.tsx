@@ -8,11 +8,12 @@ import {
   LineupSettings,
   playerTeamIsNflAbbreviation,
   Position,
-  sanitizeNflScheduleTeamName,
   TeamFantasyPositionPerformance,
-  TeamToSchedule,
   Week,
   lineupSorter,
+  NFLSchedule,
+  ESPNTeam,
+  TeamSchedule,
 } from "@ff-mern/ff-types";
 import { NflRankedText } from "../NflRankedText";
 import { InlineTeamTile } from "../InlineTeamTile";
@@ -22,7 +23,7 @@ type TableType = "starters" | "bench" | "backup";
 type TeamTableProps = {
   players: FinalizedLineup;
   positionsInTable: LineupSettings;
-  nflSchedule?: TeamToSchedule;
+  nflSchedule?: NFLSchedule;
   nflDefenseStats?: TeamFantasyPositionPerformance;
   name: TableType;
   week: Week;
@@ -56,6 +57,16 @@ const findOppositePlayers = (
     }, []);
 };
 
+const formatNflOpponent = (opp: TeamSchedule | undefined, week: Week) => {
+  if (!opp) {
+    return "n/a"
+  }
+  if (week in opp) {
+    return opp[week].opponent;
+  }
+  return "BYE";
+}
+
 export const TeamTable = ({
   players,
   positionsInTable,
@@ -83,6 +94,7 @@ export const TeamTable = ({
             <th className="text-center">Position</th>
             <th className="text-center">Player Name</th>
             <th className="text-center">Team</th>
+            <th className="text-center">Game Time</th>
             <th className="text-center">Matchup</th>
             <th className="text-center">Matchup vs. Position</th>
             {isOwner && name === "starters" ? <th>Backup</th> : null}
@@ -96,6 +108,12 @@ export const TeamTable = ({
             const newRows = players[pos];
             acc = acc.concat(
               newRows.map((player, i) => {
+                let opponentTeam: TeamSchedule | undefined = undefined;
+                if (nflSchedule && player.team in nflSchedule) {
+                  if (player.team) {
+                    opponentTeam = nflSchedule[player.team]
+                  }
+                }
                 return (
                   <tr
                     key={
@@ -161,34 +179,39 @@ export const TeamTable = ({
                         <td className="centered-td align-middle">
                           <div>
                             {player.team &&
-                              playerTeamIsNflAbbreviation(player.team) && (
-                                <InlineTeamTile
-                                  team={
-                                    nflSchedule[
-                                      AbbreviationToFullTeam[player.team]
-                                    ][week]
-                                  }
-                                />
-                              )}
+                              playerTeamIsNflAbbreviation(player.team) ? (
+                              <InlineTeamTile
+                                team={
+                                  formatNflOpponent(opponentTeam, week) as AbbreviatedNflTeam
+                                }
+                              />
+                            ) : 'n/a'}
                           </div>
                         </td>
                         <td className="centered-td align-middle">
+                          {opponentTeam && opponentTeam[week].gameTime && (
+                            <span>
+                              {new Date(opponentTeam[week].gameTime).toLocaleString(undefined, {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                timeZoneName: 'short'
+                              })}
+                            </span>
+                          )}
+                        </td>
+                        <td className="centered-td align-middle">
                           {player.team &&
-                          playerTeamIsNflAbbreviation(player.team) &&
-                          nflSchedule[AbbreviationToFullTeam[player.team]][
-                            week
-                          ] !== "BYE" ? (
+                            playerTeamIsNflAbbreviation(player.team) &&
+                            playerTeamIsNflAbbreviation(formatNflOpponent(opponentTeam, week)) &&
+                            formatNflOpponent(opponentTeam, week) !== "BYE" ? (
                             <NflRankedText
                               rank={
                                 nflDefenseStats[
-                                  AbbreviationToFullTeam[
-                                    sanitizeNflScheduleTeamName(
-                                      nflSchedule[
-                                        AbbreviationToFullTeam[player.team]
-                                      ][week]
-                                    ) as AbbreviatedNflTeam
-                                  ]
-                                ][player.position]
+                                AbbreviationToFullTeam[formatNflOpponent(opponentTeam, week) as AbbreviatedNflTeam]]
+                                [player.position]
                               }
                             />
                           ) : (

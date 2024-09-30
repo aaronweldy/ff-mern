@@ -4,7 +4,7 @@
   "private": true,
   "proxy": "https://us-central1-ff-mern.cloudfunctions.net/app",
   "dependencies": {
-    "@ff-mern/ff-types": "^1.9.21",
+    "@ff-mern/ff-types": "latest",
     "@react-query-firebase/auth": "^0.3.4",
     "@testing-library/jest-dom": "^5.11.6",
     "@testing-library/react": "^11.2.2",

@@ -194,7 +194,7 @@ const TeamPage = () => {
               isOwner={user.data?.uid === team.owner && canEditRoster}
               players={lineup}
               positionsInTable={league.lineupSettings}
-              nflSchedule={nflScheduleQuery?.data?.schedule}
+              nflSchedule={nflScheduleQuery?.data}
               nflDefenseStats={defenseStatsQuery?.data?.data}
               name="starters"
               week={week.toString() as Week}
@@ -210,7 +210,7 @@ const TeamPage = () => {
               isOwner={user.data?.uid === team.owner && canEditRoster}
               players={lineup}
               positionsInTable={{ bench: 1 } as LineupSettings}
-              nflSchedule={nflScheduleQuery?.data?.schedule}
+              nflSchedule={nflScheduleQuery?.data}
               nflDefenseStats={defenseStatsQuery?.data?.data}
               name="bench"
               week={week.toString() as Week}

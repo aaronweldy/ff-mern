@@ -17,7 +17,7 @@ export const useLeagueScoringData = (id: string) => {
   const defenseStatsQuery = useNflDefenseStats();
   useEffect(() => {
     if (league) {
-      setWeek(league.lastScoredWeek);
+      setWeek(league.lastScoredWeek || 1);
     }
   }, [league]);
 

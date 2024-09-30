@@ -20,6 +20,7 @@ export default function AddPoints() {
     tempTeams[index].weekInfo[week].addedPoints = parseInt(e.target.value);
     setTeams(tempTeams);
   };
+
   const updateTeams = () => {
     sendUpdate();
     setRedirect(true);
@@ -62,24 +63,24 @@ export default function AddPoints() {
             <tbody>
               {teams && league
                 ? teams.map((team, i) => {
-                    return (
-                      <tr key={i}>
-                        <td>{team.name}</td>
-                        <td>
-                          {(team.weekInfo[week].weekScore || 0).toFixed(2)}
-                        </td>
-                        <td>
-                          <Form.Control
-                            value={team.weekInfo[week].addedPoints || 0}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLSelectElement>
-                            ) => handleAddedPoints(e, i)}
-                            type="text"
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })
+                  return (
+                    <tr key={i}>
+                      <td>{team.name}</td>
+                      <td>
+                        {(team.weekInfo[week].weekScore || 0).toFixed(2)}
+                      </td>
+                      <td>
+                        <Form.Control
+                          value={team.weekInfo[week].addedPoints || 0}
+                          onChange={(
+                            e: React.ChangeEvent<HTMLSelectElement>
+                          ) => handleAddedPoints(e, i)}
+                          type="text"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
                 : null}
             </tbody>
           </Table>

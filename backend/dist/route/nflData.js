@@ -28,8 +28,12 @@ router.get("/allPlayers/", (_, res) => __awaiter(void 0, void 0, void 0, functio
     }
 }));
 router.get("/nflSchedule/", (_, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const schedule = (yield db.collection("nflTeamSchedules").doc("dist").get()).data();
-    res.status(200).send({ schedule });
+    const schedule = yield db.collection("nflSchedule").get();
+    const resp = {};
+    schedule.forEach((doc) => {
+        resp[doc.id] = doc.data();
+    });
+    res.status(200).send(resp);
 }));
 router.get("/nflDefenseStats/", (_, res) => __awaiter(void 0, void 0, void 0, function* () {
     const data = (yield db.collection("nflDefenseVsPositionStats").doc("dist").get()).data();

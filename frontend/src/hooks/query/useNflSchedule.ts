@@ -1,4 +1,4 @@
-import { TeamToSchedule } from "@ff-mern/ff-types";
+import { NFLSchedule } from "@ff-mern/ff-types";
 import { useQuery } from "react-query";
 
 const fetchSchedule = async () => {
@@ -10,10 +10,6 @@ const fetchSchedule = async () => {
   return await resp.json();
 };
 
-type NflScheduleResponse = {
-  schedule: TeamToSchedule;
-};
-
 export const useNflSchedule = () => {
-  return useQuery<NflScheduleResponse, Error>("nflSchedule", fetchSchedule);
+  return useQuery<NFLSchedule, Error>("nflSchedule", fetchSchedule);
 };

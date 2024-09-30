@@ -2,6 +2,7 @@ import { instanceToPlain } from "class-transformer";
 import { Router } from "express";
 import { db } from "../config/firebase-config.js";
 import { fetchPlayers } from "../utils/fetchRoutes.js";
+import { NFLSchedule } from "@ff-mern/ff-types";
 
 const router = Router();
 
@@ -23,10 +24,14 @@ router.get("/allPlayers/", async (_, res) => {
 });
 
 router.get("/nflSchedule/", async (_, res) => {
-  const schedule = (
-    await db.collection("nflTeamSchedules").doc("dist").get()
-  ).data();
-  res.status(200).send({ schedule });
+  const schedule =
+    await db.collection("nflSchedule").get();
+  const resp: NFLSchedule = {}
+  schedule.forEach((doc) => {
+    resp[doc.id] = doc.data()
+  })
+
+  res.status(200).send(resp);
 });
 
 router.get("/nflDefenseStats/", async (_, res) => {
