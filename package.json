@@ -8,6 +8,7 @@
   ],
   "packageManager": "yarn@3.8.5",
   "dependencies": {
+    "firebase-tools": "^13.20.1",
     "react-query": "^3.34.16"
   },
   "devDependencies": {

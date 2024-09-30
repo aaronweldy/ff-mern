@@ -13,6 +13,8 @@ import {
   ProjectedPlayer,
   sanitizePlayerName,
   playerTeamIsNflAbbreviation,
+  NFLSchedule,
+  ESPNResponse,
 } from "@ff-mern/ff-types";
 import fetch from "node-fetch";
 import { load } from "cheerio";
@@ -111,6 +113,72 @@ const parsePlayerFromScrapedData = (playerString: string) => {
   };
 };
 
+async function fetchAndParseESPNSchedule(schedule: NFLSchedule, week: number): Promise<void> {
+  const url = `http://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data: ESPNResponse = await response.json();
+
+    for (const event of data.events) {
+      const gameTime = new Date(event.date);
+
+      for (const competitor of event.competitions[0].competitors) {
+        const teamName = competitor.team.abbreviation;
+        const isHome = competitor.homeAway === 'home';
+        const opponent = event.competitions[0].competitors.find(c => c.id !== competitor.id)?.team.abbreviation;
+
+        if (!opponent) {
+          console.error(`No opponent found for ${teamName} in week ${week}`);
+          continue;
+        }
+
+        if (!schedule[teamName]) {
+          schedule[teamName] = {};
+        }
+
+        schedule[teamName][data.week.number] = {
+          opponent,
+          isHome,
+          gameTime: gameTime.toISOString()
+        };
+      }
+    }
+
+  } catch (error) {
+    console.error(`Error fetching data for week ${week}:`, error);
+  }
+}
+
+async function updateFirebase(schedule: NFLSchedule): Promise<void> {
+  const scheduleRef = db.collection('nflSchedule');
+
+  for (const [team, games] of Object.entries(schedule)) {
+    await scheduleRef.doc(team).set(games);
+  }
+
+  console.log('Firebase updated successfully');
+}
+
+async function updateScheduleForAllWeeks(startWeek: number, endWeek: number): Promise<void> {
+  const schedule = {}
+  for (let week = startWeek; week <= endWeek; week++) {
+    console.log(`Processing week ${week}...`);
+
+    await fetchAndParseESPNSchedule(schedule, week);
+
+    // Add a delay to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log(schedule)
+  }
+  if (schedule) {
+    await updateFirebase(schedule);
+  }
+}
+
 const fetchSeasonProjections = async () => {
   let playerAvgAdp: Record<string, number> = {};
   const overallUrl = "https://www.fantasypros.com/nfl/adp/overall.php";
@@ -164,7 +232,8 @@ export const fetchRankings = onSchedule("every day 00:00",
   });
 
 export const fetchNflSchedule =
-  onSchedule("1st thursday of month 00:00", async () => {
+  onSchedule("every day 00:00", async () => {
+    await updateScheduleForAllWeeks(1, 18);
     const url = "http://www.espn.com/nfl/schedulegrid/_/";
     const data: Record<Week | "0", AbbreviatedNflTeam | "WSH">[] = (
       await get(url)

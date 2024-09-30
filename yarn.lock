@@ -1895,6 +1895,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@electric-sql/pglite@npm:^0.2.0":
+  version: 0.2.9
+  resolution: "@electric-sql/pglite@npm:0.2.9"
+  checksum: 33915bdd1e16a39e9df267ee03b42b53370d00f6b95c1325d5a594f98c0fda4ac120e11c0246f71a4d74177599bdecf827491613b788eddd2a741b2ef684d41b
+  languageName: node
+  linkType: hard
+
 "@eslint-community/eslint-utils@npm:^4.2.0":
   version: 4.4.0
   resolution: "@eslint-community/eslint-utils@npm:4.4.0"
@@ -1970,7 +1977,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ff-mern/ff-types@^1.9.21, @ff-mern/ff-types@workspace:ff-types":
+"@ff-mern/ff-types@npm:^1.9.21":
+  version: 1.9.21
+  resolution: "@ff-mern/ff-types@npm:1.9.21"
+  dependencies:
+    class-transformer: ^0.5.1
+    cross-env: ^7.0.3
+    firebase-admin: ^10.2.0
+    uuid: ^8.3.2
+  checksum: 137655587980c02ec36abbe9ceea8a5c006596a2d4bfcb22bce9b41c161af1408c49a58c98b7557f2ee1fcba226bc473743424a1db34d2895549f128e1f9e804
+  languageName: node
+  linkType: hard
+
+"@ff-mern/ff-types@npm:latest":
+  version: 2.0.3
+  resolution: "@ff-mern/ff-types@npm:2.0.3"
+  dependencies:
+    class-transformer: ^0.5.1
+    cross-env: ^7.0.3
+    firebase-admin: ^12.5.0
+  checksum: 87440fbedfb275cf179e738e61193f44c936456a98aea5a8717dd88064a137c5ec050e188b6365d9bbc700e9579a251814d7afae179edf828cddc5ab7a65b452
+  languageName: node
+  linkType: hard
+
+"@ff-mern/ff-types@workspace:ff-types":
   version: 0.0.0-use.local
   resolution: "@ff-mern/ff-types@workspace:ff-types"
   dependencies:
@@ -10930,10 +10960,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"firebase-tools@npm:latest":
-  version: 13.17.0
-  resolution: "firebase-tools@npm:13.17.0"
+"firebase-tools@npm:^13.20.1":
+  version: 13.20.1
+  resolution: "firebase-tools@npm:13.20.1"
   dependencies:
+    "@electric-sql/pglite": ^0.2.0
     "@google-cloud/cloud-sql-connector": ^1.3.3
     "@google-cloud/pubsub": ^4.5.0
     abort-controller: ^3.0.0
@@ -10968,6 +10999,7 @@ __metadata:
     leven: ^3.1.0
     libsodium-wrappers: ^0.7.10
     lodash: ^4.17.21
+    lsofi: 1.0.0
     marked: ^13.0.2
     marked-terminal: ^7.0.0
     mime: ^2.5.2
@@ -11002,7 +11034,7 @@ __metadata:
     yaml: ^2.4.1
   bin:
     firebase: lib/bin/firebase.js
-  checksum: 28f558ef38d885ca9d041410093697a6bd81026e1f2de3cbf4931175d655cc2e14c3386b08a2976111084c2e8fc6c30f371753a2226d8383e2d0d48ce8a74254
+  checksum: 4518b47bb915a5f8dca0e255bfd4f2f8483d3a0cb157095af48a9b65fddbfaf6080ac7c4e6cec1b011f6693a83576b9d0d9df648d5df142afbeb20d7b4ce774f
   languageName: node
   linkType: hard
 
@@ -11373,7 +11405,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "functions@workspace:functions"
   dependencies:
-    "@ff-mern/ff-types": ^1.9.21
+    "@ff-mern/ff-types": latest
     "@types/node-fetch": ^2.6.1
     "@types/x-ray": ^2.3.6
     "@typescript-eslint/eslint-plugin": ^3.9.1
@@ -11384,7 +11416,7 @@ __metadata:
     firebase-admin: ^12.5.0
     firebase-functions: ^6.0.0
     firebase-functions-test: ^0.2.0
-    firebase-tools: latest
+    firebase-tools: ^13.20.1
     node-fetch: 2
     request: ^2.88.2
     tabletojson: 4.1.4
@@ -13004,6 +13036,15 @@ __metadata:
   dependencies:
     has-tostringtag: ^1.0.0
   checksum: d1e8d01bb0a7134c74649c4e62da0c6118a0bfc6771ea3c560914d52a627873e6920dd0fd0ebc0e12ad2ff4687eac4c308f7e80320b973b2c8a2c8f97a7524f7
+  languageName: node
+  linkType: hard
+
+"is-number@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "is-number@npm:2.1.0"
+  dependencies:
+    kind-of: ^3.0.2
+  checksum: d80e041a43a8de31ecc02037d532f1f448ec9c5b6c02fe7ee67bdd45d21cd9a4b3b4cf07e428ae5adafc2f17408c49fcb0a227915916d94a16d576c39e689f60
   languageName: node
   linkType: hard
 
@@ -15505,6 +15546,16 @@ __metadata:
     lodash.clonedeep: ^4.5.0
     lru-cache: 6.0.0
   checksum: 3468a655b89295ddc0f069a5ebd574ff8565476efc49dfd2b666ed7bd5c6f090e6e3e35cc84714194cc154d5331007d6bbfd50b480ed3ea07303820f81ef7389
+  languageName: node
+  linkType: hard
+
+"lsofi@npm:1.0.0":
+  version: 1.0.0
+  resolution: "lsofi@npm:1.0.0"
+  dependencies:
+    is-number: ^2.1.0
+    through2: ^2.0.1
+  checksum: b2ed122ba35b52f572335114a176a32a49868214712aa141b0f10cf5fa8f4955ae8c6e6e7fb60d8035fda486ebf344b4f4a05ac283dcff504cb6ba3581766836
   languageName: node
   linkType: hard
 
@@ -19195,7 +19246,7 @@ react-dom@latest:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:^2.0.1, readable-stream@npm:^2.0.5, readable-stream@npm:^2.2.2, readable-stream@npm:^2.3.5":
+"readable-stream@npm:^2.0.1, readable-stream@npm:^2.0.5, readable-stream@npm:^2.2.2, readable-stream@npm:^2.3.5, readable-stream@npm:~2.3.6":
   version: 2.3.8
   resolution: "readable-stream@npm:2.3.8"
   dependencies:
@@ -19840,6 +19891,7 @@ react-dom@latest:
   version: 0.0.0-use.local
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
+    firebase-tools: ^13.20.1
     patch-package: ^6.4.7
     postinstall-postinstall: ^2.1.0
     react-query: ^3.34.16
@@ -21732,6 +21784,16 @@ react-dom@latest:
   languageName: node
   linkType: hard
 
+"through2@npm:^2.0.1":
+  version: 2.0.5
+  resolution: "through2@npm:2.0.5"
+  dependencies:
+    readable-stream: ~2.3.6
+    xtend: ~4.0.1
+  checksum: beb0f338aa2931e5660ec7bf3ad949e6d2e068c31f4737b9525e5201b824ac40cac6a337224856b56bd1ddd866334bbfb92a9f57cd6f66bc3f18d3d86fc0fe50
+  languageName: node
+  linkType: hard
+
 "through@npm:^2.3.6":
   version: 2.3.8
   resolution: "through@npm:2.3.8"
@@ -23578,7 +23640,7 @@ react-dom@latest:
   languageName: node
   linkType: hard
 
-"xtend@npm:^4.0.0":
+"xtend@npm:^4.0.0, xtend@npm:~4.0.1":
   version: 4.0.2
   resolution: "xtend@npm:4.0.2"
   checksum: ac5dfa738b21f6e7f0dd6e65e1b3155036d68104e67e5d5d1bde74892e327d7e5636a076f625599dc394330a731861e87343ff184b0047fef1360a7ec0a5a36a

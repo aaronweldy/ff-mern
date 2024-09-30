@@ -9,3 +9,4 @@ export * from "./Trade";
 export * from "./Socket";
 export * from "./Draft";
 export * from "./Chat";
+export * from "./ESPN";

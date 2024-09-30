@@ -314,4 +314,41 @@ type SocketData = {
     user: DecodedIdToken;
 };
 
-export { AbbreviatedNflTeam, AbbreviationToFullTeam, ChatMessage, ClientToServerEvents, ConnectionAction, CreateDraftRequest, CumulativePlayerScore, CumulativePlayerScores, CurrentPick, DatabasePlayer, DraftPhase, DraftPick, DraftSettings, DraftState, DraftType, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GenericRequest, InterServerEvents, IterablePlayer, League, LeagueAPIResponse, LineupSettings, MessageType, NflPlayer, PickOrder, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, ProjectedPlayer, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedADPData, ScrapedPlayerProjection, ServerToClientEvents, SimplifiedTeamInfo, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, SyncAction, Team, TeamFantasyPositionPerformance, TeamRoster, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, createDraftStateForLeague, createEmptyPlayer, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getEmptyLineupFromSettings, getNumPlayersFromLineupSettings, lineupOrder, lineupSorter, lineupToIterable, mapTeamsToIds, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
+type ESPNTeam = {
+    id: string;
+    displayName: string;
+};
+type ESPNCompetitor = {
+    id: string;
+    homeAway: 'home' | 'away';
+    team: ESPNTeam;
+};
+type ESPNCompetition = {
+    id: string;
+    competitors: ESPNCompetitor[];
+};
+type ESPNEvent = {
+    id: string;
+    date: string;
+    name: string;
+    competitions: ESPNCompetition[];
+};
+type ESPNResponse = {
+    events: ESPNEvent[];
+    week: {
+        number: number;
+    };
+};
+type GameSchedule = {
+    opponent: string;
+    isHome: boolean;
+    gameTime: string;
+};
+type TeamSchedule = {
+    [week: string]: GameSchedule;
+};
+type NFLSchedule = {
+    [team: string]: TeamSchedule;
+};
+
+export { AbbreviatedNflTeam, AbbreviationToFullTeam, ChatMessage, ClientToServerEvents, ConnectionAction, CreateDraftRequest, CumulativePlayerScore, CumulativePlayerScores, CurrentPick, DatabasePlayer, DraftPhase, DraftPick, DraftSettings, DraftState, DraftType, ESPNCompetition, ESPNCompetitor, ESPNEvent, ESPNResponse, ESPNTeam, ErrorType, FantasyPerformanceByPosition, FetchPlayerScoresRequest, FinalizedLineup, FinalizedPlayer, FullCategory, FullNflTeam, GameSchedule, GenericRequest, InterServerEvents, IterablePlayer, League, LeagueAPIResponse, LineupSettings, MessageType, NFLSchedule, NflPlayer, PickOrder, PlayerInTrade, PlayerScoreData, PlayerScoresResponse, Position, PositionInfo, ProjectedPlayer, Qualifier, QuicksetLineupType, QuicksetRequest, RosteredPlayer, RunScoresResponse, ScoringCategory, ScoringError, ScoringMinimum, ScoringSetting, ScrapedADPData, ScrapedPlayerProjection, ServerToClientEvents, SimplifiedTeamInfo, SinglePosition, SingleTeamResponse, SocketData, StatKey, StoredPlayerInformation, SyncAction, Team, TeamFantasyPositionPerformance, TeamRoster, TeamSchedule, TeamToSchedule, TeamWeekInfo, Trade, TradeStatus, UpdateAllTeamsResponse, Week, buildTrade, convertedScoringTypes, createDraftStateForLeague, createEmptyPlayer, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getEmptyLineupFromSettings, getNumPlayersFromLineupSettings, lineupOrder, lineupSorter, lineupToIterable, mapTeamsToIds, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
