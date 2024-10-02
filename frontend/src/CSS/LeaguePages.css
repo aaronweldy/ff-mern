@@ -109,6 +109,7 @@
   from {
     transform: rotate(0);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -188,4 +189,9 @@
   max-width: 2rem;
   max-height: 2rem;
   margin-right: 1em;
+}
+
+.player-played {
+  background-color: #f0f0f0;
+  opacity: 0.7;
 }

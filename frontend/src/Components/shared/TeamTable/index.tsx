@@ -67,6 +67,13 @@ const formatNflOpponent = (opp: TeamSchedule | undefined, week: Week) => {
   return "BYE";
 }
 
+const hasPlayerAlreadyPlayed = (gameTime: string | undefined): boolean => {
+  if (!gameTime) return false;
+  const now = new Date();
+  const gameDate = new Date(gameTime);
+  return now > gameDate;
+};
+
 export const TeamTable = ({
   players,
   positionsInTable,
@@ -94,8 +101,8 @@ export const TeamTable = ({
             <th className="text-center">Position</th>
             <th className="text-center">Player Name</th>
             <th className="text-center">Team</th>
-            <th className="text-center">Game Time</th>
             <th className="text-center">Matchup</th>
+            <th className="text-center">Game Time</th>
             <th className="text-center">Matchup vs. Position</th>
             {isOwner && name === "starters" ? <th>Backup</th> : null}
           </tr>
@@ -122,6 +129,7 @@ export const TeamTable = ({
                       player.fullName +
                       i.toString()
                     }
+                    className={hasPlayerAlreadyPlayed(opponentTeam && opponentTeam[week] && opponentTeam[week].gameTime) ? 'player-played' : ''}
                   >
                     {isOwner ? (
                       <td className="centered-td align-middle">
@@ -189,7 +197,7 @@ export const TeamTable = ({
                           </div>
                         </td>
                         <td className="centered-td align-middle">
-                          {opponentTeam && opponentTeam[week].gameTime && (
+                          {opponentTeam && opponentTeam[week]?.gameTime && (
                             <span>
                               {new Date(opponentTeam[week].gameTime).toLocaleString(undefined, {
                                 weekday: 'short',
