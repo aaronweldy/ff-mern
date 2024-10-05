@@ -8,47 +8,49 @@ export type LineupDiff = {
 }
 
 // Finds the diff between the submitted lineups for a given team.
-export const findLineupChanges = (prevWeekInfo: TeamWeekInfo[], newWeekInfo: TeamWeekInfo[]) => {
+export const findLineupChanges = (prevWeekInfo: TeamWeekInfo[], newWeekInfo: TeamWeekInfo[]): LineupDiff[] => {
     const diff: LineupDiff[] = [];
-    for (let i = 0; i < prevWeekInfo.length; i++) {
-        const prevWeeklyLineup = prevWeekInfo[i].finalizedLineup;
-        const newWeeklyLineup = newWeekInfo[i].finalizedLineup;
-        // Flatten the lineups & iterate over each position to find differences.
-        Object.keys(prevWeeklyLineup).forEach((pos: Position) => {
-            if (pos === 'bench') {
-                return;
-            }
-            for (let j = 0; j < prevWeeklyLineup[pos].length; j++) {
-                const prevPlayer = prevWeeklyLineup[pos][j];
-                const newPlayer = newWeeklyLineup[pos][j];
-                if (!prevPlayer) {
-                    diff.push({
-                        week: String(i) as Week,
-                        newPlayer: newPlayer,
-                        oldPlayer: undefined,
-                        position: pos as Position,
-                    });
-                    continue;
+
+    prevWeekInfo.forEach((prevWeek, weekIndex) => {
+        const newWeek = newWeekInfo[weekIndex];
+        if (!newWeek) return;
+
+        const prevWeeklyLineup = prevWeek.finalizedLineup;
+        const newWeeklyLineup = newWeek.finalizedLineup;
+
+        (Object.keys(prevWeeklyLineup) as Position[]).forEach((pos) => {
+            if (pos === 'bench') return;
+
+            const prevPlayers = prevWeeklyLineup[pos];
+            const newPlayers = newWeeklyLineup[pos];
+
+            prevPlayers.forEach((prevPlayer, playerIndex) => {
+                const newPlayer = newPlayers[playerIndex];
+
+                if (!prevPlayer || !newPlayer || prevPlayer.fullName !== newPlayer.fullName) {
+                    const change: LineupDiff = {
+                        week: String(weekIndex) as Week,
+                        newPlayer: newPlayer || undefined,
+                        oldPlayer: prevPlayer || undefined,
+                        position: pos,
+                    };
+                    diff.push(change);
+
+                    console.log(
+                        `Week: ${change.week}, ` +
+                        `${getPlayerDescription(change.oldPlayer)} -> ${getPlayerDescription(change.newPlayer)} ` +
+                        `at position ${change.position}`
+                    );
                 }
-                if (!newPlayer) {
-                    diff.push({
-                        week: String(i) as Week,
-                        newPlayer: undefined,
-                        oldPlayer: prevPlayer,
-                        position: pos as Position,
-                    });
-                    continue;
-                }
-                if (prevPlayer.fullName !== newPlayer.fullName) {
-                    diff.push({
-                        week: String(i) as Week,
-                        newPlayer: newPlayer,
-                        oldPlayer: prevPlayer,
-                        position: pos as Position,
-                    });
-                }
-            }
+            });
         });
-    }
+    });
+
     return diff;
 };
+
+function getPlayerDescription(player?: FinalizedPlayer): string {
+    if (!player) return "(Empty)";
+    if (player.fullName === "") return "(Bench)";
+    return player.fullName;
+}

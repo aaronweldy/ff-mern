@@ -13,6 +13,7 @@ const fetchSingleTeam = async (teamId?: string) => {
 
 export const useSingleTeam = (teamId?: string) => {
   const [team, setTeam] = useState<Team>();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { isLoading, isSuccess } = useQuery<SingleTeamResponse, Error>(
     ["team", teamId],
@@ -25,9 +26,9 @@ export const useSingleTeam = (teamId?: string) => {
     }
   );
   const updateTeamMutation = useMutation<SingleTeamResponse, Error, Team>(
-    async (team: Team) => {
+    async (newTeam: Team) => {
       const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/updateSingleTeam/`;
-      const body = JSON.stringify({ team });
+      const body = JSON.stringify({ team: newTeam });
       const req = {
         method: "PUT",
         headers: { "content-type": "application/json" },
@@ -35,13 +36,18 @@ export const useSingleTeam = (teamId?: string) => {
       };
       const resp = await fetch(url, req);
       if (!resp.ok) {
-        throw new Error(resp.statusText);
+        throw new Error(await resp.text());
       }
       return resp.json();
     },
     {
       onSuccess: (data) => {
+        console.log(data);
         queryClient.setQueryData(["team", teamId], { team: data.team });
+      },
+      onError: (error) => {
+        console.error(error);
+        setErrorMessage(`Failed to update team: ${error.message}`);
       },
     }
   );
@@ -82,5 +88,7 @@ export const useSingleTeam = (teamId?: string) => {
     isSuccess,
     updateTeamMutation,
     setHighestProjectedLineupMutation,
+    errorMessage,
+    setErrorMessage,
   };
 };

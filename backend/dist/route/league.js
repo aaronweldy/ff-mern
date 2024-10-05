@@ -314,7 +314,7 @@ router.post("/:leagueId/runScores/", (req, res) => __awaiter(void 0, void 0, voi
                 }
             });
         });
-        yield db.collection("teams").doc(team.id).update(team);
+        yield db.collection("teams").doc(team.id).update(Object.assign({}, team));
     }));
     yield db.collection("leagues").doc(leagueId).update({ lastScoredWeek: week });
     res.status(200).json({ teams, errors, data });
@@ -421,7 +421,7 @@ router.patch("/:leagueId/resetAllRosters/", (req, res) => __awaiter(void 0, void
                 finalizedLineup: {},
             }),
         ];
-        yield db.collection("teams").doc(team.id).update(team);
+        yield db.collection("teams").doc(team.id).update(Object.assign({}, team));
     }));
     res.status(200).send({ teams });
 }));

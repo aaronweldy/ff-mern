@@ -12,7 +12,16 @@ import { Router } from "express";
 import admin, { db } from "../config/firebase-config.js";
 import { fetchPlayerProjections } from "../utils/fetchRoutes.js";
 import { findLineupChanges } from "../utils/findLineupChanges.js";
+import { getNflSchedule } from "../utils/db.js";
 const router = Router();
+const hasPlayerAlreadyPlayed = (schedule, team, week) => {
+    if (!schedule[team] || !schedule[team][week] || !schedule[team][week].gameTime)
+        return false;
+    console.log("Checking if " + team + " has already played in week " + week, schedule[team][week].gameTime);
+    const now = new Date();
+    const gameDate = new Date(schedule[team][week].gameTime);
+    return now > gameDate;
+};
 router.post("/validateTeams/", (req, res) => {
     const { teams } = req.body;
     teams.forEach((team) => {
@@ -42,18 +51,18 @@ router.post("/updateTeams/", (req, res) => {
     res.status(200).send({ teams });
 });
 router.put("/updateSingleTeam/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
     const { team } = req.body;
     console.log("Updating team: " + team.name);
     try {
         const doc = db.collection("teams").doc(team.id);
         const prevData = (yield doc.get()).data();
         const lineupDiff = findLineupChanges(prevData.weekInfo, team.weekInfo);
+        const schedule = yield getNflSchedule();
         for (const diff of lineupDiff) {
-            console.log("Changes: ");
-            console.log("Week: " + diff.week + ", "
-                + ((_b = (_a = diff === null || diff === void 0 ? void 0 : diff.oldPlayer) === null || _a === void 0 ? void 0 : _a.fullName) !== null && _b !== void 0 ? _b : "(Empty)") + " -> " + ((_d = (_c = diff === null || diff === void 0 ? void 0 : diff.newPlayer) === null || _c === void 0 ? void 0 : _c.fullName) !== null && _d !== void 0 ? _d : "(Empty)")
-                + " at position " + diff.position);
+            if ((diff.oldPlayer && hasPlayerAlreadyPlayed(schedule, diff.oldPlayer.team, diff.week)) ||
+                (diff.newPlayer && hasPlayerAlreadyPlayed(schedule, diff.newPlayer.team, diff.week))) {
+                return res.status(400).send("Cannot modify lineup for players who have already played");
+            }
         }
         doc
             .set(Object.assign(Object.assign({}, team), { lastUpdated: new Date().toLocaleString() }))

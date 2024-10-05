@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Dropdown, DropdownButton, SplitButton } from "react-bootstrap";
+import { Table, Dropdown, DropdownButton, SplitButton, OverlayTrigger, Tooltip } from "react-bootstrap";
 import {
   AbbreviatedNflTeam,
   AbbreviationToFullTeam,
@@ -12,7 +12,6 @@ import {
   Week,
   lineupSorter,
   NFLSchedule,
-  ESPNTeam,
   TeamSchedule,
 } from "@ff-mern/ff-types";
 import { NflRankedText } from "../NflRankedText";
@@ -57,11 +56,14 @@ const findOppositePlayers = (
     }, []);
 };
 
-const formatNflOpponent = (opp: TeamSchedule | undefined, week: Week) => {
+const formatNflOpponent = (opp: TeamSchedule | undefined, week: Week, withHomeAway = false) => {
   if (!opp) {
     return "n/a"
   }
   if (week in opp) {
+    if (withHomeAway) {
+      return opp[week].isHome ? opp[week].opponent : `@${opp[week].opponent}`;
+    }
     return opp[week].opponent;
   }
   return "BYE";
@@ -99,11 +101,8 @@ export const TeamTable = ({
           <tr>
             {isOwner ? <th>Move</th> : null}
             <th className="text-center">Position</th>
-            <th className="text-center">Player Name</th>
-            <th className="text-center">Team</th>
+            <th className="text-center">Player</th>
             <th className="text-center">Matchup</th>
-            <th className="text-center">Game Time</th>
-            <th className="text-center">Matchup vs. Position</th>
             {isOwner && name === "starters" ? <th>Backup</th> : null}
           </tr>
         </thead>
@@ -133,7 +132,7 @@ export const TeamTable = ({
                   >
                     {isOwner ? (
                       <td className="centered-td align-middle">
-                        <DropdownButton title="Move">
+                        <DropdownButton title="Move" disabled={hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}>
                           {findOppositePlayers(
                             player,
                             name === "starters",
@@ -177,54 +176,57 @@ export const TeamTable = ({
                       </span>
                     </td>
                     <td className="centered-td align-middle">
-                      <span className="flex-nowrap">{player.fullName}</span>
-                    </td>
-                    <td className="centered-td align-middle">
-                      <InlineTeamTile team={player.team} />
+                      <div className="d-flex align-items-center">
+                        <InlineTeamTile team={player.team} showName={false} />
+                        <span className="flex-nowrap ml-2">{player.fullName}</span>
+                      </div>
                     </td>
                     {nflSchedule && nflDefenseStats && (
                       <>
                         <td className="centered-td align-middle">
                           <div>
-                            {player.team &&
-                              playerTeamIsNflAbbreviation(player.team) ? (
-                              <InlineTeamTile
-                                team={
-                                  formatNflOpponent(opponentTeam, week) as AbbreviatedNflTeam
+                            {player.team && playerTeamIsNflAbbreviation(player.team) ? (
+                              <OverlayTrigger
+                                placement="top"
+                                overlay={
+                                  <Tooltip id={`tooltip-${player.fullName}`}>
+                                    Matchup vs. Position: {
+                                      playerTeamIsNflAbbreviation(formatNflOpponent(opponentTeam, week)) &&
+                                        formatNflOpponent(opponentTeam, week) !== "BYE" ? (
+                                        <NflRankedText
+                                          rank={
+                                            nflDefenseStats[
+                                            AbbreviationToFullTeam[formatNflOpponent(opponentTeam, week) as AbbreviatedNflTeam]
+                                            ][player.position]
+                                          }
+                                        />
+                                      ) : (
+                                        "n/a"
+                                      )
+                                    }
+                                  </Tooltip>
                                 }
-                              />
+                              >
+                                <div className="d-flex flex-column align-items-center">
+                                  <InlineTeamTile
+                                    team={formatNflOpponent(opponentTeam, week, true) as AbbreviatedNflTeam}
+                                  />
+                                  <small>
+                                    {opponentTeam && opponentTeam[week]?.gameTime && (
+                                      <span className="text-muted">
+                                        {new Date(opponentTeam[week].gameTime).toLocaleString(undefined, {
+                                          weekday: 'short',
+                                          hour: 'numeric',
+                                          minute: '2-digit',
+                                          timeZoneName: 'short'
+                                        })}
+                                      </span>
+                                    )}
+                                  </small>
+                                </div>
+                              </OverlayTrigger>
                             ) : 'n/a'}
                           </div>
-                        </td>
-                        <td className="centered-td align-middle">
-                          {opponentTeam && opponentTeam[week]?.gameTime && (
-                            <span>
-                              {new Date(opponentTeam[week].gameTime).toLocaleString(undefined, {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                timeZoneName: 'short'
-                              })}
-                            </span>
-                          )}
-                        </td>
-                        <td className="centered-td align-middle">
-                          {player.team &&
-                            playerTeamIsNflAbbreviation(player.team) &&
-                            playerTeamIsNflAbbreviation(formatNflOpponent(opponentTeam, week)) &&
-                            formatNflOpponent(opponentTeam, week) !== "BYE" ? (
-                            <NflRankedText
-                              rank={
-                                nflDefenseStats[
-                                AbbreviationToFullTeam[formatNflOpponent(opponentTeam, week) as AbbreviatedNflTeam]]
-                                [player.position]
-                              }
-                            />
-                          ) : (
-                            "n/a"
-                          )}
                         </td>
                       </>
                     )}
@@ -233,6 +235,7 @@ export const TeamTable = ({
                         <SplitButton
                           id="backup"
                           title={!player.backup ? "None" : player.backup}
+                          disabled={hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
                           variant="secondary"
                         >
                           {findOppositePlayers(player, true, players).map(

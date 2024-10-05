@@ -12,7 +12,7 @@ import { Router } from "express";
 import admin, { db } from "../config/firebase-config.js";
 import { fetchPlayerProjections } from "../utils/fetchRoutes.js";
 import { findLineupChanges } from "../utils/findLineupChanges.js";
-
+import { getNflSchedule } from "../utils/db.js";
 const router = Router();
 
 const hasPlayerAlreadyPlayed = (schedule: NFLSchedule, team: string, week: Week): boolean => {
@@ -68,22 +68,13 @@ router.put("/updateSingleTeam/", async (req, res) => {
     const prevData = (await doc.get()).data() as Team;
     const lineupDiff = findLineupChanges(prevData.weekInfo, team.weekInfo);
 
-    const nflScheduleDoc = await db.collection("nflTeamSchedules").doc("dist").get();
-    const nflSchedule = nflScheduleDoc.data() as NFLSchedule;
-
+    const schedule = await getNflSchedule();
     for (const diff of lineupDiff) {
-      console.log("Changes: ");
-      console.log(
-        "Week: " + diff.week + ", "
-        + (diff?.oldPlayer?.fullName ?? "(Empty)") + " -> " + (diff?.newPlayer?.fullName ?? "(Empty)")
-        + " at position " + diff.position
-      );
-
       if (
-        (diff.oldPlayer && hasPlayerAlreadyPlayed(nflSchedule, diff.oldPlayer.team, diff.week as Week)) ||
-        (diff.newPlayer && hasPlayerAlreadyPlayed(nflSchedule, diff.newPlayer.team, diff.week as Week))
+        (diff.oldPlayer && hasPlayerAlreadyPlayed(schedule, diff.oldPlayer.team, diff.week as Week)) ||
+        (diff.newPlayer && hasPlayerAlreadyPlayed(schedule, diff.newPlayer.team, diff.week as Week))
       ) {
-        return res.status(400).json({ error: "Cannot modify lineup for players who have already played" });
+        return res.status(400).send("Cannot modify lineup for players who have already played");
       }
     }
 

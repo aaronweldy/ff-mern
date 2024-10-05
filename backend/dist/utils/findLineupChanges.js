@@ -1,46 +1,42 @@
 // Finds the diff between the submitted lineups for a given team.
 export const findLineupChanges = (prevWeekInfo, newWeekInfo) => {
     const diff = [];
-    for (let i = 0; i < prevWeekInfo.length; i++) {
-        const prevWeeklyLineup = prevWeekInfo[i].finalizedLineup;
-        const newWeeklyLineup = newWeekInfo[i].finalizedLineup;
-        // Flatten the lineups & iterate over each position to find differences.
+    prevWeekInfo.forEach((prevWeek, weekIndex) => {
+        const newWeek = newWeekInfo[weekIndex];
+        if (!newWeek)
+            return;
+        const prevWeeklyLineup = prevWeek.finalizedLineup;
+        const newWeeklyLineup = newWeek.finalizedLineup;
         Object.keys(prevWeeklyLineup).forEach((pos) => {
-            if (pos === 'bench') {
+            if (pos === 'bench')
                 return;
-            }
-            for (let j = 0; j < prevWeeklyLineup[pos].length; j++) {
-                const prevPlayer = prevWeeklyLineup[pos][j];
-                const newPlayer = newWeeklyLineup[pos][j];
-                if (!prevPlayer) {
-                    diff.push({
-                        week: String(i),
-                        newPlayer: newPlayer,
-                        oldPlayer: undefined,
+            const prevPlayers = prevWeeklyLineup[pos];
+            const newPlayers = newWeeklyLineup[pos];
+            prevPlayers.forEach((prevPlayer, playerIndex) => {
+                const newPlayer = newPlayers[playerIndex];
+                if (!prevPlayer || !newPlayer || prevPlayer.fullName !== newPlayer.fullName) {
+                    const change = {
+                        week: String(weekIndex),
+                        newPlayer: newPlayer || undefined,
+                        oldPlayer: prevPlayer || undefined,
                         position: pos,
-                    });
-                    continue;
+                    };
+                    diff.push(change);
+                    // Improved logging
+                    console.log(`Week: ${change.week}, ` +
+                        `${getPlayerDescription(change.oldPlayer)} -> ${getPlayerDescription(change.newPlayer)} ` +
+                        `at position ${change.position}`);
                 }
-                if (!newPlayer) {
-                    diff.push({
-                        week: String(i),
-                        newPlayer: undefined,
-                        oldPlayer: prevPlayer,
-                        position: pos,
-                    });
-                    continue;
-                }
-                if (prevPlayer.fullName !== newPlayer.fullName) {
-                    diff.push({
-                        week: String(i),
-                        newPlayer: newPlayer,
-                        oldPlayer: prevPlayer,
-                        position: pos,
-                    });
-                }
-            }
+            });
         });
-    }
+    });
     return diff;
 };
+function getPlayerDescription(player) {
+    if (!player)
+        return "(Empty)";
+    if (player.fullName === "")
+        return "(Bench)";
+    return player.fullName;
+}
 //# sourceMappingURL=findLineupChanges.js.map

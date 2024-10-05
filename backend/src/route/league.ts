@@ -237,7 +237,7 @@ router.patch("/:leagueId/update/", async (req, res) => {
           ...team,
           leagueName: league.name,
           leagueLogo: league.logo,
-        } as Team);
+        });
     } catch (e) {
       const teamId = v4();
       await admin
@@ -348,7 +348,7 @@ router.post("/:leagueId/runScores/", async (req, res) => {
           }
         });
     });
-    await db.collection("teams").doc(team.id).update(team);
+    await db.collection("teams").doc(team.id).update({ ...team });
   });
   await db.collection("leagues").doc(leagueId).update({ lastScoredWeek: week });
   res.status(200).json({ teams, errors, data });
@@ -470,7 +470,7 @@ router.patch("/:leagueId/resetAllRosters/", async (req, res) => {
         finalizedLineup: {},
       }),
     ];
-    await db.collection("teams").doc(team.id).update(team);
+    await db.collection("teams").doc(team.id).update({ ...team });
   });
   res.status(200).send({ teams });
 });

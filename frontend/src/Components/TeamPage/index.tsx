@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { Button, ButtonGroup, Col, Container, Row } from "react-bootstrap";
+import { Button, ButtonGroup, Col, Container, Row, Toast } from "react-bootstrap";
 import { auth, storage } from "../../firebase-config";
 import { TeamTable } from "../shared/TeamTable";
 import LeagueButton from "../shared/LeagueButton";
@@ -10,7 +10,7 @@ import "../../CSS/LeaguePages.css";
 import { LineupSettings, FinalizedPlayer, Week } from "@ff-mern/ff-types";
 import { useTeamTable } from "../../hooks/useTeamTable";
 import { Header } from "./Header";
-import { getWeeklyLineup } from "../utils/getWeeklyLineup";
+import { getWeeklyLineup, findPlayerInLineup } from "../utils/getWeeklyLineup";
 import { DisplayLastUpdated } from "./DisplayLastUpdated";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { useAuthUser } from "@react-query-firebase/auth";
@@ -19,7 +19,7 @@ import { SuperflexModal } from "./SuperflexModal";
 import { useLeagueScoringData } from "../../hooks/useLeagueScoringData";
 import { useSuperflexData } from "../../hooks/useSuperflexData";
 import { QuicksetDropdown } from "../shared/QuicksetDropdown";
-
+import cloneDeep from "lodash/cloneDeep";
 const TeamPage = () => {
   const { id, leagueId } = useParams() as { id: string; leagueId: string };
   const {
@@ -31,8 +31,7 @@ const TeamPage = () => {
     teamsLoading,
     leagueLoading,
   } = useLeagueScoringData(leagueId);
-  const { team, updateTeamMutation, setHighestProjectedLineupMutation } =
-    useSingleTeam(id);
+  const { team, updateTeamMutation, setHighestProjectedLineupMutation, errorMessage, setErrorMessage } = useSingleTeam(id);
   const user = useAuthUser(["user"], auth);
   const [showImageModal, setShowImageModal] = useState(false);
   const {
@@ -108,21 +107,32 @@ const TeamPage = () => {
     selectedIndex: number
   ) => {
     if (team) {
-      handlePlayerChange(
-        selectedPlayer,
-        name,
-        swapPlayer,
-        selectedIndex,
-        lineup
-      );
-      updateTeamMutation.mutate(team);
+      const tempTeam = cloneDeep(team);
+      const tempLineup = getWeeklyLineup(week, tempTeam, league?.lineupSettings);
+      const selectedTempPlayer = findPlayerInLineup(tempLineup, selectedPlayer);
+      const swapTempPlayer = findPlayerInLineup(tempLineup, swapPlayer);
+      if (selectedTempPlayer && swapTempPlayer) {
+        handlePlayerChange(
+          selectedTempPlayer,
+          name,
+          swapTempPlayer,
+          selectedIndex,
+          tempLineup
+        );
+        updateTeamMutation.mutate(tempTeam);
+      }
     }
   };
 
   const onBench = (selectedPlayer: FinalizedPlayer) => {
     if (team) {
-      handleBenchPlayer(selectedPlayer, lineup);
-      updateTeamMutation.mutate(team);
+      const tempTeam = cloneDeep(team);
+      const tempLineup = getWeeklyLineup(week, tempTeam, league?.lineupSettings);
+      const selectedTempPlayer = findPlayerInLineup(tempLineup, selectedPlayer);
+      if (selectedTempPlayer) {
+        handleBenchPlayer(selectedTempPlayer, tempLineup);
+        updateTeamMutation.mutate(tempTeam);
+      }
     }
   };
 
@@ -140,6 +150,24 @@ const TeamPage = () => {
         handleHide={() => setShowImageModal(!showImageModal)}
         handleInfoSubmission={handleInfoSubmission}
       />
+      <Toast
+        show={!!errorMessage}
+        onClose={() => setErrorMessage(null)}
+        delay={3000}
+        autohide
+        style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          minWidth: 200,
+          zIndex: 9999
+        }}
+      >
+        <Toast.Header>
+          <strong className="mr-auto">Error</strong>
+        </Toast.Header>
+        <Toast.Body>{errorMessage}</Toast.Body>
+      </Toast>
       <Row className="mt-3">
         <LeagueButton id={leagueId} />
       </Row>
