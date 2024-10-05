@@ -1,8 +1,6 @@
 import React from "react";
-import { Table, Dropdown, DropdownButton, SplitButton, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Table } from "react-bootstrap";
 import {
-  AbbreviatedNflTeam,
-  AbbreviationToFullTeam,
   FinalizedLineup,
   FinalizedPlayer,
   LineupSettings,
@@ -13,9 +11,14 @@ import {
   lineupSorter,
   NFLSchedule,
   TeamSchedule,
+  SinglePosition,
+  StoredPlayerInformation,
 } from "@ff-mern/ff-types";
-import { NflRankedText } from "../NflRankedText";
 import { InlineTeamTile } from "../InlineTeamTile";
+import { usePlayerScores } from "../../../hooks/query/usePlayerScores";
+import { PlayerActionButton } from '../PlayerActionButton';
+import { MatchupOverlay } from '../MatchupOverlay';
+import { getStatBreakdown } from "../../../utils/statBreakdown";
 
 type TableType = "starters" | "bench" | "backup";
 
@@ -36,6 +39,8 @@ type TeamTableProps = {
   ) => void;
   handleBenchPlayer: (player: FinalizedPlayer, teamId?: string) => void;
   teamId?: string;
+  showScores?: boolean;
+  leagueId?: string;
 };
 
 const findOppositePlayers = (
@@ -56,19 +61,6 @@ const findOppositePlayers = (
     }, []);
 };
 
-const formatNflOpponent = (opp: TeamSchedule | undefined, week: Week, withHomeAway = false) => {
-  if (!opp) {
-    return "n/a"
-  }
-  if (week in opp) {
-    if (withHomeAway) {
-      return opp[week].isHome ? opp[week].opponent : `@${opp[week].opponent}`;
-    }
-    return opp[week].opponent;
-  }
-  return "BYE";
-}
-
 const hasPlayerAlreadyPlayed = (gameTime: string | undefined): boolean => {
   if (!gameTime) return false;
   const now = new Date();
@@ -87,6 +79,8 @@ export const TeamTable = ({
   handlePlayerChange,
   handleBenchPlayer,
   teamId,
+  showScores = false,
+  leagueId,
 }: TeamTableProps) => {
   const iterablePositions = Object.keys(positionsInTable)
     .reduce((acc: Position[], pos: string) => {
@@ -94,6 +88,7 @@ export const TeamTable = ({
       return acc;
     }, [])
     .sort(lineupSorter);
+  const { data: playerScores } = usePlayerScores(leagueId || "", parseInt(week));
   return (
     <div className="team-table-wrapper">
       <Table striped bordered hover className="w-auto left-scrollable-table">
@@ -103,6 +98,8 @@ export const TeamTable = ({
             <th className="text-center">Position</th>
             <th className="text-center">Player</th>
             <th className="text-center">Matchup</th>
+            {showScores && <th className="text-center">Points</th>}
+            <th className="text-center">Stats</th>
             {isOwner && name === "starters" ? <th>Backup</th> : null}
           </tr>
         </thead>
@@ -132,42 +129,16 @@ export const TeamTable = ({
                   >
                     {isOwner ? (
                       <td className="centered-td align-middle">
-                        <DropdownButton title="Move" disabled={hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}>
-                          {findOppositePlayers(
-                            player,
-                            name === "starters",
-                            players
-                          ).map((oppPlayer, j) => {
-                            return (
-                              <Dropdown.Item
-                                key={
-                                  oppPlayer.position +
-                                  oppPlayer.lineup +
-                                  oppPlayer.fullName +
-                                  j.toString()
-                                }
-                                onClick={() =>
-                                  handlePlayerChange(
-                                    player,
-                                    name,
-                                    oppPlayer,
-                                    i,
-                                    teamId
-                                  )
-                                }
-                              >
-                                {oppPlayer.lineup}: {oppPlayer.fullName}
-                              </Dropdown.Item>
-                            );
-                          })}
-                          {name === "starters" && player.fullName !== "" ? (
-                            <Dropdown.Item
-                              onClick={() => handleBenchPlayer(player, teamId)}
-                            >
-                              bench
-                            </Dropdown.Item>
-                          ) : null}
-                        </DropdownButton>
+                        <PlayerActionButton
+                          player={player}
+                          oppositePlayers={findOppositePlayers(player, name === "starters", players)}
+                          disabled={hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
+                          handlePlayerChange={handlePlayerChange}
+                          handleBenchPlayer={handleBenchPlayer}
+                          teamId={teamId}
+                          actionType="move"
+                          tableType={name}
+                        />
                       </td>
                     ) : null}
                     <td className="centered-td align-middle">
@@ -182,101 +153,38 @@ export const TeamTable = ({
                       </div>
                     </td>
                     {nflSchedule && nflDefenseStats && (
-                      <>
-                        <td className="centered-td align-middle">
-                          <div>
-                            {player.team && playerTeamIsNflAbbreviation(player.team) ? (
-                              <OverlayTrigger
-                                placement="top"
-                                overlay={
-                                  <Tooltip id={`tooltip-${player.fullName}`}>
-                                    Matchup vs. Position: {
-                                      playerTeamIsNflAbbreviation(formatNflOpponent(opponentTeam, week)) &&
-                                        formatNflOpponent(opponentTeam, week) !== "BYE" ? (
-                                        <NflRankedText
-                                          rank={
-                                            nflDefenseStats[
-                                            AbbreviationToFullTeam[formatNflOpponent(opponentTeam, week) as AbbreviatedNflTeam]
-                                            ][player.position]
-                                          }
-                                        />
-                                      ) : (
-                                        "n/a"
-                                      )
-                                    }
-                                  </Tooltip>
-                                }
-                              >
-                                <div className="d-flex flex-column align-items-center">
-                                  <InlineTeamTile
-                                    team={formatNflOpponent(opponentTeam, week, true) as AbbreviatedNflTeam}
-                                  />
-                                  <small>
-                                    {opponentTeam && opponentTeam[week]?.gameTime && (
-                                      <span className="text-muted">
-                                        {new Date(opponentTeam[week].gameTime).toLocaleString(undefined, {
-                                          weekday: 'short',
-                                          hour: 'numeric',
-                                          minute: '2-digit',
-                                          timeZoneName: 'short'
-                                        })}
-                                      </span>
-                                    )}
-                                  </small>
-                                </div>
-                              </OverlayTrigger>
-                            ) : 'n/a'}
-                          </div>
-                        </td>
-                      </>
+                      <td className="centered-td align-middle">
+                        <div>
+                          {player.team && playerTeamIsNflAbbreviation(player.team) ? (
+                            <MatchupOverlay
+                              player={player}
+                              opponentTeam={opponentTeam}
+                              week={week}
+                              nflDefenseStats={nflDefenseStats}
+                            />
+                          ) : 'n/a'}
+                        </div>
+                      </td>
                     )}
+                    {showScores && (
+                      <td className="centered-td align-middle">
+                        {playerScores?.players[player.sanitizedName]?.scoring?.totalPoints?.toFixed(1) || '0.00'}
+                      </td>
+                    )}
+                    <td className="centered-td align-middle">
+                      {getStatBreakdown(player.position as SinglePosition, playerScores?.players[player.sanitizedName] as StoredPlayerInformation)}
+                    </td>
                     {isOwner && name === "starters" ? (
                       <td>
-                        <SplitButton
-                          id="backup"
-                          title={!player.backup ? "None" : player.backup}
+                        <PlayerActionButton
+                          player={player}
+                          oppositePlayers={findOppositePlayers(player, true, players)}
                           disabled={hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
-                          variant="secondary"
-                        >
-                          {findOppositePlayers(player, true, players).map(
-                            (oppPlayer, j) => {
-                              return (
-                                <Dropdown.Item
-                                  key={j}
-                                  onClick={() =>
-                                    handlePlayerChange(
-                                      player,
-                                      "backup",
-                                      oppPlayer,
-                                      -1,
-                                      teamId
-                                    )
-                                  }
-                                >
-                                  {oppPlayer.fullName}
-                                </Dropdown.Item>
-                              );
-                            }
-                          )}
-                          <Dropdown.Item
-                            onClick={() =>
-                              handlePlayerChange(
-                                player,
-                                "backup",
-                                new FinalizedPlayer(
-                                  "",
-                                  player.position,
-                                  "" as AbbreviatedNflTeam,
-                                  "bench"
-                                ),
-                                -1,
-                                teamId
-                              )
-                            }
-                          >
-                            None
-                          </Dropdown.Item>
-                        </SplitButton>
+                          handlePlayerChange={handlePlayerChange}
+                          teamId={teamId}
+                          actionType="backup"
+                          tableType={name}
+                        />
                       </td>
                     ) : null}
                   </tr>

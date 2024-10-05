@@ -228,6 +228,8 @@ const TeamPage = () => {
               week={week.toString() as Week}
               handleBenchPlayer={onBench}
               handlePlayerChange={onChange}
+              showScores={true}
+              leagueId={leagueId}
             />
           </Row>
           <Row>
@@ -244,6 +246,8 @@ const TeamPage = () => {
               week={week.toString() as Week}
               handleBenchPlayer={onBench}
               handlePlayerChange={onChange}
+              showScores={true}
+              leagueId={leagueId}
             />
           </Row>
           <SuperflexModal

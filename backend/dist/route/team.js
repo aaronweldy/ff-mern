@@ -17,7 +17,6 @@ const router = Router();
 const hasPlayerAlreadyPlayed = (schedule, team, week) => {
     if (!schedule[team] || !schedule[team][week] || !schedule[team][week].gameTime)
         return false;
-    console.log("Checking if " + team + " has already played in week " + week, schedule[team][week].gameTime);
     const now = new Date();
     const gameDate = new Date(schedule[team][week].gameTime);
     return now > gameDate;
@@ -83,7 +82,7 @@ router.get("/:id/", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     });
 }));
 router.post("/setLineupFromProjection/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { team, week, type, lineupSettings, } = req.body;
+    const { team, week, type, } = req.body;
     console.log(team.name);
     const weekNum = parseInt(week);
     if (type === "LastWeek" && parseInt(week) > 1) {

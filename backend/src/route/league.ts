@@ -78,7 +78,7 @@ router.post("/create/", async (req, res) => {
       lastScoredWeek: 0,
     })
     .then(async () => {
-      let comms: string[] = [];
+      const comms: string[] = [];
       for await (const team of teams) {
         const teamId = v4();
         await admin
@@ -238,7 +238,7 @@ router.patch("/:leagueId/update/", async (req, res) => {
           leagueName: league.name,
           leagueLogo: league.logo,
         });
-    } catch (e) {
+    } catch {
       const teamId = v4();
       await admin
         .auth()
@@ -370,7 +370,7 @@ router.post("/:leagueId/playerScores/", async (req, res) => {
     return;
   }
   const yearWeek = getCurrentSeason() + week.toString();
-  let data = (
+  const data = (
     await db
       .collection("leagueScoringData")
       .doc(yearWeek + leagueId)

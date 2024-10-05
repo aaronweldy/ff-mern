@@ -17,7 +17,6 @@ import {
 import { db } from "../config/firebase-config.js";
 import fetch from "node-fetch";
 import { load } from "cheerio";
-// @ts-ignore
 import { get } from './tableScraper.js';
 
 export type ScrapedPlayer = Record<string, string>;
@@ -68,7 +67,7 @@ export const fetchPlayerProjections = async (week: Week) => {
   if (check.exists) {
     return check.data() as Record<string, number>;
   }
-  let scrapedProjections: Record<string, number> = {};
+  const scrapedProjections: Record<string, number> = {};
   for (const pos of positions) {
     const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=${week}`;
     const tableData = await get(url);
@@ -89,7 +88,7 @@ export const fetchPlayerProjections = async (week: Week) => {
 
 export const fetchPlayers = () => {
   return new Promise<RosteredPlayer[]>(async (resolve, _) => {
-    let players: RosteredPlayer[] = [];
+    const players: RosteredPlayer[] = [];
     const kickerUrl = "https://www.fantasypros.com/nfl/projections/k.php";
     const kickerData = await get(kickerUrl);
     for (const player of kickerData[0]) {
@@ -134,7 +133,7 @@ export const fetchLatestFantasyProsScoredWeek = async (targetWeek: string) => {
 export const fetchWeeklySnapCount = async (week: Week) => {
   const year = getCurrentSeason();
   console.log(year);
-  let curStats = (
+  const curStats = (
     await db
       .collection("weekStats")
       .doc(year + "week" + week)
@@ -167,7 +166,7 @@ export const fetchWeeklyStats = async (week: number) => {
     week.toString()
   );
   console.log("Parsed season: " + season);
-  let usableStats: Record<string, DatabasePlayer> = {};
+  const usableStats: Record<string, DatabasePlayer> = {};
   if (latestScoredWeek < week || season < year) {
     console.log("No stats for " + season + " week " + week + " available");
     return usableStats;
@@ -283,15 +282,16 @@ export const scoreAllPlayers = async (
             );
             return statNumber >= min.threshold;
           });
-          let retObj: Record<string, number> = {};
+          const retObj: Record<string, number> = {};
           retObj[hashVal] =
             successMins.length === category.minimums.length ? points : 0;
           return retObj;
         } catch (error) {
-          console.log(
-            `Error finding stats for player ${player.fullName}, ${player.position}`
+          console.error(
+            `Error finding stats for player ${player.fullName}, ${player.position}:`,
+            error
           );
-          return { hashVal: 0 };
+          return { [hashVal]: 0 };
         }
       });
     data[player.sanitizedName] = {

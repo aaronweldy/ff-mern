@@ -68,7 +68,7 @@ declare class League {
     constructor(name: string, commissioners: string[], numWeeks: number, lineupSettings: LineupSettings, logo: string);
 }
 
-type ScoringCategory = "ATT" | "CMP" | "PASS YD" | "REC YD" | "RUSH YD" | "CARRIES" | "YD PER CARRY" | "YD PER CATCH" | "REC" | "TARGETS" | "PASS TD" | "RUSH TD" | "REC TD" | "YD PER ATT" | "YD PER COMPLETION" | "CP%" | "INT" | "FUM" | "XPT" | "FG 1-19" | "FG 20-29" | "FG 30-39" | "FG 40-49" | "FG 50+" | "FG/XP MISS";
+type ScoringCategory = "ATT" | "CMP" | "PASS YD" | "REC YD" | "RUSH YD" | "CARRIES" | "YD PER CARRY" | "YD PER CATCH" | "REC" | "TARGETS" | "PASS TD" | "RUSH TD" | "REC TD" | "YD PER ATT" | "YD PER COMPLETION" | "CP%" | "INT" | "FUM" | "XPT" | "FG" | "FGA" | "FG 1-19" | "FG 20-29" | "FG 30-39" | "FG 40-49" | "FG 50+" | "FG/XP MISS";
 type Qualifier = "per" | "between" | "greater than" | "test";
 type ScoringMinimum = {
     statType: ScoringCategory;
@@ -95,7 +95,7 @@ declare class ScoringError {
     team: Team;
     constructor(type: ErrorType, desc: string, player: FinalizedPlayer, team: Team);
 }
-type StatKey = "20+" | "ATT" | "CMP" | "Y/CMP" | "FL" | "FPTS" | "FPTS/G" | "G" | "LG" | "Player" | "REC" | "ROST" | "Rank" | "TD" | "TD_2" | "TGT" | "Y/R" | "YDS" | "YDS_2" | "ATT_2" | "Y/A" | "Y/A_2" | "PCT" | "INT" | "1-19" | "20-29" | "30-39" | "40-49" | "50+" | "XPT" | "team" | "position" | "snaps";
+type StatKey = "20+" | "ATT" | "CMP" | "Y/CMP" | "FL" | "FPTS" | "FPTS/G" | "G" | "LG" | "Player" | "REC" | "ROST" | "Rank" | "TD" | "TD_2" | "TGT" | "Y/R" | "YDS" | "YDS_2" | "ATT_2" | "Y/A" | "Y/A_2" | "PCT" | "INT" | "FG" | "FGA" | "1-19" | "20-29" | "30-39" | "40-49" | "50+" | "XPA" | "XPT" | "team" | "position" | "snaps";
 type DatabasePlayer = Record<StatKey, string>;
 
 type TeamRoster = Record<Position, NflPlayer[]>;

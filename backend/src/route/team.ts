@@ -1,7 +1,6 @@
 import {
   FinalizedLineup,
   FinalizedPlayer,
-  LineupSettings,
   QuicksetLineupType,
   setPlayerName,
   Team,
@@ -102,12 +101,10 @@ router.post("/setLineupFromProjection/", async (req, res) => {
     team,
     week,
     type,
-    lineupSettings,
   }: {
     team: Team;
     week: Week;
     type: QuicksetLineupType;
-    lineupSettings: LineupSettings;
   } = req.body;
   console.log(team.name);
   const weekNum = parseInt(week);

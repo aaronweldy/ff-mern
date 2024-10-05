@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import request from 'request';
 import xray from 'x-ray';
 import { tabletojson } from 'tabletojson';
-var x = xray();
+const x = xray();
 /**
  * Retrieve a web page and extract all tables from the HTML.
  * @param {string} url The URL of the page to retrieve.

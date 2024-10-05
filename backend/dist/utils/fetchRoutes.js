@@ -18,7 +18,6 @@ import { convertedScoringTypes, RosteredPlayer, sanitizePlayerName, getCurrentSe
 import { db } from "../config/firebase-config.js";
 import fetch from "node-fetch";
 import { load } from "cheerio";
-// @ts-ignore
 import { get } from './tableScraper.js';
 export const positions = ["qb", "rb", "wr", "te", "k"];
 export const longPositions = [
@@ -40,7 +39,7 @@ export const fetchPlayerProjections = (week) => __awaiter(void 0, void 0, void 0
     if (check.exists) {
         return check.data();
     }
-    let scrapedProjections = {};
+    const scrapedProjections = {};
     for (const pos of positions) {
         const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=${week}`;
         const tableData = yield get(url);
@@ -58,7 +57,7 @@ export const fetchPlayerProjections = (week) => __awaiter(void 0, void 0, void 0
 });
 export const fetchPlayers = () => {
     return new Promise((resolve, _) => __awaiter(void 0, void 0, void 0, function* () {
-        let players = [];
+        const players = [];
         const kickerUrl = "https://www.fantasypros.com/nfl/projections/k.php";
         const kickerData = yield get(kickerUrl);
         for (const player of kickerData[0]) {
@@ -89,7 +88,7 @@ export const fetchLatestFantasyProsScoredWeek = (targetWeek) => __awaiter(void 0
 export const fetchWeeklySnapCount = (week) => __awaiter(void 0, void 0, void 0, function* () {
     const year = getCurrentSeason();
     console.log(year);
-    let curStats = (yield db
+    const curStats = (yield db
         .collection("weekStats")
         .doc(year + "week" + week)
         .get()).data().playerMap;
@@ -118,7 +117,7 @@ export const fetchWeeklyStats = (week) => __awaiter(void 0, void 0, void 0, func
     console.log("season is: ", year);
     const [season, latestScoredWeek] = yield fetchLatestFantasyProsScoredWeek(week.toString());
     console.log("Parsed season: " + season);
-    let usableStats = {};
+    const usableStats = {};
     if (latestScoredWeek < week || season < year) {
         console.log("No stats for " + season + " week " + week + " available");
         return usableStats;
@@ -207,14 +206,14 @@ export const scoreAllPlayers = (league, leagueId, week) => __awaiter(void 0, voi
                     const statNumber = Number.parseFloat(stats[player.sanitizedName][convertedScoringTypes[player.position][min.statType]]);
                     return statNumber >= min.threshold;
                 });
-                let retObj = {};
+                const retObj = {};
                 retObj[hashVal] =
                     successMins.length === category.minimums.length ? points : 0;
                 return retObj;
             }
             catch (error) {
-                console.log(`Error finding stats for player ${player.fullName}, ${player.position}`);
-                return { hashVal: 0 };
+                console.error(`Error finding stats for player ${player.fullName}, ${player.position}:`, error);
+                return { [hashVal]: 0 };
             }
         });
         data[player.sanitizedName] = {

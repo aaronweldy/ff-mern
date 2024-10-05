@@ -22,7 +22,6 @@ export const findLineupChanges = (prevWeekInfo, newWeekInfo) => {
                         position: pos,
                     };
                     diff.push(change);
-                    // Improved logging
                     console.log(`Week: ${change.week}, ` +
                         `${getPlayerDescription(change.oldPlayer)} -> ${getPlayerDescription(change.newPlayer)} ` +
                         `at position ${change.position}`);

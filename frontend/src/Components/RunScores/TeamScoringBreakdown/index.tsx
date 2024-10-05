@@ -85,8 +85,8 @@ const getStatsData = (
       <td key={i}>
         {category in categoriesForPosition && playerData
           ? playerData.statistics[
-              categoriesForPosition[category as ScoringCategory]!
-            ]
+          categoriesForPosition[category as ScoringCategory]!
+          ]
           : 0}
       </td>
     );
