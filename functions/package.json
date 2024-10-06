@@ -14,7 +14,7 @@
   },
   "main": "lib/index.js",
   "dependencies": {
-    "@ff-mern/ff-types": "^2.0.8",
+    "@ff-mern/ff-types": "^2.0.10",
     "@types/x-ray": "^2.3.6",
     "cheerio": "^1.0.0-rc.10",
     "firebase-admin": "^12.5.0",

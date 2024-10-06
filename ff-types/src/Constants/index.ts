@@ -105,6 +105,10 @@ export const AbbreviationToFullTeam: Record<AbbreviatedNflTeam, FullNflTeam> = {
   WSH: "washington commanders",
 };
 
+export const FullTeamToAbbreviation: Record<FullNflTeam, AbbreviatedNflTeam> = Object.fromEntries(
+  Object.entries(AbbreviationToFullTeam).map(([abbr, fullName]) => [fullName, abbr as AbbreviatedNflTeam])
+) as Record<FullNflTeam, AbbreviatedNflTeam>;
+
 export type Week =
   | "1"
   | "2"

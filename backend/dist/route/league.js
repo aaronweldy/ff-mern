@@ -73,7 +73,7 @@ router.post("/create/", (req, res) => __awaiter(void 0, void 0, void 0, function
     })
         .then(() => __awaiter(void 0, void 0, void 0, function* () {
         var _a, e_1, _b, _c;
-        let comms = [];
+        const comms = [];
         try {
             for (var _d = true, teams_1 = __asyncValues(teams), teams_1_1; teams_1_1 = yield teams_1.next(), _a = teams_1_1.done, !_a;) {
                 _c = teams_1_1.value;
@@ -219,7 +219,7 @@ router.patch("/:leagueId/update/", (req, res) => __awaiter(void 0, void 0, void 
                 .doc(team.id)
                 .update(Object.assign(Object.assign({}, team), { leagueName: league.name, leagueLogo: league.logo }));
         }
-        catch (e) {
+        catch (_e) {
             const teamId = v4();
             yield admin
                 .auth()
@@ -332,7 +332,7 @@ router.post("/:leagueId/playerScores/", (req, res) => __awaiter(void 0, void 0, 
         return;
     }
     const yearWeek = getCurrentSeason() + week.toString();
-    let data = (yield db
+    const data = (yield db
         .collection("leagueScoringData")
         .doc(yearWeek + leagueId)
         .get()).data();

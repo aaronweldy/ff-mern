@@ -1,6 +1,7 @@
 import React from "react";
 import { Table } from "react-bootstrap";
 import {
+  AbbreviationToFullTeam,
   FinalizedLineup,
   FinalizedPlayer,
   LineupSettings,
@@ -112,10 +113,8 @@ export const TeamTable = ({
             acc = acc.concat(
               newRows.map((player, i) => {
                 let opponentTeam: TeamSchedule | undefined = undefined;
-                if (nflSchedule && player.team in nflSchedule) {
-                  if (player.team) {
-                    opponentTeam = nflSchedule[player.team]
-                  }
+                if (nflSchedule && player.team !== 'None' && AbbreviationToFullTeam[player.team] in nflSchedule) {
+                  opponentTeam = nflSchedule[AbbreviationToFullTeam[player.team]]
                 }
                 return (
                   <tr
@@ -152,7 +151,7 @@ export const TeamTable = ({
                         <span className="flex-nowrap ml-2">{player.fullName}</span>
                       </div>
                     </td>
-                    {nflSchedule && nflDefenseStats && (
+                    {opponentTeam && nflDefenseStats && (
                       <td className="centered-td align-middle">
                         <div>
                           {player.team && playerTeamIsNflAbbreviation(player.team) ? (

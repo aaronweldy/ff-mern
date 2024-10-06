@@ -1,6 +1,6 @@
 import React from 'react';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { AbbreviatedNflTeam, TeamSchedule, Week, TeamFantasyPositionPerformance, AbbreviationToFullTeam, FinalizedPlayer } from "@ff-mern/ff-types";
+import { AbbreviatedNflTeam, TeamSchedule, Week, TeamFantasyPositionPerformance, FinalizedPlayer, FullTeamToAbbreviation, FullNflTeam } from "@ff-mern/ff-types";
 import { NflRankedText } from "../NflRankedText";
 import { InlineTeamTile } from "../InlineTeamTile";
 import { playerTeamIsNflAbbreviation } from "@ff-mern/ff-types";
@@ -18,7 +18,7 @@ const formatNflOpponent = (opp: TeamSchedule | undefined, week: Week, withHomeAw
     }
     if (week in opp) {
         if (withHomeAway) {
-            return opp[week].isHome ? opp[week].opponent : `@${opp[week].opponent}`;
+            return opp[week].isHome ? FullTeamToAbbreviation[opp[week].opponent as FullNflTeam] : `@${FullTeamToAbbreviation[opp[week].opponent as FullNflTeam]}`;
         }
         return opp[week].opponent;
     }
@@ -37,18 +37,18 @@ export const MatchupOverlay: React.FC<MatchupOverlayProps> = ({
             overlay={
                 <Tooltip id={`tooltip-${player.fullName}`}>
                     Matchup vs. Position: {
-                        playerTeamIsNflAbbreviation(formatNflOpponent(opponentTeam, week)) &&
-                            formatNflOpponent(opponentTeam, week) !== "BYE" ? (
-                            <NflRankedText
-                                rank={
-                                    nflDefenseStats[
-                                    AbbreviationToFullTeam[formatNflOpponent(opponentTeam, week) as AbbreviatedNflTeam]
-                                    ][player.position]
-                                }
-                            />
-                        ) : (
-                            "n/a"
-                        )
+                        opponentTeam && opponentTeam[week]
+                            ? (
+                                <NflRankedText
+                                    rank={
+                                        nflDefenseStats[
+                                        opponentTeam[week].opponent as FullNflTeam
+                                        ][player.position]
+                                    }
+                                />
+                            ) : (
+                                "n/a"
+                            )
                     }
                 </Tooltip>
             }

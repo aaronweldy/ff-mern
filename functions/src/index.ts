@@ -24,7 +24,7 @@ const db = admin.firestore();
 import request from 'request';
 import xray from 'x-ray';
 import { tabletojson } from 'tabletojson';
-var x = xray();
+const x = xray();
 /**
  * Retrieve a web page and extract all tables from the HTML.
  * @param {string} url The URL of the page to retrieve.
@@ -127,9 +127,9 @@ async function fetchAndParseESPNSchedule(schedule: NFLSchedule, week: number): P
       const gameTime = new Date(event.date);
 
       for (const competitor of event.competitions[0].competitors) {
-        const teamName = competitor.team.abbreviation;
+        const teamName = competitor.team.displayName.toLowerCase();
         const isHome = competitor.homeAway === 'home';
-        const opponent = event.competitions[0].competitors.find(c => c.id !== competitor.id)?.team.abbreviation;
+        const opponent = event.competitions[0].competitors.find(c => c.id !== competitor.id)?.team.displayName.toLowerCase();
 
         if (!opponent) {
           console.error(`No opponent found for ${teamName} in week ${week}`);
@@ -180,7 +180,7 @@ async function updateScheduleForAllWeeks(startWeek: number, endWeek: number): Pr
 }
 
 const fetchSeasonProjections = async () => {
-  let playerAvgAdp: Record<string, number> = {};
+  const playerAvgAdp: Record<string, number> = {};
   const overallUrl = "https://www.fantasypros.com/nfl/adp/overall.php";
   const overallData = (await get(overallUrl))[0] as {
     "Player Team (Bye)": string;

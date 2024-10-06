@@ -355,6 +355,7 @@ const AbbreviationToFullTeam = {
     WAS: "washington commanders",
     WSH: "washington commanders",
 };
+const FullTeamToAbbreviation = Object.fromEntries(Object.entries(AbbreviationToFullTeam).map(([abbr, fullName]) => [fullName, abbr]));
 
 const buildTrade = (playersInvolved, teamIds) => {
     const players = [];
@@ -448,4 +449,4 @@ const createDraftStateForLeague = (lineupSettings, leagueId, teams, availablePla
     };
 };
 
-export { AbbreviationToFullTeam, FinalizedPlayer, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, createDraftStateForLeague, createEmptyPlayer, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getEmptyLineupFromSettings, getNumPlayersFromLineupSettings, lineupOrder, lineupSorter, lineupToIterable, mapTeamsToIds, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
+export { AbbreviationToFullTeam, FinalizedPlayer, FullTeamToAbbreviation, League, ProjectedPlayer, RosteredPlayer, ScoringError, Team, buildTrade, convertedScoringTypes, createDraftStateForLeague, createEmptyPlayer, emptyDefaultPositions, getCurrentPickInfo, getCurrentSeason, getEmptyLineupFromSettings, getNumPlayersFromLineupSettings, lineupOrder, lineupSorter, lineupToIterable, mapTeamsToIds, playerTeamIsNflAbbreviation, positionTypes, sanitizeNflScheduleTeamName, sanitizePlayerName, scoringTypes, setPlayerName, singlePositionTypes };
