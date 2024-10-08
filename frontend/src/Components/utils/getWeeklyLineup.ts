@@ -89,12 +89,17 @@ export const getWeeklyLineup = (
   return currentFinalizedLineup;
 };
 
-export const findPlayerInLineup = (lineup: FinalizedLineup, player: FinalizedPlayer) => {
+type PlayerLineupInfo = {
+  player: FinalizedPlayer;
+  index: number;
+}
+
+export const findPlayerInLineup = (lineup: FinalizedLineup, player: FinalizedPlayer): PlayerLineupInfo | null => {
   for (const pos of Object.keys(lineup)) {
     const players = lineup[pos as Position];
     for (const p of players) {
       if (p.fullName === player.fullName && p.position === player.position && p.sanitizedName === player.sanitizedName && (p.lineup === 'bench' || p.lineup.indexOf(player.lineup) >= 0)) {
-        return p;
+        return { player: p, index: players.indexOf(p) };
       }
     }
   }

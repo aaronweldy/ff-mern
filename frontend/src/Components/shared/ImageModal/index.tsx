@@ -30,7 +30,9 @@ const ImageModal = ({
   const [imageUrl, setImageUrl] = useState("");
   const [name, setName] = useState(origName);
   useEffect(() => {
-    getDownloadURL(ref(storage, `${id}/logo`)).then((url) => setImageUrl(url));
+    getDownloadURL(ref(storage, `${id}/logo`)).then((url) => setImageUrl(url)).catch((error) => {
+      console.error(error);
+    });
   }, [name, id]);
   const onDrop = useCallback(<T extends File>(acceptedFiles: T[]) => {
     const reader = new FileReader();

@@ -92,6 +92,8 @@ const TeamPage = () => {
               tempTeam.name = teamName;
             }
             updateTeamMutation.mutate(tempTeam);
+          }).catch((error) => {
+            console.error(error);
           });
         }
       );
@@ -111,12 +113,13 @@ const TeamPage = () => {
       const tempLineup = getWeeklyLineup(week, tempTeam, league?.lineupSettings);
       const selectedTempPlayer = findPlayerInLineup(tempLineup, selectedPlayer);
       const swapTempPlayer = findPlayerInLineup(tempLineup, swapPlayer);
+      console.log(selectedTempPlayer, swapTempPlayer, selectedIndex);
       if (selectedTempPlayer && swapTempPlayer) {
         handlePlayerChange(
-          selectedTempPlayer,
+          selectedTempPlayer.player,
           name,
-          swapTempPlayer,
-          selectedIndex,
+          swapTempPlayer.player,
+          selectedTempPlayer.index,
           tempLineup
         );
         updateTeamMutation.mutate(tempTeam);
@@ -130,7 +133,7 @@ const TeamPage = () => {
       const tempLineup = getWeeklyLineup(week, tempTeam, league?.lineupSettings);
       const selectedTempPlayer = findPlayerInLineup(tempLineup, selectedPlayer);
       if (selectedTempPlayer) {
-        handleBenchPlayer(selectedTempPlayer, tempLineup);
+        handleBenchPlayer(selectedTempPlayer.player, tempLineup);
         updateTeamMutation.mutate(tempTeam);
       }
     }

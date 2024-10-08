@@ -151,10 +151,10 @@ export const TeamTable = ({
                         <span className="flex-nowrap ml-2">{player.fullName}</span>
                       </div>
                     </td>
-                    {opponentTeam && nflDefenseStats && (
+                    {nflDefenseStats && (
                       <td className="centered-td align-middle">
                         <div>
-                          {player.team && playerTeamIsNflAbbreviation(player.team) ? (
+                          {opponentTeam && playerTeamIsNflAbbreviation(player.team) ? (
                             <MatchupOverlay
                               player={player}
                               opponentTeam={opponentTeam}

@@ -42,7 +42,6 @@ export const useSingleTeam = (teamId?: string) => {
     },
     {
       onSuccess: (data) => {
-        console.log(data);
         queryClient.setQueryData(["team", teamId], { team: data.team });
       },
       onError: (error) => {

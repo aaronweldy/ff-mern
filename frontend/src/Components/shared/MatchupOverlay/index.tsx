@@ -3,7 +3,6 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { AbbreviatedNflTeam, TeamSchedule, Week, TeamFantasyPositionPerformance, FinalizedPlayer, FullTeamToAbbreviation, FullNflTeam } from "@ff-mern/ff-types";
 import { NflRankedText } from "../NflRankedText";
 import { InlineTeamTile } from "../InlineTeamTile";
-import { playerTeamIsNflAbbreviation } from "@ff-mern/ff-types";
 
 interface MatchupOverlayProps {
     player: FinalizedPlayer;
