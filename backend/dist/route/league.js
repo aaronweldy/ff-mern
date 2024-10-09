@@ -326,6 +326,10 @@ router.post("/:leagueId/playerScores/", (req, res) => __awaiter(void 0, void 0, 
     const { players, week } = req.body;
     const teams = yield getTeamsInLeague(leagueId);
     const league = (yield db.collection("leagues").doc(leagueId).get()).data();
+    if (!league) {
+        res.status(404).send("League not found");
+        return;
+    }
     if (week > league.lastScoredWeek) {
         const resp = { teams, league, players: {} };
         res.status(200).send(resp);
