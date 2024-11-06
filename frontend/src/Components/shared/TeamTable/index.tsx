@@ -31,6 +31,7 @@ type TeamTableProps = {
   name: TableType;
   week: Week;
   isOwner: boolean;
+  isAdmin?: boolean;
   handlePlayerChange: (
     player: FinalizedPlayer,
     name: TableType,
@@ -77,6 +78,7 @@ export const TeamTable = ({
   name,
   week,
   isOwner,
+  isAdmin = false,
   handlePlayerChange,
   handleBenchPlayer,
   teamId,
@@ -100,7 +102,7 @@ export const TeamTable = ({
             <th className="text-center">Player</th>
             <th className="text-center">Matchup</th>
             {showScores && <th className="text-center">Points</th>}
-            <th className="text-center">Stats</th>
+            {showScores && <th className="text-center">Stats</th>}
             {isOwner && name === "starters" ? <th>Backup</th> : null}
           </tr>
         </thead>
@@ -124,14 +126,14 @@ export const TeamTable = ({
                       player.fullName +
                       i.toString()
                     }
-                    className={hasPlayerAlreadyPlayed(opponentTeam && opponentTeam[week] && opponentTeam[week].gameTime) ? 'player-played' : ''}
+                    className={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam && opponentTeam[week] && opponentTeam[week].gameTime) ? 'player-played' : ''}
                   >
                     {isOwner ? (
                       <td className="centered-td align-middle">
                         <PlayerActionButton
                           player={player}
                           oppositePlayers={findOppositePlayers(player, name === "starters", players)}
-                          disabled={hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
+                          disabled={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
                           handlePlayerChange={handlePlayerChange}
                           handleBenchPlayer={handleBenchPlayer}
                           teamId={teamId}
@@ -178,7 +180,7 @@ export const TeamTable = ({
                         <PlayerActionButton
                           player={player}
                           oppositePlayers={findOppositePlayers(player, true, players)}
-                          disabled={hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
+                          disabled={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
                           handlePlayerChange={handlePlayerChange}
                           teamId={teamId}
                           actionType="backup"

@@ -74,7 +74,7 @@ export default function AdjustLineups() {
         currentLineup
       );
       selectedTeam.weekInfo[week].finalizedLineup = currentLineup;
-      updateTeamMutation.mutate(selectedTeam);
+      updateTeamMutation.mutate({ team: selectedTeam, isAdmin: true });
     }
   };
 
@@ -82,7 +82,7 @@ export default function AdjustLineups() {
     if (teamId && selectedTeam) {
       handleBenchPlayer(selectedPlayer, currentLineup);
       selectedTeam.weekInfo[week].finalizedLineup = currentLineup;
-      updateTeamMutation.mutate(selectedTeam);
+      updateTeamMutation.mutate({ team: selectedTeam, isAdmin: true });
     }
   };
 
@@ -141,6 +141,7 @@ export default function AdjustLineups() {
                 handleBenchPlayer={onBench}
                 handlePlayerChange={onPlayerChange}
                 isOwner
+                isAdmin
                 teamId={selectedTeam.id}
               />
             </Col>
@@ -158,6 +159,7 @@ export default function AdjustLineups() {
                 handleBenchPlayer={onBench}
                 handlePlayerChange={onPlayerChange}
                 isOwner
+                isAdmin
                 teamId={selectedTeam.id}
               />
             </Col>

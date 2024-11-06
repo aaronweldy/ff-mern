@@ -43,7 +43,7 @@ const TeamPage = () => {
     week,
     () => {
       if (team) {
-        updateTeamMutation.mutate(team);
+        updateTeamMutation.mutate({ team });
       }
     },
     team,
@@ -76,7 +76,7 @@ const TeamPage = () => {
     const tempTeam = { ...team };
     if (teamName && teamName !== tempTeam.name) {
       tempTeam.name = teamName;
-      updateTeamMutation.mutate(tempTeam);
+      updateTeamMutation.mutate({ team: tempTeam });
     }
     if (
       imageUrl !== team.logo &&
@@ -91,7 +91,7 @@ const TeamPage = () => {
             if (teamName) {
               tempTeam.name = teamName;
             }
-            updateTeamMutation.mutate(tempTeam);
+            updateTeamMutation.mutate({ team: tempTeam });
           }).catch((error) => {
             console.error(error);
           });
@@ -122,7 +122,7 @@ const TeamPage = () => {
           selectedTempPlayer.index,
           tempLineup
         );
-        updateTeamMutation.mutate(tempTeam);
+        updateTeamMutation.mutate({ team: tempTeam });
       }
     }
   };
@@ -134,7 +134,7 @@ const TeamPage = () => {
       const selectedTempPlayer = findPlayerInLineup(tempLineup, selectedPlayer);
       if (selectedTempPlayer) {
         handleBenchPlayer(selectedTempPlayer.player, tempLineup);
-        updateTeamMutation.mutate(tempTeam);
+        updateTeamMutation.mutate({ team: tempTeam });
       }
     }
   };

@@ -60,8 +60,8 @@ router.post("/updateTeams/", (req, res) => {
 });
 
 router.put("/updateSingleTeam/", async (req, res) => {
-  const { team } = req.body;
-  console.log("Updating team: " + team.name);
+  const { team, isAdmin } = req.body;
+  console.log("Updating team: " + team.name + " by admin: " + isAdmin);
   try {
     const doc = db.collection("teams").doc(team.id);
     const prevData = (await doc.get()).data() as Team;
@@ -69,9 +69,9 @@ router.put("/updateSingleTeam/", async (req, res) => {
 
     const schedule = await getNflSchedule();
     for (const diff of lineupDiff) {
-      if (
+      if (!isAdmin && (
         (diff.oldPlayer && hasPlayerAlreadyPlayed(schedule, diff.oldPlayer.team, diff.week as Week)) ||
-        (diff.newPlayer && hasPlayerAlreadyPlayed(schedule, diff.newPlayer.team, diff.week as Week))
+        (diff.newPlayer && hasPlayerAlreadyPlayed(schedule, diff.newPlayer.team, diff.week as Week)))
       ) {
         return res.status(400).send("Cannot modify lineup for players who have already played");
       }

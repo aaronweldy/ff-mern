@@ -25,10 +25,10 @@ export const useSingleTeam = (teamId?: string) => {
       enabled: !!teamId,
     }
   );
-  const updateTeamMutation = useMutation<SingleTeamResponse, Error, Team>(
-    async (newTeam: Team) => {
+  const updateTeamMutation = useMutation<SingleTeamResponse, Error, { team: Team; isAdmin?: boolean }>(
+    async ({ team: newTeam, isAdmin }) => {
       const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/updateSingleTeam/`;
-      const body = JSON.stringify({ team: newTeam });
+      const body = JSON.stringify({ team: newTeam, isAdmin });
       const req = {
         method: "PUT",
         headers: { "content-type": "application/json" },
