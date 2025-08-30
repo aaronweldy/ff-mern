@@ -1,24 +1,24 @@
-import React, { useState, useCallback } from "react";
-import { Container, Form, Button, Row, Image, Col } from "react-bootstrap";
-import { Navigate } from "react-router-dom";
+import {
+  emptyDefaultPositions,
+  Position,
+  PositionInfo,
+  Team,
+} from "@ff-mern/ff-types";
+import { ref, uploadString } from "firebase/storage";
+import React, { useCallback, useState } from "react";
+import { Button, Col, Container, Form, Image, Row } from "react-bootstrap";
 import { useDropzone } from "react-dropzone";
+import { Navigate } from "react-router-dom";
 import { v4 } from "uuid";
-import EditLineupSettingsForm from "../shared/EditLineupSettingsForm";
 import { storage } from "../../firebase-config";
-import LeagueCreationTable from "../shared/LeagueCreationTable";
+import { useCreateLeagueMutation } from "../../hooks/query/useCreateLeagueMutation";
+import EditLineupSettingsForm from "../shared/EditLineupSettingsForm";
 import LeagueCreationHeader from "../shared/LeagueCreationHeader";
+import LeagueCreationTable from "../shared/LeagueCreationTable";
+import { IncDecInput } from "./IncDecInput";
 import ScoringSettingCheckGroup, {
   ScoringType,
 } from "./ScoringSettingCheckGroup";
-import {
-  Team,
-  PositionInfo,
-  emptyDefaultPositions,
-  Position,
-} from "@ff-mern/ff-types";
-import { ref, uploadString } from "firebase/storage";
-import { useCreateLeagueMutation } from "../../hooks/query/useCreateLeagueMutation";
-import { IncDecInput } from "./IncDecInput";
 
 function CreateLeague() {
   const [numTeams, setNumTeams] = useState(0);
@@ -33,7 +33,7 @@ function CreateLeague() {
   const [superflexLineups, setSuperflexLineups] = useState("0");
   const [scoring, setScoring] = useState("Standard");
   const [imageUrl, setImageUrl] = useState(
-    `${process.env.REACT_APP_DEFAULT_LOGO}`
+    `${import.meta.env.VITE_DEFAULT_LOGO}`
   );
   const createLeagueQuery = useCreateLeagueMutation({
     league: leagueName,
@@ -118,7 +118,7 @@ function CreateLeague() {
     setLoading(true);
     const id = v4();
     const leagueRef = ref(storage, `logos/${id}`);
-    if (imageUrl !== process.env.REACT_APP_DEFAULT_LOGO) {
+    if (imageUrl !== import.meta.env.VITE_DEFAULT_LOGO) {
       uploadString(leagueRef, imageUrl, "data_url")
         .then(async () => {
           createLeagueQuery.mutate(id);

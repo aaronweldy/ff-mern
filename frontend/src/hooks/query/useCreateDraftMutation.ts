@@ -13,7 +13,7 @@ export const useCreateDraft = (
     async (state: DraftFormState) => {
       console.log("creating draft", state);
       if (league) {
-        const url = process.env.REACT_APP_PUBLIC_URL + "/api/v1/draft/create/";
+        const url = import.meta.env.VITE_PUBLIC_URL + "/api/v1/draft/create/";
         const body: CreateDraftRequest = {
           leagueId,
           draftSettings: {

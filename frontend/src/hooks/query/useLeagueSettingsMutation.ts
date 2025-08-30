@@ -9,7 +9,7 @@ export const useLeagueSettingsMutation = (id: string) => {
     ScoringSetting[]
   >(
     async (settings) => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/updateScoringSettings/`;
+      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${id}/updateScoringSettings/`;
       const req = {
         method: "PATCH",
         headers: { "content-type": "application/json" },

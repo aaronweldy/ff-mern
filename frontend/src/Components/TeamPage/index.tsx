@@ -1,25 +1,25 @@
-import React, { useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
-import { Button, ButtonGroup, Col, Container, Row, Toast } from "react-bootstrap";
-import { auth, storage } from "../../firebase-config";
-import { TeamTable } from "../shared/TeamTable";
-import LeagueButton from "../shared/LeagueButton";
-import ImageModal from "../shared/ImageModal";
-import EditWeek from "../shared/EditWeek";
-import "../../CSS/LeaguePages.css";
-import { LineupSettings, FinalizedPlayer, Week } from "@ff-mern/ff-types";
-import { useTeamTable } from "../../hooks/useTeamTable";
-import { Header } from "./Header";
-import { getWeeklyLineup, findPlayerInLineup } from "../utils/getWeeklyLineup";
-import { DisplayLastUpdated } from "./DisplayLastUpdated";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { FinalizedPlayer, LineupSettings, Week } from "@ff-mern/ff-types";
 import { useAuthUser } from "@react-query-firebase/auth";
+import { getDownloadURL, ref, uploadString } from "firebase/storage";
+import cloneDeep from "lodash/cloneDeep";
+import { useMemo, useState } from "react";
+import { Button, ButtonGroup, Col, Container, Row, Toast } from "react-bootstrap";
+import { useParams } from "react-router-dom";
+import "../../CSS/LeaguePages.css";
+import { auth, storage } from "../../firebase-config";
 import { useSingleTeam } from "../../hooks/query/useSingleTeam";
-import { SuperflexModal } from "./SuperflexModal";
 import { useLeagueScoringData } from "../../hooks/useLeagueScoringData";
 import { useSuperflexData } from "../../hooks/useSuperflexData";
+import { useTeamTable } from "../../hooks/useTeamTable";
+import EditWeek from "../shared/EditWeek";
+import ImageModal from "../shared/ImageModal";
+import LeagueButton from "../shared/LeagueButton";
 import { QuicksetDropdown } from "../shared/QuicksetDropdown";
-import cloneDeep from "lodash/cloneDeep";
+import { TeamTable } from "../shared/TeamTable";
+import { findPlayerInLineup, getWeeklyLineup } from "../utils/getWeeklyLineup";
+import { DisplayLastUpdated } from "./DisplayLastUpdated";
+import { Header } from "./Header";
+import { SuperflexModal } from "./SuperflexModal";
 const TeamPage = () => {
   const { id, leagueId } = useParams() as { id: string; leagueId: string };
   const {
@@ -80,7 +80,7 @@ const TeamPage = () => {
     }
     if (
       imageUrl !== team.logo &&
-      imageUrl !== process.env.REACT_APP_DEFAULT_LOGO
+      imageUrl !== import.meta.env.VITE_DEFAULT_LOGO
     ) {
       uploadString(ref(storage, `${team.id}/logo`), imageUrl, "data_url").then(
         (snapshot) => {

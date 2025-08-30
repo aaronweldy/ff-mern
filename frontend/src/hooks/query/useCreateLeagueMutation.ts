@@ -1,4 +1,4 @@
-import { Team, PositionInfo } from "@ff-mern/ff-types";
+import { PositionInfo, Team } from "@ff-mern/ff-types";
 import { useMutation } from "react-query";
 
 type CreateLeagueType = {
@@ -16,7 +16,7 @@ type CreateLeagueResponse = {
 
 export const useCreateLeagueMutation = (info: CreateLeagueType) => {
   return useMutation<CreateLeagueResponse, Error, string>(async (id) => {
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/create/`;
+    const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/create/`;
     const resp = await fetch(url, {
       method: "POST",
       headers: {

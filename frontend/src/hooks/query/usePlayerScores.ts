@@ -6,7 +6,7 @@ const fetchPlayerScores = async (
   week: number,
   players?: string[]
 ) => {
-  const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${leagueId}/playerScores/`;
+  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${leagueId}/playerScores/`;
   const req = {
     method: "POST",
     headers: { "content-type": "application/json" },

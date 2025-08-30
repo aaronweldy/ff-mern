@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Navigate, useParams } from "react-router-dom";
-import { Container, Col, Button, Row } from "react-bootstrap";
-import { useLeague } from "../../hooks/query/useLeague";
-import { auth, storage } from "../../firebase-config";
-import "firebase/auth";
-import "../../CSS/LeaguePages.css";
 import { Team, TeamWeekInfo } from "@ff-mern/ff-types";
-import { ref, getDownloadURL } from "firebase/storage";
-import { useTeams } from "../../hooks/query/useTeams";
-import { useDeleteLeagueMutation } from "../../hooks/query/useDeleteLeagueMutation";
 import { useAuthUser } from "@react-query-firebase/auth";
+import "firebase/auth";
+import { getDownloadURL, ref } from "firebase/storage";
+import { useEffect, useMemo, useState } from "react";
+import { Button, Col, Container, Row } from "react-bootstrap";
+import { Navigate, useParams } from "react-router-dom";
+import "../../CSS/LeaguePages.css";
+import { auth, storage } from "../../firebase-config";
+import { useCreateDraft } from "../../hooks/query/useCreateDraftMutation";
+import { useDeleteDraftMutation } from "../../hooks/query/useDeleteDraftMutation";
+import { useDeleteLeagueMutation } from "../../hooks/query/useDeleteLeagueMutation";
+import { useDraftForLeague } from "../../hooks/query/useDraftForLeague";
+import { useLeague } from "../../hooks/query/useLeague";
+import { useTeams } from "../../hooks/query/useTeams";
+import { ConfirmationModal } from "../shared/ConfirmationModal";
+import { CommissionerOptions } from "./CommissionerOptions";
+import { CreateDraftModal, DraftFormState } from "./CreateDraftModal";
 import { CumulativeScoreTable } from "./CumulativeScoreTable";
 import { LeagueDeletionModal } from "./LeagueDeletionModal";
 import { LeagueName } from "./LeagueName";
-import { CommissionerOptions } from "./CommissionerOptions";
-import { useCreateDraft } from "../../hooks/query/useCreateDraftMutation";
-import { CreateDraftModal, DraftFormState } from "./CreateDraftModal";
-import { useDraftForLeague } from "../../hooks/query/useDraftForLeague";
-import "./style.css";
 import { LiveDraftRow } from "./LiveDraftRow";
-import { ConfirmationModal } from "../shared/ConfirmationModal";
-import { useDeleteDraftMutation } from "../../hooks/query/useDeleteDraftMutation";
+import "./style.css";
 
 export const LeagueHome = () => {
   const { id } = useParams() as { id: string };
@@ -53,7 +53,7 @@ export const LeagueHome = () => {
           return b.weekInfo.reduce(reducer, 0) - a.weekInfo.reduce(reducer, 0);
         });
         setTeams(sortedTeams);
-        if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
+        if (league.logo !== import.meta.env.VITE_DEFAULT_LOGO) {
           getDownloadURL(ref(storage, `logos/${league.logo}`)).then((url) => {
             setImgUrl(url);
           }).catch((err) => {

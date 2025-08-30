@@ -1,29 +1,29 @@
-import { onSchedule } from "firebase-functions/scheduler";
-import { onRequest } from "firebase-functions/https";
-import admin from "firebase-admin";
 import {
   AbbreviatedNflTeam,
   AbbreviationToFullTeam,
+  ESPNResponse,
   FullNflTeam,
-  singlePositionTypes,
+  NFLSchedule,
+  playerTeamIsNflAbbreviation,
+  ProjectedPlayer,
+  sanitizePlayerName,
   ScrapedADPData,
+  singlePositionTypes,
   TeamFantasyPositionPerformance,
   TeamToSchedule,
   Week,
-  ProjectedPlayer,
-  sanitizePlayerName,
-  playerTeamIsNflAbbreviation,
-  NFLSchedule,
-  ESPNResponse,
 } from "@ff-mern/ff-types";
-import fetch from "node-fetch";
 import { load } from "cheerio";
+import admin from "firebase-admin";
+import { onRequest } from "firebase-functions/https";
+import { onSchedule } from "firebase-functions/scheduler";
+import fetch from "node-fetch";
+import request from 'request';
+import { tabletojson } from 'tabletojson';
+import xray from 'x-ray';
 
 admin.initializeApp();
 const db = admin.firestore();
-import request from 'request';
-import xray from 'x-ray';
-import { tabletojson } from 'tabletojson';
 const x = xray();
 /**
  * Retrieve a web page and extract all tables from the HTML.
@@ -57,36 +57,50 @@ export const get = async (url: string): Promise<Array<any>> => {
 };
 
 
-type ScrapedTeamData = {
+type NFLTeamDefenseData = {
   Team: string;
-  Rank: string;
-  QB: string;
-  Rank_2: string;
-  RB: string;
-  Rank_3: string;
-  WR: string;
-  Rank_4: string;
-  TE: string;
-  Rank_5: string;
-  K: string;
-  Rank_6: string;
-  DST: string;
+  Rnk: string;
+  "Fan Pts Agnst": string;
 };
 
 const fetchTeamDefensePerformance = async () => {
-  const url = "https://www.fantasypros.com/nfl/points-allowed.php";
-  const data = await get(url);
-  let updateData: TeamFantasyPositionPerformance =
+  const updateData: TeamFantasyPositionPerformance =
     {} as TeamFantasyPositionPerformance;
-  (data[0] as ScrapedTeamData[]).forEach((teamData) => {
-    updateData[teamData.Team.toLowerCase() as FullNflTeam] = {
-      QB: parseInt(teamData.Rank),
-      RB: parseInt(teamData.Rank_2),
-      WR: parseInt(teamData.Rank_3),
-      TE: parseInt(teamData.Rank_4),
-      K: parseFloat(teamData.Rank_5),
-    };
-  });
+
+  const positions = [
+    { pos: 'QB', nflPosition: 1 },
+    { pos: 'RB', nflPosition: 2 },
+    { pos: 'WR', nflPosition: 3 },
+    { pos: 'TE', nflPosition: 4 },
+    { pos: 'K', nflPosition: 7 }
+  ] as const;
+
+  for (const { pos, nflPosition } of positions) {
+    const url = `https://fantasy.nfl.com/research/pointsagainst?position=${nflPosition}&statCategory=stats&statSeason=2024&statType=seasonStats`;
+    const data = await get(url);
+
+    if (data[0]) {
+      (data[0] as NFLTeamDefenseData[]).forEach((teamData: NFLTeamDefenseData) => {
+        if (teamData.Team && teamData.Rnk) {
+          const defenseIndex = teamData.Team.toLowerCase().indexOf(' defense');
+          const teamName = teamData.Team.slice(0, defenseIndex).toLowerCase() as FullNflTeam;
+
+          if (!updateData[teamName]) {
+            updateData[teamName] = {
+              QB: 0,
+              RB: 0,
+              WR: 0,
+              TE: 0,
+              K: 0
+            };
+          }
+
+          updateData[teamName][pos] = parseInt(teamData.Rnk);
+        }
+      });
+    }
+  }
+
   await db.collection("nflDefenseVsPositionStats").doc("dist").set(updateData);
 };
 

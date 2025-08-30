@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 
 const fetchSingleTeam = async (teamId?: string) => {
-  const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/${teamId}/`;
+  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/team/${teamId}/`;
   const resp = await fetch(url);
   if (!resp.ok) {
     throw new Error(resp.statusText);
@@ -27,7 +27,7 @@ export const useSingleTeam = (teamId?: string) => {
   );
   const updateTeamMutation = useMutation<SingleTeamResponse, Error, { team: Team; isAdmin?: boolean }>(
     async ({ team: newTeam, isAdmin }) => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/updateSingleTeam/`;
+      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/team/updateSingleTeam/`;
       const body = JSON.stringify({ team: newTeam, isAdmin });
       const req = {
         method: "PUT",
@@ -56,7 +56,7 @@ export const useSingleTeam = (teamId?: string) => {
     QuicksetRequest
   >(
     async (info) => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/setLineupFromProjection/`;
+      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/team/setLineupFromProjection/`;
       const body = JSON.stringify({
         team,
         week: info.week,

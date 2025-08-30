@@ -18,7 +18,7 @@
     "@types/x-ray": "^2.3.6",
     "cheerio": "^1.0.0-rc.10",
     "firebase-admin": "^12.5.0",
-    "firebase-functions": "^6.0.0",
+    "firebase-functions": "latest",
     "node-fetch": "2",
     "request": "^2.88.2",
     "tabletojson": "4.1.4",

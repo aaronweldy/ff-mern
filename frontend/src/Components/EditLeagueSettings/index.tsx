@@ -1,25 +1,25 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { Container, Form, Button, Row, Image, Col } from "react-bootstrap";
-import { Navigate, useParams } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { Button, Col, Container, Form, Image, Row } from "react-bootstrap";
 import { useDropzone } from "react-dropzone";
+import { Navigate, useParams } from "react-router-dom";
 import { v4 } from "uuid";
 import { storage } from "../../firebase-config";
 
-import EditLineupSettingsForm from "../shared/EditLineupSettingsForm";
-import { useLeague } from "../../hooks/query/useLeague";
-import LeagueCreationTable from "../shared/LeagueCreationTable";
-import LeagueCreationHeader from "../shared/LeagueCreationHeader";
 import {
-  Team,
-  PositionInfo,
   emptyDefaultPositions,
   Position,
+  PositionInfo,
+  Team,
 } from "@ff-mern/ff-types";
-import { ref, getDownloadURL, uploadString } from "firebase/storage";
+import { getDownloadURL, ref, uploadString } from "firebase/storage";
+import { useLeague } from "../../hooks/query/useLeague";
 import { useTeams } from "../../hooks/query/useTeams";
 import { useUpdateLeagueMutation } from "../../hooks/query/useUpdateLeagueMutation";
 import { IncDecInput } from "../CreateLeague/IncDecInput";
+import EditLineupSettingsForm from "../shared/EditLineupSettingsForm";
 import LeagueButton from "../shared/LeagueButton";
+import LeagueCreationHeader from "../shared/LeagueCreationHeader";
+import LeagueCreationTable from "../shared/LeagueCreationTable";
 
 function EditLeagueSettings() {
   const { id } = useParams() as { id: string };
@@ -36,7 +36,7 @@ function EditLeagueSettings() {
   const [numSuperflex, setNumSuperflex] = useState("0");
   const [changedLogo, setChangedLogo] = useState(false);
   const [imageUrl, setImageUrl] = useState(
-    `${process.env.REACT_APP_DEFAULT_LOGO}`
+    `${import.meta.env.VITE_DEFAULT_LOGO}`
   );
   const updateLeagueQuery = useUpdateLeagueMutation(id, {
     league,
@@ -52,7 +52,7 @@ function EditLeagueSettings() {
         setTeams(initTeams);
         setNumTeams(initTeams.length);
       }
-      if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
+      if (league.logo !== import.meta.env.VITE_DEFAULT_LOGO) {
         getDownloadURL(ref(storage, `logos/${league.logo}`)).then((url) => {
           setImageUrl(url);
         }).catch((err) => {
@@ -130,7 +130,7 @@ function EditLeagueSettings() {
     setLoading(true);
     const imageId = v4();
     const leagueRef = ref(storage, `logos/${imageId}`);
-    if (imageUrl !== process.env.REACT_APP_DEFAULT_LOGO && changedLogo) {
+    if (imageUrl !== import.meta.env.VITE_DEFAULT_LOGO && changedLogo) {
       uploadString(leagueRef, imageUrl, "data_url")
         .then(async () => {
           updateLeagueQuery.mutate({ imageId: imageId, changed: true });

@@ -31,7 +31,7 @@ export const useUpdateAllTeamsMutation = (
                 lineupSettings
               );
             }
-            const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/setLineupFromProjection/`;
+            const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/team/setLineupFromProjection/`;
             const body = JSON.stringify({
               team,
               week: week.toString(),

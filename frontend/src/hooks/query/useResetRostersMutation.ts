@@ -5,7 +5,7 @@ export const useResetRostersMutation = (leagueId: string) => {
   const queryClient = useQueryClient();
   return useMutation<Team[], Error>(
     async () => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${leagueId}/resetAllRosters/`;
+      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${leagueId}/resetAllRosters/`;
       const req = {
         method: "PATCH",
         headers: { "content-type": "application/json" },

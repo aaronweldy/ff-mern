@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { Card, CardDeck, Button, Container, Row } from "react-bootstrap";
-import { auth, storage } from "../../firebase-config";
-import "firebase/auth";
-import "../../CSS/LeaguePages.css";
 import { Team } from "@ff-mern/ff-types";
-import { ref, getDownloadURL } from "firebase/storage";
-import { useTeamsByUser } from "../../hooks/query/useTeamsByUser";
 import { useAuthUser } from "@react-query-firebase/auth";
+import "firebase/auth";
+import { getDownloadURL, ref } from "firebase/storage";
+import { useEffect, useState } from "react";
+import { Button, Card, CardDeck, Container, Row } from "react-bootstrap";
 import { Navigate } from "react-router-dom";
+import "../../CSS/LeaguePages.css";
+import { auth, storage } from "../../firebase-config";
+import { useTeamsByUser } from "../../hooks/query/useTeamsByUser";
 
 const TeamHub = () => {
   const user = useAuthUser("user", auth);
@@ -16,7 +16,7 @@ const TeamHub = () => {
   useEffect(() => {
     if (userTeamsQuery.isSuccess) {
       userTeamsQuery.data.teams.forEach((team: Team) => {
-        if (team.leagueLogo !== process.env.REACT_APP_DEFAULT_LOGO) {
+        if (team.leagueLogo !== import.meta.env.VITE_DEFAULT_LOGO) {
           getDownloadURL(ref(storage, `logos/${team.leagueLogo}`)).then(
             (newUrl) => {
               setTeamLogos((teamLogos) => {

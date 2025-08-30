@@ -22,7 +22,7 @@ export const useUpdateLeagueMutation = (
   const queryClient = useQueryClient();
   return useMutation<void, Error, MutationSettings>(
     async (settings) => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${leagueId}/update/`;
+      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${leagueId}/update/`;
       const body = {
         league: {
           ...info.league,

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "react-query";
 
 const fetchTeams = async (leagueId: string) => {
-  const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${leagueId}/teams/`;
+  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${leagueId}/teams/`;
   const resp = await fetch(url);
   if (!resp.ok) {
     throw new Error(resp.statusText);

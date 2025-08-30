@@ -24,7 +24,7 @@ const toJSON = (data: Response) => data.json();
 export class API {
   static fetchLeague(leagueId: string) {
     const url =
-      process.env.REACT_APP_PUBLIC_URL + `/api/v1/league/${leagueId}/`;
+      import.meta.env.VITE_PUBLIC_URL + `/api/v1/league/${leagueId}/`;
     return new Promise<LeagueAPIResponse>((resolve, _) => {
       fetch(url)
         .then((data) => data.json())
@@ -34,7 +34,7 @@ export class API {
 
   static runScores(id: string, week: number = 1, teams: Team[]) {
     const url =
-      process.env.REACT_APP_PUBLIC_URL + `/api/v1/league/${id}/runScores/`;
+      import.meta.env.VITE_PUBLIC_URL + `/api/v1/league/${id}/runScores/`;
     const reqDict = generatePostRequest({ week, teams });
     return new Promise<RunScoresResponse>((resolve, _) => {
       fetch(url, reqDict)
@@ -49,7 +49,7 @@ export class API {
     players,
   }: FetchPlayerScoresRequest) {
     const url =
-      process.env.REACT_APP_PUBLIC_URL +
+      import.meta.env.VITE_PUBLIC_URL +
       `/api/v1/league/${leagueId}/playerScores/`;
     const req = generatePostRequest({ players, week });
     return new Promise<PlayerScoresResponse>((resolve, reject) =>
@@ -60,10 +60,10 @@ export class API {
     );
   }
 
-  static validateAndUpdateTeams(teams: Team[]) {}
+  static validateAndUpdateTeams(teams: Team[]) { }
 
   static updateTeams(teams: Team[]) {
-    const url = process.env.REACT_APP_PUBLIC_URL + `/api/v1/team/updateTeams/`;
+    const url = import.meta.env.VITE_PUBLIC_URL + `/api/v1/team/updateTeams/`;
     const req = generatePostRequest({ teams });
     return new Promise<Team[]>((resolve, _) =>
       fetch(url, req)
@@ -74,7 +74,7 @@ export class API {
 
   static fetchGlobalPlayers() {
     const url =
-      process.env.REACT_APP_PUBLIC_URL + "/api/v1/nflData/allPlayers/";
+      import.meta.env.VITE_PUBLIC_URL + "/api/v1/nflData/allPlayers/";
     return new Promise<RosteredPlayer[]>((resolve, reject) => {
       fetch(url)
         .then((data) => data.json())
@@ -85,7 +85,7 @@ export class API {
 
   static fetchNflSchedule() {
     const url =
-      process.env.REACT_APP_PUBLIC_URL + "/api/v1/nflData/nflSchedule/";
+      import.meta.env.VITE_PUBLIC_URL + "/api/v1/nflData/nflSchedule/";
     return new Promise<TeamToSchedule>((resolve, reject) => {
       fetch(url)
         .then((data) => data.json())
@@ -96,7 +96,7 @@ export class API {
 
   static fetchNflDefenseStats() {
     const url =
-      process.env.REACT_APP_PUBLIC_URL + "/api/v1/nflData/nflDefenseStats/";
+      import.meta.env.VITE_PUBLIC_URL + "/api/v1/nflData/nflDefenseStats/";
     return new Promise<TeamFantasyPositionPerformance>((resolve, reject) => {
       fetch(url)
         .then((data) => data.json())
@@ -109,7 +109,7 @@ export class API {
 
   static fetchCumulativePlayerScores(leagueId: string) {
     const url =
-      process.env.REACT_APP_PUBLIC_URL +
+      import.meta.env.VITE_PUBLIC_URL +
       `/api/v1/league/${leagueId}/cumulativePlayerScores/`;
     return new Promise<CumulativePlayerScores>((resolve, reject) => {
       fetch(url)

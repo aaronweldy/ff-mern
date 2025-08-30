@@ -14,7 +14,7 @@ type JoinLeagueResponse = {
 };
 
 const getSearchResults = async (leagueName: string) => {
-  const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/find/${leagueName}/`;
+  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/find/${leagueName}/`;
   const resp = await fetch(url);
   if (!resp.ok) {
     throw new Error(resp.statusText);
@@ -23,7 +23,7 @@ const getSearchResults = async (leagueName: string) => {
 };
 
 const joinLeague = async ({ id, userEmail }: JoinLeagueInfo) => {
-  const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/join/`;
+  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${id}/join/`;
   const body = {
     owner: userEmail,
   };
@@ -47,7 +47,7 @@ export const useLeagueSearchMutations = () => {
       onSuccess: (data) => {
         Promise.all(
           Object.entries(data).map(async ([id, league]) => {
-            if (league.logo !== process.env.REACT_APP_DEFAULT_LOGO) {
+            if (league.logo !== import.meta.env.VITE_DEFAULT_LOGO) {
               const imgUrl = await getDownloadURL(
                 ref(storage, `logos/${league.logo}`)
               );

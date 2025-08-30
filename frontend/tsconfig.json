@@ -6,6 +6,18 @@
     "downlevelIteration": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "module": "es2022",
+    "target": "ESNext",
+    "types": [
+      "vite/client"
+    ],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "isolatedModules": true,
     "paths": {
       "react": [
         "./node_modules/@types/react"

@@ -1,18 +1,18 @@
+import { useAuthUser } from "@react-query-firebase/auth";
 import React, { useState } from "react";
 import {
-  Container,
-  Row,
-  Col,
-  InputGroup,
-  FormControl,
   Button,
   Card,
   CardDeck,
+  Col,
+  Container,
+  FormControl,
+  InputGroup,
+  Row,
 } from "react-bootstrap";
 import { Navigate } from "react-router-dom";
 import { auth } from "../../firebase-config";
 import { useLeagueSearchMutations } from "../../hooks/query/useLeagueSearchMutations";
-import { useAuthUser } from "@react-query-firebase/auth";
 
 const JoinLeague = () => {
   const [leagueName, setLeagueName] = useState("");
@@ -62,7 +62,7 @@ const JoinLeague = () => {
                     <Card.Img
                       variant="bottom"
                       className="mt-auto"
-                      src={urlMap[id] || process.env.REACT_APP_DEFAULT_LOGO}
+                      src={urlMap[id] || import.meta.env.VITE_DEFAULT_LOGO}
                     />
                     <Card.Title className="d-flex justify-content-center">
                       <div className="font-weight-bold">{league.name}</div>

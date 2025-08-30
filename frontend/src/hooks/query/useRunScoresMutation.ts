@@ -10,7 +10,7 @@ export const useRunScoresMutation = (
   return useMutation<RunScoresResponse, Error>(
     "runScores",
     async () => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/runScores/`;
+      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${id}/runScores/`;
       const req = {
         method: "POST",
         headers: { "content-type": "application/json" },

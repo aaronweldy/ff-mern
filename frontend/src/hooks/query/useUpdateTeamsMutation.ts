@@ -13,7 +13,7 @@ export const useUpdateTeamsMutation = (
   const queryClient = useQueryClient();
   return useMutation<UpdateTeamsResponse, Error>(
     async () => {
-      let url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/team/`;
+      let url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/team/`;
       if (validate) {
         url += "validateTeams/";
       } else {

@@ -6,7 +6,7 @@ type UploadPhotoRequest = {
 };
 
 const uploadPhoto = async ({ id, newUrl }: UploadPhotoRequest) => {
-  const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/user/${id}/updatePhoto/`;
+  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/user/${id}/updatePhoto/`;
   const req = {
     method: "POST",
     headers: { "content-type": "application/json" },

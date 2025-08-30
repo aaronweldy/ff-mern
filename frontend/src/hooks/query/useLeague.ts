@@ -7,7 +7,7 @@ type ApiResponse = {
 };
 
 const getLeagueData = async (id: string) => {
-  const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/league/${id}/`;
+  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${id}/`;
   const resp = await fetch(url);
   if (!resp.ok) {
     throw new Error(resp.statusText);

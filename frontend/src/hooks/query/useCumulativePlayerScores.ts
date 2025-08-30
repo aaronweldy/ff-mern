@@ -3,7 +3,7 @@ import { useQuery } from "react-query";
 
 const fetchCumulativePlayerScores = async (leagueId: string) => {
   const url =
-    process.env.REACT_APP_PUBLIC_URL +
+    import.meta.env.VITE_PUBLIC_URL +
     `/api/v1/league/${leagueId}/cumulativePlayerScores/`;
   const resp = await fetch(url);
   if (!resp.ok) {

@@ -1,29 +1,29 @@
-import React, { useEffect, useState, useReducer } from "react";
-import { useParams } from "react-router-dom";
-import {
-  Card,
-  CardDeck,
-  Container,
-  Row,
-  Col,
-  Button,
-  Image,
-} from "react-bootstrap";
-import PasswordModal from "./PasswordModal";
-import ImageModal from "../shared/ImageModal";
-import { auth, storage } from "../../firebase-config";
-import { getDownloadURL, uploadString, ref } from "firebase/storage";
+import { Team } from "@ff-mern/ff-types";
+import { useAuthUser } from "@react-query-firebase/auth";
 import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
   updateProfile,
 } from "firebase/auth";
+import { getDownloadURL, ref, uploadString } from "firebase/storage";
+import React, { useEffect, useReducer, useState } from "react";
+import {
+  Button,
+  Card,
+  CardDeck,
+  Col,
+  Container,
+  Image,
+  Row,
+} from "react-bootstrap";
+import { useParams } from "react-router-dom";
 import "../../CSS/LeaguePages.css";
-import { Team } from "@ff-mern/ff-types";
-import { useAuthUser } from "@react-query-firebase/auth";
-import { useUploadPhotoMutation } from "../../hooks/query/useUploadPhotoMutation";
+import { auth, storage } from "../../firebase-config";
 import { useTeamsByUser } from "../../hooks/query/useTeamsByUser";
+import { useUploadPhotoMutation } from "../../hooks/query/useUploadPhotoMutation";
+import ImageModal from "../shared/ImageModal";
+import PasswordModal from "./PasswordModal";
 
 type PasswordReducerState = {
   oldPassword: string;
@@ -41,16 +41,16 @@ type PasswordReducerAction =
   | { type: "setFirstNewPassword"; unmatched: boolean; password: string }
   | { type: "setSecondNewPassword"; unmatched: boolean; password: string }
   | {
-      type: "setFlags";
-      success: boolean;
-      incorrectPassword: boolean;
-      changePassword: boolean;
-      unmatched: boolean;
-    }
+    type: "setFlags";
+    success: boolean;
+    incorrectPassword: boolean;
+    changePassword: boolean;
+    unmatched: boolean;
+  }
   | {
-      type: "reset";
-      initState: PasswordReducerState;
-    };
+    type: "reset";
+    initState: PasswordReducerState;
+  };
 
 const passwordReducer = (
   state: PasswordReducerState,
@@ -218,7 +218,7 @@ const User = () => {
               <Image
                 src={
                   imageUrl ||
-                  `${process.env.REACT_APP_PUBLIC_URL}/football.jfif`
+                  `${import.meta.env.VITE_PUBLIC_URL}/football.jfif`
                 }
                 className="image-fit-height mr-3"
                 roundedCircle

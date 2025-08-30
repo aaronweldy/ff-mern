@@ -2,7 +2,7 @@ import { TeamFantasyPositionPerformance } from "@ff-mern/ff-types";
 import { useQuery } from "react-query";
 
 const fetchDefenseStats = async () => {
-  const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/nflData/nflDefenseStats/`;
+  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/nflData/nflDefenseStats/`;
   const resp = await fetch(url);
   if (!resp.ok) {
     throw new Error(resp.statusText);

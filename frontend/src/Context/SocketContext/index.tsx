@@ -33,8 +33,8 @@ export const SocketProvider = ({ children }: ProviderProps) => {
 
   useEffect(() => {
     let socket: SocketType | null = null;
-    if (tokenResult.isSuccess && process.env.REACT_APP_PUBLIC_URL) {
-      socket = io(process.env.REACT_APP_PUBLIC_URL || "", {
+    if (tokenResult.isSuccess && import.meta.env.VITE_PUBLIC_URL) {
+      socket = io(import.meta.env.VITE_PUBLIC_URL || "", {
         auth: { token: tokenResult?.data?.token },
       });
       dispatch({ type: "set", value: socket });

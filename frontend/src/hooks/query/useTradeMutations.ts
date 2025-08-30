@@ -8,7 +8,7 @@ export const useTradeMutations = (leagueId: string) => {
   const queryClient = useQueryClient();
 
   const proposeQuery = useMutation<void, Error, Trade>(async (trade) => {
-    const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/trade/propose/`;
+    const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/trade/propose/`;
     const resp = await fetch(url, {
       method: "POST",
       headers: {
@@ -23,7 +23,7 @@ export const useTradeMutations = (leagueId: string) => {
 
   const cancelQuery = useMutation<void, Error, string>(
     async (tradeId) => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/trade/${tradeId}/`;
+      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/trade/${tradeId}/`;
       const resp = await fetch(url, {
         headers: { "content-type": "application/json" },
         method: "DELETE",
@@ -42,7 +42,7 @@ export const useTradeMutations = (leagueId: string) => {
 
   const rejectQuery = useMutation<void, Error, string>(
     async (tradeId) => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/trade/${tradeId}/reject/`;
+      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/trade/${tradeId}/reject/`;
       const resp = await fetch(url, {
         headers: { "content-type": "application/json" },
         method: "PATCH",
@@ -61,7 +61,7 @@ export const useTradeMutations = (leagueId: string) => {
 
   const acceptQuery = useMutation<void, Error, string>(
     async (tradeId) => {
-      const url = `${process.env.REACT_APP_PUBLIC_URL}/api/v1/trade/${tradeId}/accept/`;
+      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/trade/${tradeId}/accept/`;
       const resp = await fetch(url, {
         headers: { "content-type": "application/json" },
         method: "PATCH",
