@@ -1,23 +1,26 @@
 import {
+  AbbreviatedNflTeam,
+  AbbreviationToFullTeam,
   FinalizedLineup,
   FinalizedPlayer,
+  NFLSchedule,
   QuicksetLineupType,
   setPlayerName,
   Team,
   Week,
-  NFLSchedule,
 } from "@ff-mern/ff-types";
 import { Router } from "express";
 import admin, { db } from "../config/firebase-config.js";
+import { getNflSchedule } from "../utils/db.js";
 import { fetchPlayerProjections } from "../utils/fetchRoutes.js";
 import { findLineupChanges } from "../utils/findLineupChanges.js";
-import { getNflSchedule } from "../utils/db.js";
 const router = Router();
 
-const hasPlayerAlreadyPlayed = (schedule: NFLSchedule, team: string, week: Week): boolean => {
-  if (!schedule[team] || !schedule[team][week] || !schedule[team][week].gameTime) return false;
+const hasPlayerAlreadyPlayed = (schedule: NFLSchedule, team: AbbreviatedNflTeam, week: Week): boolean => {
+  const fullTeam = AbbreviationToFullTeam[team];
+  if (!schedule[fullTeam] || !schedule[fullTeam][week] || !schedule[fullTeam][week].gameTime) return false;
   const now = new Date();
-  const gameDate = new Date(schedule[team][week].gameTime);
+  const gameDate = new Date(schedule[fullTeam][week].gameTime);
   return now > gameDate;
 };
 

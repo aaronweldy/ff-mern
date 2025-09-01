@@ -10,11 +10,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { FinalizedPlayer, setPlayerName, } from "@ff-mern/ff-types";
 import { Router } from "express";
 import admin, { db } from "../config/firebase-config.js";
+import { getNflSchedule } from "../utils/db.js";
 import { fetchPlayerProjections } from "../utils/fetchRoutes.js";
 import { findLineupChanges } from "../utils/findLineupChanges.js";
-import { getNflSchedule } from "../utils/db.js";
 const router = Router();
 const hasPlayerAlreadyPlayed = (schedule, team, week) => {
+    console.log(schedule[team], schedule[team][week], schedule[team][week].gameTime, "test");
     if (!schedule[team] || !schedule[team][week] || !schedule[team][week].gameTime)
         return false;
     const now = new Date();

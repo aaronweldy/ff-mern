@@ -41,7 +41,7 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json({ limit: "50mb" }), cors());
 
 app.get("/", (_, res) => {
-  res.json({ message: "API working" });
+  res.json({ message: "API working with hot reload!" });
 });
 
 app.use("/api/v1/user/", user);

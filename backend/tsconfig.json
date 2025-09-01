@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "target": "es6",
+    "target": "es2020",
+    "module": "ESNext",
     "noImplicitAny": true,
     "moduleResolution": "Node",
     "sourceMap": true,
@@ -16,7 +17,11 @@
       "src/types"
     ],
     "strictPropertyInitialization": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "ts-node": {
+    "esm": true
   },
   "references": [
     {
