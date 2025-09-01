@@ -65,8 +65,8 @@ export const CumulativeScoreTable = ({
                 .map((_, idx) => (
                   <td key={idx}>
                     {(
-                      team.weekInfo[idx + 1].weekScore +
-                      team.weekInfo[idx + 1].addedPoints
+                      team.weekInfo[idx + 1]?.weekScore +
+                      team.weekInfo[idx + 1]?.addedPoints
                     ).toFixed(2)}
                   </td>
                 )),

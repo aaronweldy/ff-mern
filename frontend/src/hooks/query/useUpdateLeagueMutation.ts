@@ -8,6 +8,7 @@ type UpdateLeagueRequest = {
   leagueName: string;
   posInfo: LineupSettings;
   numSuperflex: number;
+  numWeeks: number;
 };
 
 type MutationSettings = {
@@ -30,6 +31,7 @@ export const useUpdateLeagueMutation = (
           name: info.leagueName,
           lineupSettings: info.posInfo,
           numSuperflex: info.numSuperflex,
+          numWeeks: info.numWeeks,
           commissioners: info.teams
             .filter((team) => team.owner !== "default" && team.isCommissioner)
             .map((team) => team.owner),

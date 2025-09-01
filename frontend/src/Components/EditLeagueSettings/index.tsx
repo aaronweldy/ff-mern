@@ -28,8 +28,6 @@ function EditLeagueSettings() {
   const [numTeams, setNumTeams] = useState(0);
   const [teams, setTeams] = useState<Team[]>([]);
   const [deletedTeams, setDeletedTeams] = useState<Team[]>([]);
-  const [redirect, setRedirect] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [leagueName, setLeagueName] = useState("");
   const [posInfo, setPosInfo] = useState<PositionInfo>(emptyDefaultPositions);
   const [numWeeks, setNumWeeks] = useState(0);
@@ -45,6 +43,7 @@ function EditLeagueSettings() {
     leagueName,
     posInfo,
     numSuperflex: parseInt(numSuperflex),
+    numWeeks,
   });
   useEffect(() => {
     if (league) {
@@ -127,27 +126,22 @@ function EditLeagueSettings() {
   }
 
   async function handleLeagueSubmission() {
-    setLoading(true);
     const imageId = v4();
     const leagueRef = ref(storage, `logos/${imageId}`);
     if (imageUrl !== import.meta.env.VITE_DEFAULT_LOGO && changedLogo) {
       uploadString(leagueRef, imageUrl, "data_url")
         .then(async () => {
           updateLeagueQuery.mutate({ imageId: imageId, changed: true });
-          setRedirect(true);
-          setLoading(false);
         })
         .catch((e) => {
           console.log(e);
         });
     } else {
       updateLeagueQuery.mutate({ imageId: "", changed: false });
-      setRedirect(true);
-      setLoading(false);
     }
   }
 
-  if (redirect) {
+  if (updateLeagueQuery.isSuccess) {
     return <Navigate to={`/league/${id}/`} />;
   }
   return (
@@ -227,7 +221,7 @@ function EditLeagueSettings() {
           </Button>
         </Form.Row>
       </Form>
-      {loading ? <div className="spinning-loader" /> : ""}
+      {updateLeagueQuery.isLoading ? <div className="spinning-loader" /> : ""}
     </Container>
   );
 }
