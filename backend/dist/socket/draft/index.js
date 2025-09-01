@@ -1,23 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 import { getCurrentPickInfo, RosteredPlayer, } from "@ff-mern/ff-types";
 import { auth, db } from "../../config/firebase-config.js";
 import { addPlayerToTeam, buildPlayersByTeam, linearizeSelections, rebuildPlayersAndSelections, } from "./utils.js";
@@ -30,7 +10,7 @@ export class DraftSocket {
         this.socket = socket;
         this.uid = user.uid;
         socket.on("disconnect", () => this.onDisconnect());
-        socket.on("join room", (room) => __awaiter(this, void 0, void 0, function* () { return this.onJoinRoom(room); }));
+        socket.on("join room", async (room) => this.onJoinRoom(room));
         socket.on("leave room", (room) => this.onLeaveRoom(room));
         socket.on("draftPick", (pick, room) => this.onDraftPick(pick, room));
         socket.on("sendMessage", (message, room) => this.onChatMessage(message, room));
@@ -55,7 +35,7 @@ export class DraftSocket {
                     .delete();
             }
         }
-        const _a = state.draftState, { availablePlayers, selections } = _a, rest = __rest(_a, ["availablePlayers", "selections"]);
+        const { availablePlayers, selections, ...rest } = state.draftState;
         db.collection("drafts").doc(roomId).set(rest);
     }
     onDisconnect() {
@@ -66,49 +46,44 @@ export class DraftSocket {
         });
         delete connectedUsers[this.uid];
     }
-    onJoinRoom(room) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            this.socket.join(room);
-            if (!activeRooms[room]) {
-                activeRooms[room] = {};
+    async onJoinRoom(room) {
+        this.socket.join(room);
+        if (!activeRooms[room]) {
+            activeRooms[room] = {};
+        }
+        let state = activeDrafts[room];
+        if (!state) {
+            try {
+                const { draftState, availablePlayers, selections, league } = await rebuildPlayersAndSelections(room);
+                draftState.availablePlayers = availablePlayers;
+                draftState.selections = selections;
+                activeDrafts[room] = {
+                    league,
+                    chatMessages: [],
+                    playersByTeam: buildPlayersByTeam(league.lineupSettings, draftState.settings.draftOrder, linearizeSelections(draftState.selections)),
+                    draftState: { ...draftState, availablePlayers, selections },
+                };
             }
-            let state = activeDrafts[room];
-            if (!state) {
-                try {
-                    const { draftState, availablePlayers, selections, league } = yield rebuildPlayersAndSelections(room);
-                    draftState.availablePlayers = availablePlayers;
-                    draftState.selections = selections;
-                    activeDrafts[room] = {
-                        league,
-                        chatMessages: [],
-                        playersByTeam: buildPlayersByTeam(league.lineupSettings, draftState.settings.draftOrder, linearizeSelections(draftState.selections)),
-                        draftState: Object.assign(Object.assign({}, draftState), { availablePlayers, selections }),
-                    };
-                }
-                catch (e) {
-                    console.error(e);
-                    return;
-                }
+            catch (e) {
+                console.error(e);
+                return;
             }
-            activeRooms[room][this.uid] = {};
-            console.info("user", (_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email, "joined room", room);
-            this.socket.emit("sync", activeDrafts[room].draftState, {
-                playersByTeam: activeDrafts[room].playersByTeam,
-            });
-            if (activeDrafts[room].league.commissioners.includes(this.uid)) {
-                this.socket.emit("isCommissioner");
-            }
+        }
+        activeRooms[room][this.uid] = {};
+        console.info("user", connectedUsers[this.uid]?.email, "joined room", room);
+        this.socket.emit("sync", activeDrafts[room].draftState, {
+            playersByTeam: activeDrafts[room].playersByTeam,
         });
+        if (activeDrafts[room].league.commissioners.includes(this.uid)) {
+            this.socket.emit("isCommissioner");
+        }
     }
     onLeaveRoom(room) {
-        var _a;
         this.socket.leave(room);
         delete activeRooms[room][this.uid];
-        console.info("user", (_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email, "left room", room);
+        console.info("user", connectedUsers[this.uid]?.email, "left room", room);
     }
     onDraftPick(selection, room, autoPick) {
-        var _a;
         console.log("room", room, "received pick", selection);
         let state = activeDrafts[room];
         if (state) {
@@ -120,7 +95,7 @@ export class DraftSocket {
             const commissionerSelection = this.uid !== selection.selectedBy.owner;
             const pickMessage = {
                 sender: "system",
-                message: `Pick ${selection.pick}: ${commissionerSelection ? "Commissioner" : ""} ${(_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email} ${autoPick ? "auto" : ""}selects ${selection.player.fullName}, ${selection.player.position}, ${selection.player.team}`,
+                message: `Pick ${selection.pick}: ${commissionerSelection ? "Commissioner" : ""} ${connectedUsers[this.uid]?.email} ${autoPick ? "auto" : ""}selects ${selection.player.fullName}, ${selection.player.position}, ${selection.player.team}`,
                 timestamp: new Date().toISOString(),
                 type: "draft",
             };
@@ -139,10 +114,9 @@ export class DraftSocket {
         }
     }
     onChatMessage(message, room) {
-        var _a;
         console.log("room", room, "received message", message);
         const newMessage = {
-            sender: (_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email,
+            sender: connectedUsers[this.uid]?.email,
             message,
             timestamp: new Date().toISOString(),
             type: "chat",
@@ -162,7 +136,6 @@ export class DraftSocket {
         });
     }
     onUndoPick(room) {
-        var _a;
         console.log("room", room, "undid pick");
         const state = activeDrafts[room];
         if (!state || state.draftState.currentPick === 0) {
@@ -176,7 +149,7 @@ export class DraftSocket {
         state.draftState.currentPick -= 1;
         const undoMessage = {
             sender: "system",
-            message: `Commissioner ${(_a = connectedUsers[this.uid]) === null || _a === void 0 ? void 0 : _a.email} undid Round ${round}, Pick ${pickInRound}`,
+            message: `Commissioner ${connectedUsers[this.uid]?.email} undid Round ${round}, Pick ${pickInRound}`,
             timestamp: new Date().toISOString(),
             type: "draft",
         };
@@ -232,7 +205,7 @@ export class DraftSocket {
         });
     }
 }
-export const initSocket = (io) => __awaiter(void 0, void 0, void 0, function* () {
+export const initSocket = async (io) => {
     io.use((socket, next) => {
         const token = socket.handshake.auth.token;
         if (!token) {
@@ -253,21 +226,25 @@ export const initSocket = (io) => __awaiter(void 0, void 0, void 0, function* ()
         .where("phase", "==", "live")
         .get()
         .then((liveDrafts) => {
-        liveDrafts.forEach((doc) => __awaiter(void 0, void 0, void 0, function* () {
+        liveDrafts.forEach(async (doc) => {
             const draftData = doc.data();
-            const stateForDraft = yield rebuildPlayersAndSelections(doc.id);
+            const stateForDraft = await rebuildPlayersAndSelections(doc.id);
             const league = stateForDraft.league;
             activeDrafts[doc.id] = {
                 league,
-                draftState: Object.assign(Object.assign({}, stateForDraft.draftState), { availablePlayers: stateForDraft.availablePlayers, selections: stateForDraft.selections }),
+                draftState: {
+                    ...stateForDraft.draftState,
+                    availablePlayers: stateForDraft.availablePlayers,
+                    selections: stateForDraft.selections,
+                },
                 chatMessages: [],
                 playersByTeam: buildPlayersByTeam(league.lineupSettings, draftData.settings.draftOrder, linearizeSelections(stateForDraft.selections)),
             };
-        }));
+        });
     });
     io.on("connection", (socket) => {
         connectedUsers[socket.data.user.uid] = socket.data.user;
         new DraftSocket(socket, io, socket.data.user);
     });
-});
+};
 //# sourceMappingURL=index.js.map

@@ -1,27 +1,18 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import { ProjectedPlayer, getEmptyLineupFromSettings, positionTypes, } from "@ff-mern/ff-types";
 import { db } from "../../config/firebase-config.js";
-export const rebuildPlayersAndSelections = (roomId) => __awaiter(void 0, void 0, void 0, function* () {
+export const rebuildPlayersAndSelections = async (roomId) => {
     let availablePlayers = [];
     let selections = {};
     let draftState;
     console.log("rebuilding state for", roomId);
     const draftRef = db.collection("drafts").doc(roomId);
-    const [curState, players, selectionsRef] = yield Promise.all([
+    const [curState, players, selectionsRef] = await Promise.all([
         draftRef.get(),
         draftRef.collection("availablePlayers").orderBy("overall", "asc").get(),
         draftRef.collection("selections").get(),
     ]);
     if (curState.exists) {
-        const league = (yield db.collection("leagues").doc(curState.data().leagueId).get()).data();
+        const league = (await db.collection("leagues").doc(curState.data().leagueId).get()).data();
         draftState = curState.data();
         const picksPerRound = draftState.settings.draftOrder.length;
         selectionsRef.forEach((pick) => {
@@ -42,14 +33,14 @@ export const rebuildPlayersAndSelections = (roomId) => __awaiter(void 0, void 0,
     else {
         throw new Error("Draft does not exist");
     }
-});
+};
 export const buildPlayersByTeam = (lineupSettings, teamIds, selections) => {
     const playersByTeam = {};
     teamIds.forEach((teamId) => {
         playersByTeam[teamId] = getEmptyLineupFromSettings(lineupSettings, { createEmptyPlayer: ProjectedPlayer["createEmptyPlayer"] });
     });
     const remainingPlayersByTeam = teamIds.reduce((acc, cur) => {
-        acc[cur] = Object.assign({}, lineupSettings);
+        acc[cur] = { ...lineupSettings };
         return acc;
     }, {});
     if (selections) {

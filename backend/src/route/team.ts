@@ -16,6 +16,11 @@ import { fetchPlayerProjections } from "../utils/fetchRoutes.js";
 import { findLineupChanges } from "../utils/findLineupChanges.js";
 const router = Router();
 
+// Typeguard to check if a team is a valid NFL team (not "None")
+const isValidNflTeam = (team: AbbreviatedNflTeam | "None"): team is AbbreviatedNflTeam => {
+  return team !== "None";
+};
+
 const hasPlayerAlreadyPlayed = (schedule: NFLSchedule, team: AbbreviatedNflTeam, week: Week): boolean => {
   const fullTeam = AbbreviationToFullTeam[team];
   if (!schedule[fullTeam] || !schedule[fullTeam][week] || !schedule[fullTeam][week].gameTime) return false;
@@ -73,8 +78,8 @@ router.put("/updateSingleTeam/", async (req, res) => {
     const schedule = await getNflSchedule();
     for (const diff of lineupDiff) {
       if (!isAdmin && (
-        (diff.oldPlayer && hasPlayerAlreadyPlayed(schedule, diff.oldPlayer.team, diff.week as Week)) ||
-        (diff.newPlayer && hasPlayerAlreadyPlayed(schedule, diff.newPlayer.team, diff.week as Week)))
+        (diff.oldPlayer && isValidNflTeam(diff.oldPlayer.team) && hasPlayerAlreadyPlayed(schedule, diff.oldPlayer.team, diff.week as Week)) ||
+        (diff.newPlayer && isValidNflTeam(diff.newPlayer.team) && hasPlayerAlreadyPlayed(schedule, diff.newPlayer.team, diff.week as Week)))
       ) {
         return res.status(400).send("Cannot modify lineup for players who have already played");
       }

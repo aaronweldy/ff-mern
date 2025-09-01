@@ -1,25 +1,20 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-import { FinalizedPlayer, setPlayerName, } from "@ff-mern/ff-types";
+import { AbbreviationToFullTeam, FinalizedPlayer, setPlayerName, } from "@ff-mern/ff-types";
 import { Router } from "express";
 import admin, { db } from "../config/firebase-config.js";
 import { getNflSchedule } from "../utils/db.js";
 import { fetchPlayerProjections } from "../utils/fetchRoutes.js";
 import { findLineupChanges } from "../utils/findLineupChanges.js";
 const router = Router();
+// Typeguard to check if a team is a valid NFL team (not "None")
+const isValidNflTeam = (team) => {
+    return team !== "None";
+};
 const hasPlayerAlreadyPlayed = (schedule, team, week) => {
-    console.log(schedule[team], schedule[team][week], schedule[team][week].gameTime, "test");
-    if (!schedule[team] || !schedule[team][week] || !schedule[team][week].gameTime)
+    const fullTeam = AbbreviationToFullTeam[team];
+    if (!schedule[fullTeam] || !schedule[fullTeam][week] || !schedule[fullTeam][week].gameTime)
         return false;
     const now = new Date();
-    const gameDate = new Date(schedule[team][week].gameTime);
+    const gameDate = new Date(schedule[fullTeam][week].gameTime);
     return now > gameDate;
 };
 router.post("/validateTeams/", (req, res) => {
@@ -28,16 +23,24 @@ router.post("/validateTeams/", (req, res) => {
         admin
             .auth()
             .getUserByEmail(team.ownerName)
-            .then((user) => __awaiter(void 0, void 0, void 0, function* () {
+            .then(async (user) => {
             db.collection("teams")
                 .doc(team.id)
-                .update(Object.assign(Object.assign({}, team), { lastUpdated: new Date().toLocaleString(), owner: user.uid }));
-        }))
-            .catch(() => __awaiter(void 0, void 0, void 0, function* () {
+                .update({
+                ...team,
+                lastUpdated: new Date().toLocaleString(),
+                owner: user.uid,
+            });
+        })
+            .catch(async () => {
             db.collection("teams")
                 .doc(team.id)
-                .update(Object.assign({ owner: "default", lastUpdated: new Date().toLocaleString() }, team));
-        }));
+                .update({
+                owner: "default",
+                lastUpdated: new Date().toLocaleString(),
+                ...team,
+            });
+        });
     });
     res.status(200).send({ teams });
 });
@@ -46,50 +49,50 @@ router.post("/updateTeams/", (req, res) => {
     for (const team of teams) {
         db.collection("teams")
             .doc(team.id)
-            .update(Object.assign(Object.assign({}, team), { lastUpdated: new Date().toLocaleString() }));
+            .update({ ...team, lastUpdated: new Date().toLocaleString() });
     }
     res.status(200).send({ teams });
 });
-router.put("/updateSingleTeam/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.put("/updateSingleTeam/", async (req, res) => {
     const { team, isAdmin } = req.body;
     console.log("Updating team: " + team.name + " by admin: " + isAdmin);
     try {
         const doc = db.collection("teams").doc(team.id);
-        const prevData = (yield doc.get()).data();
+        const prevData = (await doc.get()).data();
         const lineupDiff = findLineupChanges(prevData.weekInfo, team.weekInfo);
-        const schedule = yield getNflSchedule();
+        const schedule = await getNflSchedule();
         for (const diff of lineupDiff) {
-            if (!isAdmin && ((diff.oldPlayer && hasPlayerAlreadyPlayed(schedule, diff.oldPlayer.team, diff.week)) ||
-                (diff.newPlayer && hasPlayerAlreadyPlayed(schedule, diff.newPlayer.team, diff.week)))) {
+            if (!isAdmin && ((diff.oldPlayer && isValidNflTeam(diff.oldPlayer.team) && hasPlayerAlreadyPlayed(schedule, diff.oldPlayer.team, diff.week)) ||
+                (diff.newPlayer && isValidNflTeam(diff.newPlayer.team) && hasPlayerAlreadyPlayed(schedule, diff.newPlayer.team, diff.week)))) {
                 return res.status(400).send("Cannot modify lineup for players who have already played");
             }
         }
         doc
-            .set(Object.assign(Object.assign({}, team), { lastUpdated: new Date().toLocaleString() }))
-            .then(() => __awaiter(void 0, void 0, void 0, function* () {
-            const teamData = (yield doc.get()).data();
+            .set({ ...team, lastUpdated: new Date().toLocaleString() })
+            .then(async () => {
+            const teamData = (await doc.get()).data();
             res.status(200).send({ team: teamData });
-        }));
+        });
     }
     catch (e) {
         console.log(e);
         res.status(500).send();
     }
-}));
-router.get("/:id/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const team = yield db.collection("teams").doc(req.params.id).get();
+});
+router.get("/:id/", async (req, res) => {
+    const team = await db.collection("teams").doc(req.params.id).get();
     res.status(200).json({
         team: team.data(),
     });
-}));
-router.post("/setLineupFromProjection/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+router.post("/setLineupFromProjection/", async (req, res) => {
     const { team, week, type, } = req.body;
     console.log(team.name);
     const weekNum = parseInt(week);
     if (type === "LastWeek" && parseInt(week) > 1) {
         team.weekInfo[weekNum].finalizedLineup =
             team.weekInfo[weekNum - 1].finalizedLineup;
-        yield db.collection("teams").doc(team.id).set(team);
+        await db.collection("teams").doc(team.id).set(team);
         res.status(200).send({ team });
         return;
     }
@@ -97,8 +100,8 @@ router.post("/setLineupFromProjection/", (req, res) => __awaiter(void 0, void 0,
         res.status(401).send();
         return;
     }
-    const projections = yield fetchPlayerProjections(week);
-    const newLineup = Object.assign({}, team.weekInfo[week].finalizedLineup);
+    const projections = await fetchPlayerProjections(week);
+    const newLineup = { ...team.weekInfo[week].finalizedLineup };
     const usedPlayers = new Set();
     for (const pos of Object.keys(team.weekInfo[weekNum].finalizedLineup)) {
         if (pos === "bench") {
@@ -131,8 +134,8 @@ router.post("/setLineupFromProjection/", (req, res) => __awaiter(void 0, void 0,
         return JSON.parse(JSON.stringify(newPlayer));
     });
     team.weekInfo[weekNum].finalizedLineup = newLineup;
-    yield db.collection("teams").doc(team.id).set(team);
+    await db.collection("teams").doc(team.id).set(team);
     res.status(200).send({ team });
-}));
+});
 export default router;
 //# sourceMappingURL=team.js.map

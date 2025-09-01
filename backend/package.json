@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "eslint ./",
     "test": "jest -i --verbose --coverage --runInBand",
-    "start": "nodemon",
+    "start": "tsx src/index.ts",
     "build": "tsc -b -v",
     "dboff": "killall mongod",
     "watch": "nodemon index.js",

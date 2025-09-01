@@ -15,8 +15,14 @@ export const handleNonKickerBackupResolution = (team, player, week, snaps, point
         const backupInd = team.weekInfo[week].finalizedLineup.bench.findIndex((p) => p.fullName === player.backup);
         let backupPlayer = team.weekInfo[week].finalizedLineup.bench[backupInd];
         const tmpLineup = curPlayerRef.lineup;
-        team.weekInfo[week].finalizedLineup[curPlayerRef.lineup][curInd] = Object.assign(Object.assign({}, backupPlayer), { lineup: tmpLineup });
-        team.weekInfo[week].finalizedLineup.bench[backupInd] = Object.assign(Object.assign({}, curPlayerRef), { lineup: "bench" });
+        team.weekInfo[week].finalizedLineup[curPlayerRef.lineup][curInd] = {
+            ...backupPlayer,
+            lineup: tmpLineup,
+        };
+        team.weekInfo[week].finalizedLineup.bench[backupInd] = {
+            ...curPlayerRef,
+            lineup: "bench",
+        };
         return backupPlayer.sanitizedName;
     }
     return player.sanitizedName;
