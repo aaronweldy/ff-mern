@@ -69,25 +69,86 @@ export const fetchLatestFantasyProsScoredWeek = async (targetWeek) => {
     const $ = load(data);
     return [parseInt($(".select-links").eq(0).find(":selected").text()), parseInt($("#single-week").attr("value"))];
 };
+// List of NFL team abbreviations for fetching snap counts
+const nflTeams = [
+    "ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE",
+    "DAL", "DEN", "DET", "GB", "HOU", "IND", "JAX", "KC",
+    "LAC", "LAR", "LV", "MIA", "MIN", "NE", "NO", "NYG",
+    "NYJ", "PHI", "PIT", "SEA", "SF", "TB", "TEN", "WSH"
+];
+/**
+ * Parse snap count from footballguys format.
+ * The format is "{snapCount}{percentage}%" where percentage is 1-100.
+ *
+ * Examples:
+ *   "61100%" -> 61 snaps at 100%
+ *   "6091%" -> 60 snaps at 91%
+ *   "712%" -> 7 snaps at 12%
+ *   "0" -> 0 snaps
+ */
+const parseFootballguysSnapCount = (value) => {
+    if (!value || value === "0")
+        return "0";
+    // Remove % sign
+    const numStr = value.replace('%', '');
+    if (!numStr || !/^\d+$/.test(numStr))
+        return "0";
+    // If no % sign, it's just a number (probably 0)
+    if (!value.includes('%')) {
+        return String(parseInt(numStr) || 0);
+    }
+    // Check for 100% case first (ends with "100")
+    if (numStr.endsWith('100') && numStr.length > 3) {
+        return numStr.slice(0, -3);
+    }
+    // Try 2-digit percentage (10-99)
+    if (numStr.length >= 3) {
+        const snapPart = numStr.slice(0, -2);
+        const pctPart = parseInt(numStr.slice(-2));
+        if (snapPart && pctPart >= 10 && pctPart <= 99) {
+            return snapPart;
+        }
+    }
+    // Try 1-digit percentage (1-9)
+    if (numStr.length >= 2) {
+        const snapPart = numStr.slice(0, -1);
+        const pctPart = parseInt(numStr.slice(-1));
+        if (snapPart && pctPart >= 1 && pctPart <= 9) {
+            return snapPart;
+        }
+    }
+    return "0";
+};
 export const fetchWeeklySnapCount = async (week) => {
     const year = getCurrentSeason();
-    console.log(year);
+    console.log("Fetching snap counts for", year, "week", week);
     const curStats = (await db
         .collection("weekStats")
         .doc(year + "week" + week)
         .get()).data().playerMap;
-    for (const pos of positions.slice(0, 4)) {
-        const url = `https://www.fantasypros.com/nfl/reports/snap-counts/${pos}.php`;
-        const tableData = await get(url);
-        const players = tableData[0];
-        for (const player of players) {
-            if (player.Player !== "") {
-                const playerName = sanitizePlayerName(player.Player);
-                const playerStats = curStats[playerName];
+    // Fetch snap counts from footballguys.com for each team
+    const weekColName = `Wk ${week}_9`; // Column format from tabletojson
+    for (const team of nflTeams) {
+        try {
+            const url = `https://www.footballguys.com/stats/snap-counts/teams?team=${team}&year=${year}&type=snap-counts`;
+            const tableData = await get(url);
+            if (!tableData[0])
+                continue;
+            for (const player of tableData[0]) {
+                // Player name is in 'Safety' column (tabletojson parsing quirk)
+                const playerName = player['Safety'];
+                if (!playerName)
+                    continue;
+                const sanitizedName = sanitizePlayerName(playerName);
+                const playerStats = curStats[sanitizedName];
                 if (playerStats) {
-                    playerStats.snaps = player[week];
+                    const rawSnaps = player[weekColName] || "0";
+                    playerStats.snaps = parseFootballguysSnapCount(rawSnaps);
                 }
             }
+        }
+        catch (error) {
+            console.error(`Error fetching snap counts for ${team}:`, error);
         }
     }
     db.collection("weekStats")

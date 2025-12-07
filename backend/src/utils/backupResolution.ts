@@ -15,6 +15,9 @@ export const handleNonKickerBackupResolution = (
 ) => {
   const datePST = new Date().toLocaleString('en-US', { timeZone: "America/Los_Angeles" });
   const curDay = new Date(datePST).getDay();
+  // Trigger backup resolution when player scored 0 points and either:
+  // - Has 0 snaps (explicitly recorded as not playing)
+  // - Has no snap data (NaN - data might be missing for some players)
   if (
     curDay > 1 &&
     curDay < 4 &&
@@ -22,7 +25,7 @@ export const handleNonKickerBackupResolution = (
     player.backup !== "None" &&
     player.lineup !== "bench" &&
     points === 0 &&
-    ((week == 1 && isNaN(snaps)) || snaps === 0)
+    (snaps === 0 || isNaN(snaps))
   ) {
     console.log("Replacing " + player.fullName + " with backup " + player.backup);
     const curInd = team.weekInfo[week].finalizedLineup[player.lineup].findIndex(
