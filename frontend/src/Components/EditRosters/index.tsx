@@ -8,6 +8,7 @@ import {
   Button,
   Row,
   OverlayTrigger,
+  Card,
 } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
 import LeagueButton from "../shared/LeagueButton";
@@ -17,6 +18,9 @@ import {
   RosteredPlayer,
   AbbreviatedNflTeam,
   setPlayerName,
+  SinglePosition,
+  singlePositionTypes,
+  AbbreviationToFullTeam,
 } from "@ff-mern/ff-types";
 import { useTeams } from "../../hooks/query/useTeams";
 import { useUpdateTeamsMutation } from "../../hooks/query/useUpdateTeamsMutation";
@@ -24,15 +28,25 @@ import { InlineTeamTile } from "../shared/InlineTeamTile";
 import styles from "./EditRosters.module.css";
 import { ConfirmationModal } from "../shared/ConfirmationModal";
 import { useResetRostersMutation } from "../../hooks/query/useResetRostersMutation";
+import { useSyncPlayersMutation } from "../../hooks/query/useSyncPlayersMutation";
+import { useAddPlayerToGlobalMutation } from "../../hooks/query/useAddPlayerToGlobalMutation";
+
+const nflTeams = Object.keys(AbbreviationToFullTeam) as AbbreviatedNflTeam[];
 
 const EditRosters = () => {
   const [show, setShow] = useState(false);
+  const [showSyncConfirm, setShowSyncConfirm] = useState(false);
   const [redirect, setRedirect] = useState(false);
+  const [newPlayerName, setNewPlayerName] = useState("");
+  const [newPlayerTeam, setNewPlayerTeam] = useState<AbbreviatedNflTeam>("ARI");
+  const [newPlayerPosition, setNewPlayerPosition] = useState<SinglePosition>("QB");
   const { id } = useParams() as { id: string };
   const { teams, setTeams, query: teamsQuery } = useTeams(id);
   const { mutate: validateTeams } = useUpdateTeamsMutation(id, teams, true);
   const playersQuery = usePlayers();
   const resetRosters = useResetRostersMutation(id);
+  const syncPlayers = useSyncPlayersMutation();
+  const addPlayerToGlobal = useAddPlayerToGlobalMutation();
   const handleAddPlayer = (idx: number) => {
     const tempTeams = [...teams];
     tempTeams[idx].rosteredPlayers.push(
@@ -99,12 +113,29 @@ const EditRosters = () => {
     setShow(false);
   };
 
+  const onSyncConfirm = () => {
+    syncPlayers.mutate();
+    setShowSyncConfirm(false);
+  };
+
+  const handleAddPlayerToGlobal = () => {
+    if (!newPlayerName.trim()) return;
+    addPlayerToGlobal.mutate({
+      fullName: newPlayerName.trim(),
+      team: newPlayerTeam,
+      position: newPlayerPosition,
+    });
+    setNewPlayerName("");
+  };
+
   if (redirect) {
     return <Navigate to={`/league/${id}/`} />;
   } else if (
     teamsQuery.isLoading ||
     playersQuery.isLoading ||
-    resetRosters.isLoading
+    resetRosters.isLoading ||
+    syncPlayers.isLoading ||
+    addPlayerToGlobal.isLoading
   ) {
     return <div className="spinning-loader" />;
   }
@@ -116,6 +147,12 @@ const EditRosters = () => {
         title="Reset All Rosters"
         onConfirm={onResetConfirm}
       />
+      <ConfirmationModal
+        show={showSyncConfirm}
+        onHide={() => setShowSyncConfirm(false)}
+        title="Sync Global Players"
+        onConfirm={onSyncConfirm}
+      />
       <Row className="justify-content-center">
         <Col md={8}>
           <LeagueButton id={id} />
@@ -126,6 +163,78 @@ const EditRosters = () => {
           >
             Reset All Rosters
           </Button>
+          <Card className="mt-3 mb-3">
+            <Card.Header>Global Players Database</Card.Header>
+            <Card.Body>
+              <Row className="align-items-end mb-3">
+                <Col md={12}>
+                  <Button
+                    variant="outline-primary"
+                    onClick={() => setShowSyncConfirm(true)}
+                  >
+                    Sync Global Players from Web
+                  </Button>
+                  <Form.Text className="ms-2 text-muted">
+                    Re-fetches all players from FantasyPros depth charts
+                  </Form.Text>
+                </Col>
+              </Row>
+              <hr />
+              <Form.Label>Add Player to Global Database</Form.Label>
+              <Row className="align-items-end">
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>Player Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter player name"
+                      value={newPlayerName}
+                      onChange={(e) => setNewPlayerName(e.target.value)}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group>
+                    <Form.Label>Position</Form.Label>
+                    <Form.Select
+                      value={newPlayerPosition}
+                      onChange={(e) => setNewPlayerPosition(e.target.value as SinglePosition)}
+                    >
+                      {singlePositionTypes.map((pos) => (
+                        <option key={pos} value={pos}>
+                          {pos}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group>
+                    <Form.Label>NFL Team</Form.Label>
+                    <Form.Select
+                      value={newPlayerTeam}
+                      onChange={(e) => setNewPlayerTeam(e.target.value as AbbreviatedNflTeam)}
+                    >
+                      {nflTeams.map((team) => (
+                        <option key={team} value={team}>
+                          {team}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={2}>
+                  <Button
+                    variant="success"
+                    onClick={handleAddPlayerToGlobal}
+                    disabled={!newPlayerName.trim()}
+                  >
+                    Add Player
+                  </Button>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
           <Row>
             {teamsQuery.isSuccess
               ? teams.map((team, i) => (
