@@ -69,6 +69,12 @@ export const fetchLatestFantasyProsScoredWeek = async (targetWeek) => {
     const $ = load(data);
     return [parseInt($(".select-links").eq(0).find(":selected").text()), parseInt($("#single-week").attr("value"))];
 };
+/**
+ * Fetches the weekly stats that were previously stored by fetchWeeklyStats.
+ * Note: Snap count fetching was removed because the FantasyPros snap counts page
+ * is now gated behind a registration wall. Backup resolution now uses the "G" (games played)
+ * stat instead of snap counts.
+ */
 export const fetchWeeklySnapCount = async (week) => {
     const year = getCurrentSeason();
     console.log(year);
@@ -76,23 +82,6 @@ export const fetchWeeklySnapCount = async (week) => {
         .collection("weekStats")
         .doc(year + "week" + week)
         .get()).data().playerMap;
-    for (const pos of positions.slice(0, 4)) {
-        const url = `https://www.fantasypros.com/nfl/reports/snap-counts/${pos}.php`;
-        const tableData = await get(url);
-        const players = tableData[0];
-        for (const player of players) {
-            if (player.Player !== "") {
-                const playerName = sanitizePlayerName(player.Player);
-                const playerStats = curStats[playerName];
-                if (playerStats) {
-                    playerStats.snaps = player[week];
-                }
-            }
-        }
-    }
-    db.collection("weekStats")
-        .doc(year + "week" + week)
-        .update({ playerMap: curStats });
     return curStats;
 };
 export const fetchWeeklyStats = async (week) => {

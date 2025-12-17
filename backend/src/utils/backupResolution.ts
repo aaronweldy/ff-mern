@@ -10,11 +10,15 @@ export const handleNonKickerBackupResolution = (
   team: Team,
   player: FinalizedPlayer,
   week: number,
-  snaps: number,
+  gamesPlayed: string,
   points: number
 ) => {
   const datePST = new Date().toLocaleString('en-US', { timeZone: "America/Los_Angeles" });
   const curDay = new Date(datePST).getDay();
+  // Use "G" (games played) stat to determine if player played
+  // If G is "0", empty, or undefined, player didn't play
+  const gamesNum = parseFloat(gamesPlayed || "0");
+  const didNotPlay = isNaN(gamesNum) || gamesNum === 0;
   if (
     curDay > 1 &&
     curDay < 4 &&
@@ -22,7 +26,7 @@ export const handleNonKickerBackupResolution = (
     player.backup !== "None" &&
     player.lineup !== "bench" &&
     points === 0 &&
-    ((week == 1 && isNaN(snaps)) || snaps === 0)
+    didNotPlay
   ) {
     console.log("Replacing " + player.fullName + " with backup " + player.backup);
     const curInd = team.weekInfo[week].finalizedLineup[player.lineup].findIndex(
