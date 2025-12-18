@@ -286,7 +286,7 @@ router.post("/:leagueId/runScores/", async (req, res) => {
                     return;
                 }
                 if (player.position !== "K") {
-                    sanitizedPlayerName = handleNonKickerBackupResolution(team, player, week, parseInt(data[sanitizedPlayerName].statistics.snaps), data[sanitizedPlayerName].scoring.totalPoints);
+                    sanitizedPlayerName = handleNonKickerBackupResolution(team, player, week, data[sanitizedPlayerName].statistics.G, data[sanitizedPlayerName].scoring.totalPoints);
                 }
                 else {
                     sanitizedPlayerName = handleKickerBackupResolution(team, player, week, data);

@@ -328,7 +328,7 @@ router.post("/:leagueId/runScores/", async (req, res) => {
               team,
               player,
               week,
-              parseInt(data[sanitizedPlayerName].statistics.snaps),
+              data[sanitizedPlayerName].statistics.G,
               data[sanitizedPlayerName].scoring.totalPoints
             );
           } else {

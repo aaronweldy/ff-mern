@@ -21,30 +21,6 @@ import { get } from './tableScraper.js';
 
 export type ScrapedPlayer = Record<string, string>;
 export type TableScraperStatsResponse = Omit<DatabasePlayer, "CP%" | "Y/CMP">;
-export type PlayerSnapCountsResponse = {
-  1: Week;
-  2: Week;
-  3: Week;
-  4: Week;
-  5: Week;
-  6: Week;
-  7: Week;
-  8: Week;
-  9: Week;
-  10: Week;
-  11: Week;
-  12: Week;
-  13: Week;
-  14: Week;
-  15: Week;
-  16: Week;
-  17: Week;
-  18: Week;
-  Player: string;
-  Team: AbbreviatedNflTeam;
-  TTL: string;
-  AVG: string;
-};
 export const positions = ["qb", "rb", "wr", "te", "k"];
 export const longPositions = [
   "Quarterbacks",
@@ -130,6 +106,12 @@ export const fetchLatestFantasyProsScoredWeek = async (targetWeek: string) => {
   return [parseInt($(".select-links").eq(0).find(":selected").text()), parseInt($("#single-week").attr("value"))];
 };
 
+/**
+ * Fetches the weekly stats that were previously stored by fetchWeeklyStats.
+ * Note: Snap count fetching was removed because the FantasyPros snap counts page
+ * is now gated behind a registration wall. Backup resolution now uses the "G" (games played)
+ * stat instead of snap counts.
+ */
 export const fetchWeeklySnapCount = async (week: Week) => {
   const year = getCurrentSeason();
   console.log(year);
@@ -139,23 +121,6 @@ export const fetchWeeklySnapCount = async (week: Week) => {
       .doc(year + "week" + week)
       .get()
   ).data().playerMap as Record<string, DatabasePlayer>;
-  for (const pos of positions.slice(0, 4)) {
-    const url = `https://www.fantasypros.com/nfl/reports/snap-counts/${pos}.php`;
-    const tableData = await get(url);
-    const players = tableData[0] as PlayerSnapCountsResponse[];
-    for (const player of players) {
-      if (player.Player !== "") {
-        const playerName = sanitizePlayerName(player.Player);
-        const playerStats = curStats[playerName];
-        if (playerStats) {
-          playerStats.snaps = player[week];
-        }
-      }
-    }
-  }
-  db.collection("weekStats")
-    .doc(year + "week" + week)
-    .update({ playerMap: curStats });
   return curStats;
 };
 
