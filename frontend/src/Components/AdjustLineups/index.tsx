@@ -21,6 +21,8 @@ import { TeamSelectionDropdown } from "../shared/TeamSelectionDropdown";
 import { QuicksetDropdown } from "../shared/QuicksetDropdown";
 import { useUpdateAllTeamsMutation } from "../../hooks/query/useQuicksetAllTeamsMutation";
 import { QuicksetAllDropdown } from "./QuicksetAllDropdown";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 export default function AdjustLineups() {
   const { id } = useParams() as { id: string };
@@ -116,54 +118,56 @@ export default function AdjustLineups() {
         league &&
         scheduleQuery.isSuccess &&
         defenseStatsQuery.isSuccess && (
-          <Row className="mt-3">
-            <Col sm={2}>
-              <h2>{selectedTeam.name}</h2>
-            </Col>
-            <Col>
-              <QuicksetDropdown
-                week={week}
-                mutationFn={setHighestProjectedLineupMutation}
-                lineupSettings={league.lineupSettings}
-              />
-            </Col>
-            <Col xs={12}>
-              <h4>Starters</h4>
-            </Col>
-            <Col xs={12}>
-              <TeamTable
-                players={currentLineup}
-                positionsInTable={league.lineupSettings}
-                name="starters"
-                nflDefenseStats={defenseStatsQuery.data?.data}
-                nflSchedule={scheduleQuery.data}
-                week={week.toString() as Week}
-                handleBenchPlayer={onBench}
-                handlePlayerChange={onPlayerChange}
-                isOwner
-                isAdmin
-                teamId={selectedTeam.id}
-              />
-            </Col>
-            <Col xs={12}>
-              <h4>Bench</h4>
-            </Col>
-            <Col xs={12}>
-              <TeamTable
-                players={currentLineup}
-                positionsInTable={{ bench: 1 } as LineupSettings}
-                name="bench"
-                nflDefenseStats={defenseStatsQuery.data?.data}
-                nflSchedule={scheduleQuery.data}
-                week={week.toString() as Week}
-                handleBenchPlayer={onBench}
-                handlePlayerChange={onPlayerChange}
-                isOwner
-                isAdmin
-                teamId={selectedTeam.id}
-              />
-            </Col>
-          </Row>
+          <DndProvider backend={HTML5Backend}>
+            <Row className="mt-3">
+              <Col sm={2}>
+                <h2>{selectedTeam.name}</h2>
+              </Col>
+              <Col>
+                <QuicksetDropdown
+                  week={week}
+                  mutationFn={setHighestProjectedLineupMutation}
+                  lineupSettings={league.lineupSettings}
+                />
+              </Col>
+              <Col xs={12}>
+                <h4>Starters</h4>
+              </Col>
+              <Col xs={12}>
+                <TeamTable
+                  players={currentLineup}
+                  positionsInTable={league.lineupSettings}
+                  name="starters"
+                  nflDefenseStats={defenseStatsQuery.data?.data}
+                  nflSchedule={scheduleQuery.data}
+                  week={week.toString() as Week}
+                  handleBenchPlayer={onBench}
+                  handlePlayerChange={onPlayerChange}
+                  isOwner
+                  isAdmin
+                  teamId={selectedTeam.id}
+                />
+              </Col>
+              <Col xs={12}>
+                <h4>Bench</h4>
+              </Col>
+              <Col xs={12}>
+                <TeamTable
+                  players={currentLineup}
+                  positionsInTable={{ bench: 1 } as LineupSettings}
+                  name="bench"
+                  nflDefenseStats={defenseStatsQuery.data?.data}
+                  nflSchedule={scheduleQuery.data}
+                  week={week.toString() as Week}
+                  handleBenchPlayer={onBench}
+                  handlePlayerChange={onPlayerChange}
+                  isOwner
+                  isAdmin
+                  teamId={selectedTeam.id}
+                />
+              </Col>
+            </Row>
+          </DndProvider>
         )}
       {(setHighestProjectedLineupMutation.isLoading ||
         updateAllLineups.isLoading) && <div className="spinning-loader" />}
