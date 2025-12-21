@@ -8,6 +8,7 @@ interface PlayerActionButtonProps {
     player: FinalizedPlayer;
     oppositePlayers: FinalizedPlayer[];
     disabled: boolean;
+    selectedIndex: number;
     handlePlayerChange: (
         player: FinalizedPlayer,
         name: TableType,
@@ -25,6 +26,7 @@ export const PlayerActionButton: React.FC<PlayerActionButtonProps> = ({
     player,
     oppositePlayers,
     disabled,
+    selectedIndex,
     handlePlayerChange,
     handleBenchPlayer,
     teamId,
@@ -38,7 +40,7 @@ export const PlayerActionButton: React.FC<PlayerActionButtonProps> = ({
                     <Dropdown.Item
                         key={j}
                         onClick={() =>
-                            handlePlayerChange(player, tableType, oppPlayer, -1, teamId)
+                            handlePlayerChange(player, tableType, oppPlayer, selectedIndex, teamId)
                         }
                     >
                         {oppPlayer.lineup}: {oppPlayer.fullName}

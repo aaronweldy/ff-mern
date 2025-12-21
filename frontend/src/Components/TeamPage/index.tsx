@@ -5,6 +5,8 @@ import cloneDeep from "lodash/cloneDeep";
 import { useMemo, useState } from "react";
 import { Button, ButtonGroup, Col, Container, Row, Toast } from "react-bootstrap";
 import { useParams } from "react-router-dom";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import "../../CSS/LeaguePages.css";
 import { auth, storage } from "../../firebase-config";
 import { useSingleTeam } from "../../hooks/query/useSingleTeam";
@@ -220,39 +222,41 @@ const TeamPage = () => {
           <Row>
             <h3>Starters</h3>
           </Row>
-          <Row>
-            <TeamTable
-              isOwner={user.data?.uid === team.owner && canEditRoster}
-              players={lineup}
-              positionsInTable={league.lineupSettings}
-              nflSchedule={nflScheduleQuery?.data}
-              nflDefenseStats={defenseStatsQuery?.data?.data}
-              name="starters"
-              week={week.toString() as Week}
-              handleBenchPlayer={onBench}
-              handlePlayerChange={onChange}
-              showScores={true}
-              leagueId={leagueId}
-            />
-          </Row>
-          <Row>
-            <h3>Bench</h3>
-          </Row>
-          <Row>
-            <TeamTable
-              isOwner={user.data?.uid === team.owner && canEditRoster}
-              players={lineup}
-              positionsInTable={{ bench: 1 } as LineupSettings}
-              nflSchedule={nflScheduleQuery?.data}
-              nflDefenseStats={defenseStatsQuery?.data?.data}
-              name="bench"
-              week={week.toString() as Week}
-              handleBenchPlayer={onBench}
-              handlePlayerChange={onChange}
-              showScores={true}
-              leagueId={leagueId}
-            />
-          </Row>
+          <DndProvider backend={HTML5Backend}>
+            <Row>
+              <TeamTable
+                isOwner={user.data?.uid === team.owner && canEditRoster}
+                players={lineup}
+                positionsInTable={league.lineupSettings}
+                nflSchedule={nflScheduleQuery?.data}
+                nflDefenseStats={defenseStatsQuery?.data?.data}
+                name="starters"
+                week={week.toString() as Week}
+                handleBenchPlayer={onBench}
+                handlePlayerChange={onChange}
+                showScores={true}
+                leagueId={leagueId}
+              />
+            </Row>
+            <Row>
+              <h3>Bench</h3>
+            </Row>
+            <Row>
+              <TeamTable
+                isOwner={user.data?.uid === team.owner && canEditRoster}
+                players={lineup}
+                positionsInTable={{ bench: 1 } as LineupSettings}
+                nflSchedule={nflScheduleQuery?.data}
+                nflDefenseStats={defenseStatsQuery?.data?.data}
+                name="bench"
+                week={week.toString() as Week}
+                handleBenchPlayer={onBench}
+                handlePlayerChange={onChange}
+                showScores={true}
+                leagueId={leagueId}
+              />
+            </Row>
+          </DndProvider>
           <SuperflexModal
             leagueLineupSettings={league.lineupSettings}
             show={showSuperflexModal}

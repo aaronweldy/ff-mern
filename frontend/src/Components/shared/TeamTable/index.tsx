@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useRef } from "react";
 import { Table } from "react-bootstrap";
 import {
   AbbreviationToFullTeam,
@@ -20,6 +20,7 @@ import { usePlayerScores } from "../../../hooks/query/usePlayerScores";
 import { PlayerActionButton } from '../PlayerActionButton';
 import { MatchupOverlay } from '../MatchupOverlay';
 import { getStatBreakdown } from "../../../utils/statBreakdown";
+import { useDrag, useDrop } from "react-dnd";
 
 type TableType = "starters" | "bench" | "backup";
 
@@ -70,6 +71,208 @@ const hasPlayerAlreadyPlayed = (gameTime: string | undefined): boolean => {
   return now > gameDate;
 };
 
+const dndItemType = "lineup-player";
+
+type LineupDragItem = {
+  player: FinalizedPlayer;
+  sourceTable: TableType;
+  sourceIndex: number;
+  sourceLineup: Position;
+};
+
+const slotAllowsPosition = (slot: Position, playerPosition: string) => {
+  if (slot === "bench") return true;
+  return slot.indexOf(playerPosition) >= 0;
+};
+
+type TeamTableRowProps = {
+  player: FinalizedPlayer;
+  rowIndex: number;
+  slot: Position;
+  name: TableType;
+  week: Week;
+  isOwner: boolean;
+  nflDefenseStats?: TeamFantasyPositionPerformance;
+  opponentTeam?: TeamSchedule;
+  disabled: boolean;
+  showScores: boolean;
+  teamId?: string;
+  oppositePlayers: FinalizedPlayer[];
+  backupOppositePlayers: FinalizedPlayer[];
+  handlePlayerChange: TeamTableProps["handlePlayerChange"];
+  handleBenchPlayer: TeamTableProps["handleBenchPlayer"];
+  playerScores?: ReturnType<typeof usePlayerScores>["data"];
+};
+
+const TeamTableRow = ({
+  player,
+  rowIndex,
+  slot,
+  name,
+  week,
+  isOwner,
+  nflDefenseStats,
+  opponentTeam,
+  disabled,
+  showScores,
+  teamId,
+  oppositePlayers,
+  backupOppositePlayers,
+  handlePlayerChange,
+  handleBenchPlayer,
+  playerScores,
+}: TeamTableRowProps) => {
+  const canDrag = isOwner && !disabled && player.fullName !== "";
+  const rowRef = useRef<HTMLTableRowElement>(null);
+
+  const [{ isDragging }, drag] = useDrag(
+    () => ({
+      type: dndItemType,
+      item: {
+        player,
+        sourceTable: name,
+        sourceIndex: rowIndex,
+        sourceLineup: player.lineup as Position,
+      },
+      canDrag,
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+    }),
+    [canDrag, name, player, rowIndex]
+  );
+
+  const [{ canDrop, isOver }, drop] = useDrop(
+    () => ({
+      accept: dndItemType,
+      canDrop: (item: unknown) => {
+        if (!isOwner || disabled) return false;
+        const dragItem = item as LineupDragItem;
+        if (dragItem.player.fullName === "") return false;
+        if (dragItem.player.fullName === player.fullName && dragItem.sourceLineup === slot) {
+          return false;
+        }
+
+        const isTargetBench = slot === "bench";
+        const isSourceBench = dragItem.sourceLineup === "bench";
+
+        if (!isTargetBench && !isSourceBench) {
+          if (player.fullName === "") return false;
+          if (!slotAllowsPosition(slot, dragItem.player.position)) return false;
+          if (!slotAllowsPosition(dragItem.sourceLineup, player.position)) return false;
+          return true;
+        }
+
+        if (!isTargetBench) {
+          return slotAllowsPosition(slot, dragItem.player.position);
+        }
+
+        return true;
+      },
+      drop: (item: unknown) => {
+        const dragItem = item as LineupDragItem;
+        if (!isOwner || disabled) return;
+        if (dragItem.player.fullName === "") return;
+        if (dragItem.player.fullName === player.fullName && dragItem.sourceLineup === slot) return;
+
+        handlePlayerChange(
+          dragItem.player,
+          dragItem.sourceTable,
+          player,
+          dragItem.sourceIndex,
+          teamId
+        );
+      },
+      collect: (monitor) => ({
+        canDrop: monitor.canDrop(),
+        isOver: monitor.isOver({ shallow: true }),
+      }),
+    }),
+    [disabled, handlePlayerChange, isOwner, player, slot, teamId]
+  );
+
+  drag(rowRef);
+  drop(rowRef);
+
+  const rowClassName = [
+    disabled ? "player-played" : "",
+    canDrop ? "lineup-drop-valid" : "",
+    canDrop && isOver ? "lineup-drop-over" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <tr ref={rowRef} className={rowClassName} style={isDragging ? { opacity: 0.5 } : undefined}>
+      {isOwner ? (
+        <td className="centered-td align-middle">
+          <PlayerActionButton
+            player={player}
+            oppositePlayers={oppositePlayers}
+            disabled={disabled}
+            selectedIndex={rowIndex}
+            handlePlayerChange={handlePlayerChange}
+            handleBenchPlayer={handleBenchPlayer}
+            teamId={teamId}
+            actionType="move"
+            tableType={name}
+          />
+        </td>
+      ) : null}
+      <td className="centered-td align-middle">
+        <span>{name === "starters" ? player.lineup : player.position}</span>
+      </td>
+      <td className="centered-td align-middle">
+        <div className="d-flex align-items-center">
+          <InlineTeamTile team={player.team} showName={false} />
+          <span className="flex-nowrap ml-2">{player.fullName}</span>
+        </div>
+      </td>
+      {nflDefenseStats && (
+        <td className="centered-td align-middle">
+          <div>
+            {opponentTeam && playerTeamIsNflAbbreviation(player.team) ? (
+              <MatchupOverlay
+                player={player}
+                opponentTeam={opponentTeam}
+                week={week}
+                nflDefenseStats={nflDefenseStats}
+              />
+            ) : (
+              "n/a"
+            )}
+          </div>
+        </td>
+      )}
+      {showScores && (
+        <td className="centered-td align-middle">
+          {playerScores?.players[player.sanitizedName]?.scoring?.totalPoints?.toFixed(1) || "0.00"}
+        </td>
+      )}
+      <td className="centered-td align-middle">
+        {getStatBreakdown(
+          player.position as SinglePosition,
+          playerScores?.players[player.sanitizedName] as StoredPlayerInformation
+        )}
+      </td>
+      {isOwner && name === "starters" ? (
+        <td>
+          <PlayerActionButton
+            player={player}
+            oppositePlayers={backupOppositePlayers}
+            disabled={disabled}
+            selectedIndex={rowIndex}
+            handlePlayerChange={handlePlayerChange}
+            teamId={teamId}
+            actionType="backup"
+            tableType={name}
+          />
+        </td>
+      ) : null}
+    </tr>
+  );
+};
+
 export const TeamTable = ({
   players,
   positionsInTable,
@@ -85,12 +288,16 @@ export const TeamTable = ({
   showScores = false,
   leagueId,
 }: TeamTableProps) => {
-  const iterablePositions = Object.keys(positionsInTable)
-    .reduce((acc: Position[], pos: string) => {
-      acc = acc.concat([...Array<Position>(1).fill(pos as Position)]);
-      return acc;
-    }, [])
-    .sort(lineupSorter);
+  const iterablePositions = useMemo(
+    () =>
+      Object.keys(positionsInTable)
+        .reduce((acc: Position[], pos: string) => {
+          acc = acc.concat([...Array<Position>(1).fill(pos as Position)]);
+          return acc;
+        }, [])
+        .sort(lineupSorter),
+    [positionsInTable]
+  );
   const { data: playerScores } = usePlayerScores(leagueId || "", parseInt(week));
   return (
     <div className="team-table-wrapper">
@@ -115,80 +322,33 @@ export const TeamTable = ({
             acc = acc.concat(
               newRows.map((player, i) => {
                 let opponentTeam: TeamSchedule | undefined = undefined;
-                if (nflSchedule && player.team !== 'None' && AbbreviationToFullTeam[player.team] in nflSchedule) {
-                  opponentTeam = nflSchedule[AbbreviationToFullTeam[player.team]]
+                if (nflSchedule && player.team !== "None" && AbbreviationToFullTeam[player.team] in nflSchedule) {
+                  opponentTeam = nflSchedule[AbbreviationToFullTeam[player.team]];
                 }
+                const disabled = !isAdmin && hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime);
+                const oppositePlayers = findOppositePlayers(player, name === "starters", players);
+                const backupOppositePlayers = findOppositePlayers(player, true, players);
+
                 return (
-                  <tr
-                    key={
-                      player.position +
-                      player.lineup +
-                      player.fullName +
-                      i.toString()
-                    }
-                    className={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam && opponentTeam[week] && opponentTeam[week].gameTime) ? 'player-played' : ''}
-                  >
-                    {isOwner ? (
-                      <td className="centered-td align-middle">
-                        <PlayerActionButton
-                          player={player}
-                          oppositePlayers={findOppositePlayers(player, name === "starters", players)}
-                          disabled={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
-                          handlePlayerChange={handlePlayerChange}
-                          handleBenchPlayer={handleBenchPlayer}
-                          teamId={teamId}
-                          actionType="move"
-                          tableType={name}
-                        />
-                      </td>
-                    ) : null}
-                    <td className="centered-td align-middle">
-                      <span>
-                        {name === "starters" ? player.lineup : player.position}
-                      </span>
-                    </td>
-                    <td className="centered-td align-middle">
-                      <div className="d-flex align-items-center">
-                        <InlineTeamTile team={player.team} showName={false} />
-                        <span className="flex-nowrap ml-2">{player.fullName}</span>
-                      </div>
-                    </td>
-                    {nflDefenseStats && (
-                      <td className="centered-td align-middle">
-                        <div>
-                          {opponentTeam && playerTeamIsNflAbbreviation(player.team) ? (
-                            <MatchupOverlay
-                              player={player}
-                              opponentTeam={opponentTeam}
-                              week={week}
-                              nflDefenseStats={nflDefenseStats}
-                            />
-                          ) : 'n/a'}
-                        </div>
-                      </td>
-                    )}
-                    {showScores && (
-                      <td className="centered-td align-middle">
-                        {playerScores?.players[player.sanitizedName]?.scoring?.totalPoints?.toFixed(1) || '0.00'}
-                      </td>
-                    )}
-                    <td className="centered-td align-middle">
-                      {getStatBreakdown(player.position as SinglePosition, playerScores?.players[player.sanitizedName] as StoredPlayerInformation)}
-                    </td>
-                    {isOwner && name === "starters" ? (
-                      <td>
-                        <PlayerActionButton
-                          player={player}
-                          oppositePlayers={findOppositePlayers(player, true, players)}
-                          disabled={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
-                          handlePlayerChange={handlePlayerChange}
-                          teamId={teamId}
-                          actionType="backup"
-                          tableType={name}
-                        />
-                      </td>
-                    ) : null}
-                  </tr>
+                  <TeamTableRow
+                    key={player.position + player.lineup + player.fullName + i.toString()}
+                    player={player}
+                    rowIndex={i}
+                    slot={pos}
+                    name={name}
+                    week={week}
+                    isOwner={isOwner}
+                    nflDefenseStats={nflDefenseStats}
+                    opponentTeam={opponentTeam}
+                    disabled={disabled}
+                    showScores={showScores}
+                    teamId={teamId}
+                    oppositePlayers={oppositePlayers}
+                    backupOppositePlayers={backupOppositePlayers}
+                    handlePlayerChange={handlePlayerChange}
+                    handleBenchPlayer={handleBenchPlayer}
+                    playerScores={playerScores}
+                  />
                 );
               })
             );
