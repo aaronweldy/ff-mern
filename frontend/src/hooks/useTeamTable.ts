@@ -2,6 +2,13 @@ import { FinalizedLineup, FinalizedPlayer } from "@ff-mern/ff-types";
 import { useCallback } from "react";
 
 export const useTeamTable = () => {
+  const canPlayerFitLineup = useCallback((player: FinalizedPlayer, lineup: string) => {
+    if (lineup === "bench") {
+      return true;
+    }
+    return lineup.split("/").includes(player.position);
+  }, []);
+
   const handlePlayerChange = useCallback(
     (
       selectedPlayer: FinalizedPlayer,
@@ -55,6 +62,67 @@ export const useTeamTable = () => {
     []
   );
 
+  const handleDragSwap = useCallback(
+    ({
+      fromLineup,
+      fromIndex,
+      toLineup,
+      toIndex,
+      lineup,
+    }: {
+      fromLineup: string;
+      fromIndex: number;
+      toLineup: string;
+      toIndex: number;
+      lineup: FinalizedLineup;
+    }) => {
+      if (fromLineup === toLineup && fromIndex === toIndex) {
+        return false;
+      }
+
+      const fromArr = lineup[fromLineup as keyof FinalizedLineup] as FinalizedPlayer[] | undefined;
+      const toArr = lineup[toLineup as keyof FinalizedLineup] as FinalizedPlayer[] | undefined;
+      if (!fromArr || !toArr) {
+        return false;
+      }
+
+      const fromPlayer = fromArr[fromIndex];
+      const toPlayer = toArr[toIndex];
+      if (!fromPlayer || fromPlayer.fullName === "" || !toPlayer) {
+        return false;
+      }
+
+      const canFitTarget = canPlayerFitLineup(fromPlayer, toLineup);
+      const canFitSource =
+        toPlayer.fullName === "" ? true : canPlayerFitLineup(toPlayer, fromLineup);
+      if (!canFitTarget || !canFitSource) {
+        return false;
+      }
+
+      if (fromLineup === "bench" && toLineup !== "bench" && toPlayer.fullName === "") {
+        fromArr.splice(fromIndex, 1);
+        fromPlayer.lineup = toLineup;
+        toArr.splice(toIndex, 1, fromPlayer);
+        return true;
+      }
+
+      if (fromLineup !== "bench" && toLineup !== "bench" && toPlayer.fullName === "") {
+        fromArr.splice(fromIndex, 1, toPlayer);
+        toArr.splice(toIndex, 1, fromPlayer);
+        fromPlayer.lineup = toLineup;
+        toPlayer.lineup = fromLineup;
+        return true;
+      }
+
+      fromArr.splice(fromIndex, 1, toPlayer);
+      toArr.splice(toIndex, 1, fromPlayer);
+      fromPlayer.lineup = toLineup;
+      toPlayer.lineup = fromLineup;
+      return true;
+    },
+    [canPlayerFitLineup]
+  );
+
   const handleBenchPlayer = useCallback(
     (selectedPlayer: FinalizedPlayer, lineup: FinalizedLineup) => {
       lineup.bench.push(
@@ -72,5 +140,5 @@ export const useTeamTable = () => {
     []
   );
 
-  return { handlePlayerChange, handleBenchPlayer };
+  return { handlePlayerChange, handleBenchPlayer, handleDragSwap };
 };

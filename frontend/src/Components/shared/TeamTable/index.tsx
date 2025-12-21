@@ -23,6 +23,11 @@ import { getStatBreakdown } from "../../../utils/statBreakdown";
 
 type TableType = "starters" | "bench" | "backup";
 
+export type LineupDragState = {
+  lineup: Position;
+  index: number;
+};
+
 type TeamTableProps = {
   players: FinalizedLineup;
   positionsInTable: LineupSettings;
@@ -43,6 +48,14 @@ type TeamTableProps = {
   teamId?: string;
   showScores?: boolean;
   leagueId?: string;
+  dragState?: LineupDragState | null;
+  setDragState?: (state: LineupDragState | null) => void;
+  onDragSwap?: (args: {
+    fromLineup: Position;
+    fromIndex: number;
+    toLineup: Position;
+    toIndex: number;
+  }) => void;
 };
 
 const findOppositePlayers = (
@@ -70,6 +83,31 @@ const hasPlayerAlreadyPlayed = (gameTime: string | undefined): boolean => {
   return now > gameDate;
 };
 
+const canPlayerFitLineup = (player: FinalizedPlayer, lineup: string) => {
+  if (lineup === "bench") {
+    return true;
+  }
+  return lineup.split("/").includes(player.position);
+};
+
+const getDragData = (e: React.DragEvent) => {
+  const raw =
+    e.dataTransfer.getData("application/x-lineup-drag") ||
+    e.dataTransfer.getData("text/plain");
+  if (!raw) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(raw) as { lineup?: Position; index?: number };
+    if (!parsed.lineup || typeof parsed.index !== "number") {
+      return null;
+    }
+    return { lineup: parsed.lineup, index: parsed.index };
+  } catch {
+    return null;
+  }
+};
+
 export const TeamTable = ({
   players,
   positionsInTable,
@@ -84,6 +122,9 @@ export const TeamTable = ({
   teamId,
   showScores = false,
   leagueId,
+  dragState,
+  setDragState,
+  onDragSwap,
 }: TeamTableProps) => {
   const iterablePositions = Object.keys(positionsInTable)
     .reduce((acc: Position[], pos: string) => {
@@ -118,6 +159,26 @@ export const TeamTable = ({
                 if (nflSchedule && player.team !== 'None' && AbbreviationToFullTeam[player.team] in nflSchedule) {
                   opponentTeam = nflSchedule[AbbreviationToFullTeam[player.team]]
                 }
+                const playerLocked = !isAdmin && hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime);
+                const dragSource =
+                  !!dragState &&
+                  dragState.lineup === (player.lineup as Position) &&
+                  dragState.index === i;
+                const fromPlayer =
+                  dragState ? (players[dragState.lineup]?.[dragState.index] as FinalizedPlayer | undefined) : undefined;
+                const canDrop =
+                  !!fromPlayer &&
+                  fromPlayer.fullName !== "" &&
+                  !dragSource &&
+                  !playerLocked &&
+                  canPlayerFitLineup(fromPlayer, player.lineup) &&
+                  (player.fullName === "" || canPlayerFitLineup(player, fromPlayer.lineup));
+                const canDrag =
+                  isOwner &&
+                  !!setDragState &&
+                  !!onDragSwap &&
+                  player.fullName !== "" &&
+                  !playerLocked;
                 return (
                   <tr
                     key={
@@ -126,20 +187,88 @@ export const TeamTable = ({
                       player.fullName +
                       i.toString()
                     }
-                    className={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam && opponentTeam[week] && opponentTeam[week].gameTime) ? 'player-played' : ''}
+                    className={[
+                      playerLocked ? "player-played" : "",
+                      dragSource ? "lineup-drag-source" : "",
+                      canDrop ? "lineup-drop-valid" : "",
+                    ].filter(Boolean).join(" ")}
+                    onDragOver={(e) => {
+                      const activeDrag = dragState ?? getDragData(e);
+                      if (!activeDrag) {
+                        return;
+                      }
+                      const activeFromPlayer = players[activeDrag.lineup]?.[activeDrag.index] as FinalizedPlayer | undefined;
+                      const canDropNow =
+                        !!activeFromPlayer &&
+                        activeFromPlayer.fullName !== "" &&
+                        !(activeDrag.lineup === (player.lineup as Position) && activeDrag.index === i) &&
+                        !playerLocked &&
+                        canPlayerFitLineup(activeFromPlayer, player.lineup) &&
+                        (player.fullName === "" || canPlayerFitLineup(player, activeFromPlayer.lineup));
+                      if (!canDropNow) {
+                        return;
+                      }
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      if (!dragState) {
+                        setDragState?.(activeDrag);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      const activeDrag = dragState ?? getDragData(e);
+                      if (!activeDrag || !onDragSwap) {
+                        return;
+                      }
+                      e.preventDefault();
+                      onDragSwap({
+                        fromLineup: activeDrag.lineup,
+                        fromIndex: activeDrag.index,
+                        toLineup: player.lineup as Position,
+                        toIndex: i,
+                      });
+                      setDragState?.(null);
+                    }}
                   >
                     {isOwner ? (
                       <td className="centered-td align-middle">
-                        <PlayerActionButton
-                          player={player}
-                          oppositePlayers={findOppositePlayers(player, name === "starters", players)}
-                          disabled={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
-                          handlePlayerChange={handlePlayerChange}
-                          handleBenchPlayer={handleBenchPlayer}
-                          teamId={teamId}
-                          actionType="move"
-                          tableType={name}
-                        />
+                        <div className="d-flex align-items-center justify-content-center">
+                          {canDrag ? (
+                            <span
+                              className="lineup-drag-handle mr-2"
+                              draggable
+                              onDragStart={(e) => {
+                                if (!setDragState) {
+                                  return;
+                                }
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData(
+                                  "application/x-lineup-drag",
+                                  JSON.stringify({ lineup: player.lineup, index: i })
+                                );
+                                e.dataTransfer.setData(
+                                  "text/plain",
+                                  JSON.stringify({ lineup: player.lineup, index: i })
+                                );
+                                setDragState({ lineup: player.lineup as Position, index: i });
+                              }}
+                              onDragEnd={() => {
+                                setDragState?.(null);
+                              }}
+                            >
+                              ⠿
+                            </span>
+                          ) : null}
+                          <PlayerActionButton
+                            player={player}
+                            oppositePlayers={findOppositePlayers(player, name === "starters", players)}
+                            disabled={playerLocked}
+                            handlePlayerChange={handlePlayerChange}
+                            handleBenchPlayer={handleBenchPlayer}
+                            teamId={teamId}
+                            actionType="move"
+                            tableType={name}
+                          />
+                        </div>
                       </td>
                     ) : null}
                     <td className="centered-td align-middle">
@@ -180,7 +309,7 @@ export const TeamTable = ({
                         <PlayerActionButton
                           player={player}
                           oppositePlayers={findOppositePlayers(player, true, players)}
-                          disabled={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
+                          disabled={playerLocked}
                           handlePlayerChange={handlePlayerChange}
                           teamId={teamId}
                           actionType="backup"
