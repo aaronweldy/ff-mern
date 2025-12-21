@@ -26,6 +26,7 @@ export const usePlayerScores = (
 ) => {
   return useQuery<PlayerScoresResponse, Error>(
     ["playerScores", leagueId, week],
-    () => fetchPlayerScores(leagueId, week, players)
+    () => fetchPlayerScores(leagueId, week, players),
+    { enabled: !!leagueId }
   );
 };

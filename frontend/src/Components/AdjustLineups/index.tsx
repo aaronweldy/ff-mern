@@ -21,10 +21,12 @@ import { TeamSelectionDropdown } from "../shared/TeamSelectionDropdown";
 import { QuicksetDropdown } from "../shared/QuicksetDropdown";
 import { useUpdateAllTeamsMutation } from "../../hooks/query/useQuicksetAllTeamsMutation";
 import { QuicksetAllDropdown } from "./QuicksetAllDropdown";
+import { type LineupDragState } from "../shared/TeamTable";
 
 export default function AdjustLineups() {
   const { id } = useParams() as { id: string };
   const [selectedTeamId, setSelectedTeamId] = useState<string>();
+  const [dragState, setDragState] = useState<LineupDragState | null>(null);
   const { league, teams, week, setWeek } = useLeagueScoringData(id);
   const updateAllLineups = useUpdateAllTeamsMutation(
     id,
@@ -39,7 +41,7 @@ export default function AdjustLineups() {
   } = useSingleTeam(selectedTeamId);
   const scheduleQuery = useNflSchedule();
   const defenseStatsQuery = useNflDefenseStats();
-  const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
+  const { handlePlayerChange, handleBenchPlayer, handleDragSwap } = useTeamTable();
   const currentLineup = useMemo(() => {
     if (selectedTeam && league) {
       return getWeeklyLineup(week, selectedTeam, league.lineupSettings);
@@ -81,6 +83,22 @@ export default function AdjustLineups() {
   const onBench = (selectedPlayer: FinalizedPlayer, teamId?: string) => {
     if (teamId && selectedTeam) {
       handleBenchPlayer(selectedPlayer, currentLineup);
+      selectedTeam.weekInfo[week].finalizedLineup = currentLineup;
+      updateTeamMutation.mutate({ team: selectedTeam, isAdmin: true });
+    }
+  };
+
+  const onDragSwap = (args: {
+    fromLineup: string;
+    fromIndex: number;
+    toLineup: string;
+    toIndex: number;
+  }) => {
+    if (!selectedTeam) {
+      return;
+    }
+    const didSwap = handleDragSwap({ ...args, lineup: currentLineup });
+    if (didSwap) {
       selectedTeam.weekInfo[week].finalizedLineup = currentLineup;
       updateTeamMutation.mutate({ team: selectedTeam, isAdmin: true });
     }
@@ -143,6 +161,9 @@ export default function AdjustLineups() {
                 isOwner
                 isAdmin
                 teamId={selectedTeam.id}
+                dragState={dragState}
+                setDragState={setDragState}
+                onDragSwap={onDragSwap}
               />
             </Col>
             <Col xs={12}>
@@ -161,6 +182,9 @@ export default function AdjustLineups() {
                 isOwner
                 isAdmin
                 teamId={selectedTeam.id}
+                dragState={dragState}
+                setDragState={setDragState}
+                onDragSwap={onDragSwap}
               />
             </Col>
           </Row>

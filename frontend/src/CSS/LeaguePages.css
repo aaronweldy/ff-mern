@@ -195,3 +195,18 @@
   background-color: #f0f0f0;
   opacity: 0.7;
 }
+
+.lineup-drop-valid {
+  outline: 2px solid #198754;
+  outline-offset: -2px;
+  background-color: rgba(25, 135, 84, 0.08);
+}
+
+.lineup-drag-source {
+  opacity: 0.6;
+}
+
+.lineup-drag-handle {
+  cursor: grab;
+  user-select: none;
+}

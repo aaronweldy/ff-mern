@@ -15,7 +15,7 @@ import EditWeek from "../shared/EditWeek";
 import ImageModal from "../shared/ImageModal";
 import LeagueButton from "../shared/LeagueButton";
 import { QuicksetDropdown } from "../shared/QuicksetDropdown";
-import { TeamTable } from "../shared/TeamTable";
+import { TeamTable, type LineupDragState } from "../shared/TeamTable";
 import { findPlayerInLineup, getWeeklyLineup } from "../utils/getWeeklyLineup";
 import { DisplayLastUpdated } from "./DisplayLastUpdated";
 import { Header } from "./Header";
@@ -53,7 +53,8 @@ const TeamPage = () => {
     () => getWeeklyLineup(week, team, league?.lineupSettings),
     [week, team, league]
   );
-  const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
+  const { handlePlayerChange, handleBenchPlayer, handleDragSwap } = useTeamTable();
+  const [dragState, setDragState] = useState<LineupDragState | null>(null);
   const canEditRoster = useMemo(() => {
     if (!league) {
       return false;
@@ -136,6 +137,23 @@ const TeamPage = () => {
         handleBenchPlayer(selectedTempPlayer.player, tempLineup);
         updateTeamMutation.mutate({ team: tempTeam });
       }
+    }
+  };
+
+  const onDragSwap = (args: {
+    fromLineup: string;
+    fromIndex: number;
+    toLineup: string;
+    toIndex: number;
+  }) => {
+    if (!team) {
+      return;
+    }
+    const tempTeam = cloneDeep(team);
+    const tempLineup = getWeeklyLineup(week, tempTeam, league?.lineupSettings);
+    const didSwap = handleDragSwap({ ...args, lineup: tempLineup });
+    if (didSwap) {
+      updateTeamMutation.mutate({ team: tempTeam });
     }
   };
 
@@ -233,6 +251,9 @@ const TeamPage = () => {
               handlePlayerChange={onChange}
               showScores={true}
               leagueId={leagueId}
+              dragState={dragState}
+              setDragState={setDragState}
+              onDragSwap={onDragSwap}
             />
           </Row>
           <Row>
@@ -251,6 +272,9 @@ const TeamPage = () => {
               handlePlayerChange={onChange}
               showScores={true}
               leagueId={leagueId}
+              dragState={dragState}
+              setDragState={setDragState}
+              onDragSwap={onDragSwap}
             />
           </Row>
           <SuperflexModal
