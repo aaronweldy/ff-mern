@@ -6,7 +6,7 @@
 |---------|---------|------|-------|
 | Frontend | `yarn workspace ff-mern start` | 3000 | Vite dev server |
 | Backend | `yarn workspace backend start` | 3001 | Express + Socket.io |
-| ff-types | `cd ff-types && npx tsc && npx rollup -c` | N/A | Build before running frontend/backend |
+| ff-types | `cd ff-types && yarn build` | N/A | Build before running frontend/backend |
 
 ## Running the Application
 
@@ -37,7 +37,7 @@ cd backend && yarn start
 
 | Workspace | Build |
 |-----------|-------|
-| ff-types | `cd ff-types && npx tsc && npx rollup -c` |
+| ff-types | `cd ff-types && yarn build` |
 | Frontend | `cd frontend && yarn build` |
 | Backend | `cd backend && yarn build` |
 
