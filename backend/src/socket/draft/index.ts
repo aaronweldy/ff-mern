@@ -322,21 +322,24 @@ export const initSocket = async (io: ServerType) => {
         next(error);
       });
   });
-  db.collection("drafts")
-    .where("phase", "==", "live")
-    .get()
-    .then((liveDrafts) => {
-      liveDrafts.forEach(async (doc) => {
-        const draftData = doc.data() as DraftState;
-        const stateForDraft = await rebuildPlayersAndSelections(doc.id);
-        const league = stateForDraft.league;
-        activeDrafts[doc.id] = {
-          league,
-          draftState: {
-            ...stateForDraft.draftState,
-            availablePlayers: stateForDraft.availablePlayers,
-            selections: stateForDraft.selections,
-          },
+  
+  // Only initialize live drafts if Firebase credentials are available
+  if (process.env.SERVICE_ACCOUNT) {
+    db.collection("drafts")
+      .where("phase", "==", "live")
+      .get()
+      .then((liveDrafts) => {
+        liveDrafts.forEach(async (doc) => {
+          const draftData = doc.data() as DraftState;
+          const stateForDraft = await rebuildPlayersAndSelections(doc.id);
+          const league = stateForDraft.league;
+          activeDrafts[doc.id] = {
+            league,
+            draftState: {
+              ...stateForDraft.draftState,
+              availablePlayers: stateForDraft.availablePlayers,
+              selections: stateForDraft.selections,
+            },
           chatMessages: [],
           playersByTeam: buildPlayersByTeam(
             league.lineupSettings,
@@ -346,6 +349,10 @@ export const initSocket = async (io: ServerType) => {
         };
       });
     });
+  } else {
+    console.warn("Skipping live drafts initialization - no Firebase credentials");
+  }
+  
   io.on("connection", (socket) => {
     connectedUsers[socket.data.user.uid] = socket.data.user;
     new DraftSocket(socket, io, socket.data.user);
