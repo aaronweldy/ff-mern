@@ -2,6 +2,11 @@
 
 Personal project to create a season-long, total-score-based fantasy football platform. Gained experience in React, Redux, Node.js, Express, Firebase, MongoDB, authentication with JWT, and more over the course of the project.
 
+## Joke of the README
+
+Why did the fantasy football team draft a backend engineer in the first round?
+They needed someone who could handle the load on Sundays — and who already knew how to deal with crashing servers.
+
 ## Features
 
 - **Season-long, customizable leagues**: run a league with almost any combination of scoring settings & teams.  
