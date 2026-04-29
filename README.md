@@ -17,3 +17,7 @@ Personal project to create a season-long, total-score-based fantasy football pla
 - **Server**
   - Set up a firebase project & create a firebase config file
   - **firebase serve**
+
+## Joke Break
+
+Why did the fantasy football app stay calm? It knew every bug would eventually become a feature request.
