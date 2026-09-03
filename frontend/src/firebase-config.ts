@@ -1,7 +1,12 @@
 import { initializeApp } from "firebase/app";
 import * as firebaseui from "firebaseui";
 import { getStorage } from "firebase/storage";
-import { EmailAuthProvider, GoogleAuthProvider, getAuth } from "firebase/auth";
+import {
+  EmailAuthProvider,
+  GoogleAuthProvider,
+  connectAuthEmulator,
+  getAuth,
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXG6J4qNGuYc4P2RZM_wKAEdECO7_qaog",
@@ -45,6 +50,15 @@ initializeApp(firebaseConfig);
 
 export const storage = getStorage();
 export const auth = getAuth();
+
+// Local dev: point Auth to the Firebase emulator so logins never touch
+// the real ff-mern project. Enabled via VITE_USE_FIREBASE_EMULATOR=true
+// in frontend/.env.development.
+if (import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true") {
+  connectAuthEmulator(auth, "http://localhost:9099", {
+    disableWarnings: true,
+  });
+}
 export const ui = new firebaseui.auth.AuthUI(auth);
 export { uiConfig };
 //export default firebase;

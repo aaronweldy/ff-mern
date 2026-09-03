@@ -8,6 +8,8 @@
     "lint": "eslint ./",
     "test": "jest -i --verbose --coverage --runInBand",
     "start": "tsx src/index.ts",
+    "seed:dev": "cross-env FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 GCLOUD_PROJECT=ff-mern tsx src/dev/seed.ts",
+    "start:emulator": "cross-env FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 GCLOUD_PROJECT=ff-mern FRONTEND_URL=http://localhost:3000 tsx src/index.ts",
     "build": "tsc -b -v",
     "dboff": "killall mongod",
     "watch": "nodemon index.js",
