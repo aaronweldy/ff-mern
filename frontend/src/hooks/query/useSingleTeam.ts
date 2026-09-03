@@ -1,48 +1,52 @@
 import { QuicksetRequest, SingleTeamResponse, Team } from "@ff-mern/ff-types";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import { apiGet, apiPost, apiPut } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
-const fetchSingleTeam = async (teamId?: string) => {
-  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/team/${teamId}/`;
-  const resp = await fetch(url);
-  if (!resp.ok) {
-    throw new Error(resp.statusText);
-  }
-  return (await resp.json()) as SingleTeamResponse;
-};
+const fetchSingleTeam = (teamId?: string) =>
+  apiGet<SingleTeamResponse>(`/api/v1/team/${teamId}/`);
 
 export const useSingleTeam = (teamId?: string) => {
-  const [team, setTeam] = useState<Team>();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
-  const { isLoading, isSuccess } = useQuery<SingleTeamResponse, Error>(
-    ["team", teamId],
+  const { data, isLoading, isSuccess } = useQuery<SingleTeamResponse, Error>(
+    queryKeys.team(teamId),
     () => fetchSingleTeam(teamId),
     {
-      onSuccess: (data) => {
-        setTeam(data.team);
-      },
       enabled: !!teamId,
     }
   );
-  const updateTeamMutation = useMutation<SingleTeamResponse, Error, { team: Team; isAdmin?: boolean }>(
-    async ({ team: newTeam, isAdmin }) => {
-      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/team/updateSingleTeam/`;
-      const body = JSON.stringify({ team: newTeam, isAdmin });
-      const req = {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body,
-      };
-      const resp = await fetch(url, req);
-      if (!resp.ok) {
-        throw new Error(await resp.text());
+  const team = data?.team;
+  // Optimistic-UI helper (local edits before mutate). Reads use `team`.
+  const setTeam = (
+    update: Team | undefined | ((prev: Team | undefined) => Team | undefined)
+  ) => {
+    queryClient.setQueryData<SingleTeamResponse | undefined>(
+      queryKeys.team(teamId),
+      (prev) => {
+        const next =
+          typeof update === "function"
+            ? (update as (p: Team | undefined) => Team | undefined)(prev?.team)
+            : update;
+        if (next === undefined) return prev;
+        return { team: next };
       }
-      return resp.json();
-    },
+    );
+  };
+  const updateTeamMutation = useMutation<SingleTeamResponse, Error, { team: Team; isAdmin?: boolean }>(
+    async ({ team: newTeam, isAdmin }) =>
+      apiPut<SingleTeamResponse>(`/api/v1/team/updateSingleTeam/`, {
+        team: newTeam,
+        isAdmin,
+      }),
     {
-      onSuccess: (data) => {
-        queryClient.setQueryData(["team", teamId], { team: data.team });
+      onSuccess: (response) => {
+        queryClient.setQueryData(queryKeys.team(teamId), {
+          team: response.team,
+        });
+        queryClient.invalidateQueries(queryKeys.team(teamId));
+        queryClient.invalidateQueries(queryKeys.allTeams());
       },
       onError: (error) => {
         console.error(error);
@@ -55,28 +59,20 @@ export const useSingleTeam = (teamId?: string) => {
     Error,
     QuicksetRequest
   >(
-    async (info) => {
-      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/team/setLineupFromProjection/`;
-      const body = JSON.stringify({
+    async (info) =>
+      apiPost<SingleTeamResponse>(`/api/v1/team/setLineupFromProjection/`, {
         team,
         week: info.week,
         type: info.type,
         lineupSettings: info.lineupSettings,
-      });
-      const req = {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body,
-      };
-      const resp = await fetch(url, req);
-      if (!resp.ok) {
-        throw new Error(resp.statusText);
-      }
-      return resp.json();
-    },
+      }),
     {
-      onSuccess: (data) => {
-        queryClient.setQueryData(["team", teamId], { team: data.team });
+      onSuccess: (response) => {
+        queryClient.setQueryData(queryKeys.team(teamId), {
+          team: response.team,
+        });
+        queryClient.invalidateQueries(queryKeys.team(teamId));
+        queryClient.invalidateQueries(queryKeys.allTeams());
       },
     }
   );

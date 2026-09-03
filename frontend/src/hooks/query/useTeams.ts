@@ -1,23 +1,34 @@
 import { Team } from "@ff-mern/ff-types";
-import { useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
+import { apiGet } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
-const fetchTeams = async (leagueId: string) => {
-  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${leagueId}/teams/`;
-  const resp = await fetch(url);
-  if (!resp.ok) {
-    throw new Error(resp.statusText);
-  }
-  return (await resp.json()) as { teams: Team[] };
-};
+type TeamsResponse = { teams: Team[] };
+
+const fetchTeams = (leagueId: string) =>
+  apiGet<TeamsResponse>(`/api/v1/league/${leagueId}/teams/`);
 
 export const useTeams = (leagueId: string) => {
-  const [teams, setTeams] = useState<Team[]>([]);
-  const query = useQuery(["teams", leagueId], () => fetchTeams(leagueId), {
-    onSuccess: (data) => {
-      setTeams(data.teams);
-    },
+  const queryClient = useQueryClient();
+  const query = useQuery(queryKeys.teams(leagueId), () => fetchTeams(leagueId), {
     staleTime: 1000 * 10 * 60,
   });
+  const teams = query.data?.teams ?? [];
+  // Kept for optimistic local editing (EditRosters, AddPoints, ...).
+  // Writes straight to the query cache so all readers stay in sync.
+  const setTeams = (
+    update: Team[] | ((prev: Team[]) => Team[])
+  ) => {
+    queryClient.setQueryData<TeamsResponse | undefined>(
+      queryKeys.teams(leagueId),
+      (prev) => {
+        const next =
+          typeof update === "function"
+            ? (update as (p: Team[]) => Team[])(prev?.teams ?? [])
+            : update;
+        return { teams: next };
+      }
+    );
+  };
   return { teams, setTeams, query };
 };

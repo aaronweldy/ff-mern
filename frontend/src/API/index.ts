@@ -1,7 +1,6 @@
 import {
   CumulativePlayerScores,
   FetchPlayerScoresRequest,
-  GenericRequest,
   LeagueAPIResponse,
   PlayerScoresResponse,
   RosteredPlayer,
@@ -10,36 +9,17 @@ import {
   TeamFantasyPositionPerformance,
   TeamToSchedule,
 } from "@ff-mern/ff-types";
-
-const generatePostRequest = (body: GenericRequest) => {
-  return {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  };
-};
-
-const toJSON = (data: Response) => data.json();
+import { apiGet, apiPost } from "./client";
 
 export class API {
   static fetchLeague(leagueId: string) {
-    const url =
-      import.meta.env.VITE_PUBLIC_URL + `/api/v1/league/${leagueId}/`;
-    return new Promise<LeagueAPIResponse>((resolve, _) => {
-      fetch(url)
-        .then((data) => data.json())
-        .then((json) => resolve(json));
-    });
+    return apiGet<LeagueAPIResponse>(`/api/v1/league/${leagueId}/`);
   }
 
   static runScores(id: string, week: number = 1, teams: Team[]) {
-    const url =
-      import.meta.env.VITE_PUBLIC_URL + `/api/v1/league/${id}/runScores/`;
-    const reqDict = generatePostRequest({ week, teams });
-    return new Promise<RunScoresResponse>((resolve, _) => {
-      fetch(url, reqDict)
-        .then(toJSON)
-        .then((json) => resolve(json));
+    return apiPost<RunScoresResponse>(`/api/v1/league/${id}/runScores/`, {
+      week,
+      teams,
     });
   }
 
@@ -48,74 +28,45 @@ export class API {
     week,
     players,
   }: FetchPlayerScoresRequest) {
-    const url =
-      import.meta.env.VITE_PUBLIC_URL +
-      `/api/v1/league/${leagueId}/playerScores/`;
-    const req = generatePostRequest({ players, week });
-    return new Promise<PlayerScoresResponse>((resolve, reject) =>
-      fetch(url, req)
-        .then(toJSON)
-        .then((json) => resolve(json))
-        .catch((err) => reject(err))
+    return apiPost<PlayerScoresResponse>(
+      `/api/v1/league/${leagueId}/playerScores/`,
+      { players, week }
     );
   }
 
-  static validateAndUpdateTeams(teams: Team[]) { }
+  static validateAndUpdateTeams(teams: Team[]) {}
 
-  static updateTeams(teams: Team[]) {
-    const url = import.meta.env.VITE_PUBLIC_URL + `/api/v1/team/updateTeams/`;
-    const req = generatePostRequest({ teams });
-    return new Promise<Team[]>((resolve, _) =>
-      fetch(url, req)
-        .then(toJSON)
-        .then((json) => resolve(json.teams))
+  static async updateTeams(teams: Team[]) {
+    const json = await apiPost<{ teams: Team[] }>(`/api/v1/team/updateTeams/`, {
+      teams,
+    });
+    return json.teams;
+  }
+
+  static async fetchGlobalPlayers() {
+    const json = await apiGet<{ players: RosteredPlayer[] }>(
+      "/api/v1/nflData/allPlayers/"
     );
+    return json.players;
   }
 
-  static fetchGlobalPlayers() {
-    const url =
-      import.meta.env.VITE_PUBLIC_URL + "/api/v1/nflData/allPlayers/";
-    return new Promise<RosteredPlayer[]>((resolve, reject) => {
-      fetch(url)
-        .then((data) => data.json())
-        .then((json: { players: RosteredPlayer[] }) => resolve(json.players))
-        .catch((err) => reject(err));
-    });
+  static async fetchNflSchedule() {
+    const json = await apiGet<{ schedule: TeamToSchedule }>(
+      "/api/v1/nflData/nflSchedule/"
+    );
+    return json.schedule;
   }
 
-  static fetchNflSchedule() {
-    const url =
-      import.meta.env.VITE_PUBLIC_URL + "/api/v1/nflData/nflSchedule/";
-    return new Promise<TeamToSchedule>((resolve, reject) => {
-      fetch(url)
-        .then((data) => data.json())
-        .then((json: { schedule: TeamToSchedule }) => resolve(json.schedule))
-        .catch((err) => reject(err));
-    });
-  }
-
-  static fetchNflDefenseStats() {
-    const url =
-      import.meta.env.VITE_PUBLIC_URL + "/api/v1/nflData/nflDefenseStats/";
-    return new Promise<TeamFantasyPositionPerformance>((resolve, reject) => {
-      fetch(url)
-        .then((data) => data.json())
-        .then((json: { data: TeamFantasyPositionPerformance }) =>
-          resolve(json.data)
-        )
-        .catch((err) => reject(err));
-    });
+  static async fetchNflDefenseStats() {
+    const json = await apiGet<{ data: TeamFantasyPositionPerformance }>(
+      "/api/v1/nflData/nflDefenseStats/"
+    );
+    return json.data;
   }
 
   static fetchCumulativePlayerScores(leagueId: string) {
-    const url =
-      import.meta.env.VITE_PUBLIC_URL +
-      `/api/v1/league/${leagueId}/cumulativePlayerScores/`;
-    return new Promise<CumulativePlayerScores>((resolve, reject) => {
-      fetch(url)
-        .then((data) => data.json())
-        .then((json: CumulativePlayerScores) => resolve(json))
-        .catch((err) => reject(err));
-    });
+    return apiGet<CumulativePlayerScores>(
+      `/api/v1/league/${leagueId}/cumulativePlayerScores/`
+    );
   }
 }

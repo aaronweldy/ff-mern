@@ -6,7 +6,9 @@ import {
   UpdateAllTeamsResponse,
 } from "@ff-mern/ff-types";
 import { useMutation, useQueryClient } from "react-query";
+import { apiPost } from "../../API/client";
 import { getWeeklyLineup } from "../../Components/utils/getWeeklyLineup";
+import { queryKeys } from "./queryKeys";
 
 export type QuicksetAllTeamsRequest = {
   type: QuicksetLineupType;
@@ -31,23 +33,16 @@ export const useUpdateAllTeamsMutation = (
                 lineupSettings
               );
             }
-            const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/team/setLineupFromProjection/`;
-            const body = JSON.stringify({
-              team,
-              week: week.toString(),
-              type: info.type,
-              lineupSettings,
-            });
-            const req = {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body,
-            };
-            const resp = await fetch(url, req);
-            if (!resp.ok) {
-              throw new Error(resp.statusText);
-            }
-            return ((await resp.json()) as SingleTeamResponse).team;
+            const { team: updated } = await apiPost<SingleTeamResponse>(
+              `/api/v1/team/setLineupFromProjection/`,
+              {
+                team,
+                week: week.toString(),
+                type: info.type,
+                lineupSettings,
+              }
+            );
+            return updated;
           })
         ),
       };
@@ -55,8 +50,11 @@ export const useUpdateAllTeamsMutation = (
     {
       onSuccess: (data) => {
         console.log(data);
-        queryClient.setQueryData(["teams", leagueId], { teams: data.teams });
-        queryClient.invalidateQueries("team");
+        queryClient.setQueryData(queryKeys.teams(leagueId), {
+          teams: data.teams,
+        });
+        queryClient.invalidateQueries(queryKeys.teams(leagueId));
+        queryClient.invalidateQueries(queryKeys.allTeams());
       },
     }
   );

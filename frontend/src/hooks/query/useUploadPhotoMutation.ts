@@ -1,23 +1,22 @@
-import { useMutation } from "react-query";
+import { useMutation, useQueryClient } from "react-query";
+import { apiPost } from "../../API/client";
 
 type UploadPhotoRequest = {
   id: string;
   newUrl: string;
 };
 
-const uploadPhoto = async ({ id, newUrl }: UploadPhotoRequest) => {
-  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/user/${id}/updatePhoto/`;
-  const req = {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ newUrl }),
-  };
-  const resp = await fetch(url, req);
-  if (!resp.ok) {
-    throw new Error(resp.statusText);
-  }
-};
+const uploadPhoto = ({ id, newUrl }: UploadPhotoRequest) =>
+  apiPost<void>(`/api/v1/user/${id}/updatePhoto/`, { newUrl });
 
 export const useUploadPhotoMutation = () => {
-  return useMutation<void, Error, UploadPhotoRequest>(uploadPhoto);
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, UploadPhotoRequest>(uploadPhoto, {
+    onSuccess: () => {
+      // Photo URL lives in Firebase storage + user profile, not in a
+      // react-query cache entry, but keep an invalidation hook so future
+      // user-profile queries stay fresh.
+      queryClient.invalidateQueries("user");
+    },
+  });
 };
