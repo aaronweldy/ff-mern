@@ -14,6 +14,10 @@ import admin, { db } from "../config/firebase-config.js";
 import { getNflSchedule } from "../utils/db.js";
 import { fetchPlayerProjections } from "../utils/fetchRoutes.js";
 import { findLineupChanges } from "../utils/findLineupChanges.js";
+import {
+  isLeagueCommissioner,
+  requireAuth,
+} from "../middleware/auth.js";
 const router = Router();
 
 // Typeguard to check if a team is a valid NFL team (not "None")
@@ -29,7 +33,16 @@ const hasPlayerAlreadyPlayed = (schedule: NFLSchedule, team: AbbreviatedNflTeam,
   return now > gameDate;
 };
 
-router.post("/validateTeams/", (req, res) => {
+/** Server-side ownership/commissioner check; never trust client isAdmin. */
+const canModifyTeam = async (uid: string, teamId: string): Promise<boolean> => {
+  const doc = await db.collection("teams").doc(teamId).get();
+  if (!doc.exists) return false;
+  const team = doc.data() as Team;
+  if (team.owner === uid) return true;
+  return isLeagueCommissioner(team.league, uid);
+};
+
+router.post("/validateTeams/", requireAuth, (req, res) => {
   const { teams } = req.body;
   teams.forEach((team: Team) => {
     admin
@@ -57,9 +70,16 @@ router.post("/validateTeams/", (req, res) => {
   res.status(200).send({ teams });
 });
 
-router.post("/updateTeams/", (req, res) => {
+router.post("/updateTeams/", requireAuth, async (req, res) => {
   const { teams } = req.body;
-  for (const team of teams) {
+  const uid = req.user!.uid;
+  for (const team of teams as Team[]) {
+    if (!(await canModifyTeam(uid, team.id))) {
+      res.status(403).send({ error: `Not authorized to update team ${team.id}` });
+      return;
+    }
+  }
+  for (const team of teams as Team[]) {
     db.collection("teams")
       .doc(team.id)
       .update({ ...team, lastUpdated: new Date().toLocaleString() });
@@ -67,12 +87,26 @@ router.post("/updateTeams/", (req, res) => {
   res.status(200).send({ teams });
 });
 
-router.put("/updateSingleTeam/", async (req, res) => {
-  const { team, isAdmin } = req.body;
+router.put("/updateSingleTeam/", requireAuth, async (req, res) => {
+  const { team } = req.body as { team: Team; isAdmin?: boolean };
+  const uid = req.user!.uid;
+  // Ownership verified server-side against the stored team, not req.body.
+  const doc = db.collection("teams").doc(team.id);
+  const prevData = (await doc.get()).data() as Team | undefined;
+  if (!prevData) {
+    res.status(404).send();
+    return;
+  }
+  const isOwner = prevData.owner === uid;
+  const isCommissioner = await isLeagueCommissioner(prevData.league, uid);
+  const isAdmin = isOwner || isCommissioner;
+  if (!isAdmin) {
+    console.log(`Forbidden team update: ${team.name} by ${uid}`);
+    res.status(403).send("Not authorized to update this team");
+    return;
+  }
   console.log("Updating team: " + team.name + " by admin: " + isAdmin);
   try {
-    const doc = db.collection("teams").doc(team.id);
-    const prevData = (await doc.get()).data() as Team;
     const lineupDiff = findLineupChanges(prevData.weekInfo, team.weekInfo);
 
     const schedule = await getNflSchedule();
@@ -104,7 +138,7 @@ router.get("/:id/", async (req, res) => {
   });
 });
 
-router.post("/setLineupFromProjection/", async (req, res) => {
+router.post("/setLineupFromProjection/", requireAuth, async (req, res) => {
   const {
     team,
     week,
@@ -114,6 +148,10 @@ router.post("/setLineupFromProjection/", async (req, res) => {
     week: Week;
     type: QuicksetLineupType;
   } = req.body;
+  if (!(await canModifyTeam(req.user!.uid, team.id))) {
+    res.status(403).send("Not authorized to update this team");
+    return;
+  }
   console.log(team.name);
   const weekNum = parseInt(week);
   if (type === "LastWeek" && parseInt(week) > 1) {
