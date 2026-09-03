@@ -1,23 +1,13 @@
 import { PlayerScoresResponse } from "@ff-mern/ff-types";
 import { useQuery } from "react-query";
+import { apiPost } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
-const fetchPlayerScores = async (
-  leagueId: string,
-  week: number,
-  players?: string[]
-) => {
-  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${leagueId}/playerScores/`;
-  const req = {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ players, week }),
-  };
-  const resp = await fetch(url, req);
-  if (!resp.ok) {
-    throw new Error(resp.statusText);
-  }
-  return await resp.json();
-};
+const fetchPlayerScores = (leagueId: string, week: number, players?: string[]) =>
+  apiPost<PlayerScoresResponse>(`/api/v1/league/${leagueId}/playerScores/`, {
+    players,
+    week,
+  });
 
 export const usePlayerScores = (
   leagueId: string,
@@ -25,7 +15,7 @@ export const usePlayerScores = (
   players?: string[]
 ) => {
   return useQuery<PlayerScoresResponse, Error>(
-    ["playerScores", leagueId, week],
+    queryKeys.playerScores(leagueId, week),
     () => fetchPlayerScores(leagueId, week, players)
   );
 };

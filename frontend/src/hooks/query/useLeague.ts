@@ -1,31 +1,38 @@
 import { League } from "@ff-mern/ff-types";
-import { useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
+import { apiGet } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
 type ApiResponse = {
   league: League;
 };
 
-const getLeagueData = async (id: string) => {
-  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${id}/`;
-  const resp = await fetch(url);
-  if (!resp.ok) {
-    throw new Error(resp.statusText);
-  }
-  const data: ApiResponse = await resp.json();
-  return data;
-};
+const getLeagueData = (id: string) =>
+  apiGet<ApiResponse>(`/api/v1/league/${id}/`);
 
 export const useLeague = (id: string) => {
-  const [league, setLeague] = useState<League>();
-  const { isLoading, isSuccess } = useQuery(
-    ["league", id],
-    () => getLeagueData(id),
-    {
-      onSuccess: (data) => {
-        setLeague(data.league);
-      },
-    }
+  const queryClient = useQueryClient();
+  const { data, isLoading, isSuccess, ...rest } = useQuery(
+    queryKeys.league(id),
+    () => getLeagueData(id)
   );
-  return { league, setLeague, isLoading, isSuccess };
+  const league = data?.league;
+  // Optimistic-UI helper kept for callers that edit league fields locally
+  // before a mutation. Reads should prefer `league` (the cache) directly.
+  const setLeague = (
+    update: League | undefined | ((prev: League | undefined) => League | undefined)
+  ) => {
+    queryClient.setQueryData<ApiResponse | undefined>(
+      queryKeys.league(id),
+      (prev) => {
+        const next =
+          typeof update === "function"
+            ? (update as (p: League | undefined) => League | undefined)(prev?.league)
+            : update;
+        if (next === undefined) return prev;
+        return { league: next };
+      }
+    );
+  };
+  return { league, setLeague, isLoading, isSuccess, ...rest };
 };

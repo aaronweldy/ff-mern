@@ -8,11 +8,19 @@ import { Router } from "express";
 import { db } from "../config/firebase-config.js";
 import { activeDrafts } from "../socket/draft/index.js";
 import { getTeamsInLeague } from "../utils/fetchRoutes.js";
+import {
+  isLeagueCommissioner,
+  requireAuth,
+} from "../middleware/auth.js";
 
 const router = Router();
 
-router.put("/create/", async (req, res) => {
+router.put("/create/", requireAuth, async (req, res) => {
   const { leagueId, draftSettings } = req.body as CreateDraftRequest;
+  if (!(await isLeagueCommissioner(leagueId, req.user!.uid))) {
+    res.status(403).send("Only commissioners may create a draft.");
+    return;
+  }
   const [leagueDoc, teams, playersDoc] = await Promise.all([
     db.collection("leagues").doc(leagueId).get(),
     getTeamsInLeague(leagueId),
@@ -55,8 +63,19 @@ router.put("/create/", async (req, res) => {
   res.status(200).send(draftData);
 });
 
-router.delete("/:id/", async (req, res) => {
+router.delete("/:id/", requireAuth, async (req, res) => {
   const { id } = req.params;
+  const draftDoc = await db.collection("drafts").doc(id).get();
+  if (draftDoc.exists) {
+    const leagueId = (draftDoc.data() as { leagueId?: string }).leagueId;
+    if (
+      leagueId &&
+      !(await isLeagueCommissioner(leagueId, req.user!.uid))
+    ) {
+      res.status(403).send("Only commissioners may delete a draft.");
+      return;
+    }
+  }
   await db.collection("drafts").doc(id).delete();
   res.status(200).send();
 });

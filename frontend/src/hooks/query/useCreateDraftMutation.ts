@@ -1,7 +1,9 @@
 import { CreateDraftRequest, DraftState, League } from "@ff-mern/ff-types";
 import { useMutation, useQueryClient } from "react-query";
 import { v4 } from "uuid";
+import { apiPut } from "../../API/client";
 import { DraftFormState } from "../../Components/LeagueHome/CreateDraftModal";
+import { queryKeys } from "./queryKeys";
 
 export const useCreateDraft = (
   leagueId: string,
@@ -13,7 +15,6 @@ export const useCreateDraft = (
     async (state: DraftFormState) => {
       console.log("creating draft", state);
       if (league) {
-        const url = import.meta.env.VITE_PUBLIC_URL + "/api/v1/draft/create/";
         const body: CreateDraftRequest = {
           leagueId,
           draftSettings: {
@@ -27,23 +28,21 @@ export const useCreateDraft = (
         if (existingDraft) {
           body.draftSettings.draftId = existingDraft.settings.draftId;
         }
-        const options = {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        };
-        const data = await fetch(url, options);
-        return (await data.json()) as DraftState;
+        return apiPut<DraftState>(`/api/v1/draft/create/`, body);
       }
+      return undefined;
     },
     {
       onSuccess: (data) => {
         if (data) {
-          queryClient.setQueryData(["draftForLeague", data.leagueId], {
+          queryClient.setQueryData(queryKeys.draftForLeague(data.leagueId), {
             draft: data,
           });
+          queryClient.invalidateQueries(
+            queryKeys.draftForLeague(data.leagueId)
+          );
+        } else {
+          queryClient.invalidateQueries(queryKeys.draftForLeague(leagueId));
         }
       },
     }

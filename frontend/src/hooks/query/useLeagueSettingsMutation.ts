@@ -1,5 +1,7 @@
 import { League, ScoringSetting } from "@ff-mern/ff-types";
 import { useMutation, useQueryClient } from "react-query";
+import { apiPatch } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
 export const useLeagueSettingsMutation = (id: string) => {
   const queryClient = useQueryClient();
@@ -9,22 +11,16 @@ export const useLeagueSettingsMutation = (id: string) => {
     ScoringSetting[]
   >(
     async (settings) => {
-      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${id}/updateScoringSettings/`;
-      const req = {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, settings }),
-      };
-      const resp = await fetch(url, req);
-      if (!resp.ok) {
-        throw new Error(resp.statusText);
-      }
-      const { league } = await resp.json();
-      return league as League;
+      const { league } = await apiPatch<{ league: League }>(
+        `/api/v1/league/${id}/updateScoringSettings/`,
+        { id, settings }
+      );
+      return league;
     },
     {
       onSuccess: (data) => {
-        queryClient.setQueryData(["league", id], { league: data });
+        queryClient.setQueryData(queryKeys.league(id), { league: data });
+        queryClient.invalidateQueries(queryKeys.league(id));
       },
     }
   );

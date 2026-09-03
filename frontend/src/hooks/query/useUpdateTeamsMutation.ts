@@ -1,5 +1,7 @@
 import { Team } from "@ff-mern/ff-types";
 import { useMutation, useQueryClient } from "react-query";
+import { apiPost } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
 export type UpdateTeamsResponse = {
   teams: Team[];
@@ -13,27 +15,16 @@ export const useUpdateTeamsMutation = (
   const queryClient = useQueryClient();
   return useMutation<UpdateTeamsResponse, Error>(
     async () => {
-      let url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/team/`;
-      if (validate) {
-        url += "validateTeams/";
-      } else {
-        url += "updateTeams/";
-      }
-      const body = JSON.stringify({ teams });
-      const req = {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body,
-      };
-      const resp = await fetch(url, req);
-      if (!resp.ok) {
-        throw new Error(resp.statusText);
-      }
-      return resp.json();
+      const path = validate
+        ? `/api/v1/team/validateTeams/`
+        : `/api/v1/team/updateTeams/`;
+      return apiPost<UpdateTeamsResponse>(path, { teams });
     },
     {
       onSuccess: (data) => {
-        queryClient.setQueryData(["teams", leagueId], data);
+        queryClient.setQueryData(queryKeys.teams(leagueId), data);
+        queryClient.invalidateQueries(queryKeys.teams(leagueId));
+        queryClient.invalidateQueries(queryKeys.allTeams());
       },
     }
   );

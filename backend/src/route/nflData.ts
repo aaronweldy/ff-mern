@@ -3,6 +3,7 @@ import { Router } from "express";
 import { db } from "../config/firebase-config.js";
 import { fetchPlayers } from "../utils/fetchRoutes.js";
 import { NFLSchedule, RosteredPlayer } from "@ff-mern/ff-types";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -23,7 +24,7 @@ router.get("/allPlayers/", async (_, res) => {
   }
 });
 
-router.post("/syncPlayers/", async (_, res) => {
+router.post("/syncPlayers/", requireAuth, async (_, res) => {
   try {
     const players = await fetchPlayers();
     const deconstructedPlayers = players.map((player) =>
@@ -40,7 +41,7 @@ router.post("/syncPlayers/", async (_, res) => {
   }
 });
 
-router.post("/addPlayer/", async (req, res) => {
+router.post("/addPlayer/", requireAuth, async (req, res) => {
   try {
     const { fullName, team, position } = req.body;
     if (!fullName || !team || !position) {

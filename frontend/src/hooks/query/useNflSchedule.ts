@@ -1,15 +1,11 @@
 import { NFLSchedule } from "@ff-mern/ff-types";
 import { useQuery } from "react-query";
+import { apiGet } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
-const fetchSchedule = async () => {
-  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/nflData/nflSchedule/`;
-  const resp = await fetch(url);
-  if (!resp.ok) {
-    throw new Error(resp.statusText);
-  }
-  return await resp.json();
-};
+const fetchSchedule = () =>
+  apiGet<NFLSchedule>("/api/v1/nflData/nflSchedule/");
 
 export const useNflSchedule = () => {
-  return useQuery<NFLSchedule, Error>("nflSchedule", fetchSchedule);
+  return useQuery<NFLSchedule, Error>(queryKeys.nflSchedule(), fetchSchedule);
 };

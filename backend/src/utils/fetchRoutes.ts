@@ -15,7 +15,6 @@ import {
   AbbreviationToFullTeam,
 } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
-import fetch from "node-fetch";
 import { load } from "cheerio";
 import { get } from './tableScraper.js';
 

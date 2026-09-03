@@ -1,14 +1,12 @@
 import { TeamFantasyPositionPerformance } from "@ff-mern/ff-types";
 import { useQuery } from "react-query";
+import { apiGet } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
-const fetchDefenseStats = async () => {
-  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/nflData/nflDefenseStats/`;
-  const resp = await fetch(url);
-  if (!resp.ok) {
-    throw new Error(resp.statusText);
-  }
-  return await resp.json();
-};
+const fetchDefenseStats = () =>
+  apiGet<{ data: TeamFantasyPositionPerformance }>(
+    "/api/v1/nflData/nflDefenseStats/"
+  );
 
 type NflDefenseStatsResponse = {
   data: TeamFantasyPositionPerformance;
@@ -16,7 +14,7 @@ type NflDefenseStatsResponse = {
 
 export const useNflDefenseStats = () => {
   return useQuery<NflDefenseStatsResponse, Error>(
-    "nflDefenseStats",
+    queryKeys.nflDefenseStats(),
     fetchDefenseStats
   );
 };
