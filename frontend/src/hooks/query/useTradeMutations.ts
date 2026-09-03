@@ -1,80 +1,60 @@
 import { Trade } from "@ff-mern/ff-types";
 import { useAuthUser } from "@react-query-firebase/auth";
 import { useMutation, useQueryClient } from "react-query";
+import { apiDelete, apiPatch, apiPost } from "../../API/client";
 import { auth } from "../../firebase-config";
+import { queryKeys } from "./queryKeys";
 
 export const useTradeMutations = (leagueId: string) => {
   const user = useAuthUser("user", auth);
   const queryClient = useQueryClient();
+  const userId = user?.data?.uid;
 
-  const proposeQuery = useMutation<void, Error, Trade>(async (trade) => {
-    const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/trade/propose/`;
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(trade),
-    });
-    if (!resp.ok) {
-      throw new Error(resp.statusText);
-    }
-  });
+  const invalidateTradeQueries = () => {
+    queryClient.invalidateQueries(queryKeys.trades(userId));
+    queryClient.invalidateQueries(queryKeys.teams(leagueId));
+  };
 
-  const cancelQuery = useMutation<void, Error, string>(
-    async (tradeId) => {
-      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/trade/${tradeId}/`;
-      const resp = await fetch(url, {
-        headers: { "content-type": "application/json" },
-        method: "DELETE",
-        body: JSON.stringify({ userId: user?.data?.uid }),
-      });
-      if (!resp.ok) {
-        throw new Error(resp.statusText);
-      }
+  const proposeQuery = useMutation<void, Error, Trade>(
+    async (trade) => {
+      await apiPost<void>(`/api/v1/trade/propose/`, trade);
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(["trades", user?.data?.uid]);
+        invalidateTradeQueries();
+      },
+    }
+  );
+
+  const cancelQuery = useMutation<void, Error, string>(
+    async (tradeId) => {
+      await apiDelete<void>(`/api/v1/trade/${tradeId}/`, { userId });
+    },
+    {
+      onSuccess: () => {
+        invalidateTradeQueries();
       },
     }
   );
 
   const rejectQuery = useMutation<void, Error, string>(
     async (tradeId) => {
-      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/trade/${tradeId}/reject/`;
-      const resp = await fetch(url, {
-        headers: { "content-type": "application/json" },
-        method: "PATCH",
-        body: JSON.stringify({ userId: user?.data?.uid }),
-      });
-      if (!resp.ok) {
-        throw new Error(resp.statusText);
-      }
+      await apiPatch<void>(`/api/v1/trade/${tradeId}/reject/`, { userId });
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(["trades", user?.data?.uid]);
+        invalidateTradeQueries();
       },
     }
   );
 
   const acceptQuery = useMutation<void, Error, string>(
     async (tradeId) => {
-      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/trade/${tradeId}/accept/`;
-      const resp = await fetch(url, {
-        headers: { "content-type": "application/json" },
-        method: "PATCH",
-        body: JSON.stringify({ userId: user?.data?.uid }),
-      });
-      if (!resp.ok) {
-        throw new Error(resp.statusText);
-      }
+      await apiPatch<void>(`/api/v1/trade/${tradeId}/accept/`, { userId });
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(["trades", user?.data?.uid]);
-        queryClient.invalidateQueries(["teams", leagueId]);
+        invalidateTradeQueries();
       },
     }
   );

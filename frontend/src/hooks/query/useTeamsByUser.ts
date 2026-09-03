@@ -1,14 +1,10 @@
 import { Team } from "@ff-mern/ff-types";
 import { useQuery } from "react-query";
+import { apiGet } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
-const fetchUserTeams = async (userId: string) => {
-  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/user/${userId}/leagues/`;
-  const resp = await fetch(url);
-  if (!resp.ok) {
-    throw new Error(resp.statusText);
-  }
-  return await resp.json();
-};
+const fetchUserTeams = (userId: string) =>
+  apiGet<{ teams: Team[] }>(`/api/v1/user/${userId}/leagues/`);
 
 type UserTeamsResponse = {
   teams: Team[];
@@ -16,7 +12,7 @@ type UserTeamsResponse = {
 
 export const useTeamsByUser = (userId?: string) => {
   return useQuery<UserTeamsResponse, Error>(
-    ["teamsForUser", userId],
+    queryKeys.teamsForUser(userId),
     () => fetchUserTeams(userId!),
     {
       enabled: !!userId,

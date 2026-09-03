@@ -1,5 +1,7 @@
 import { League, LineupSettings, Team } from "@ff-mern/ff-types";
 import { useMutation, useQueryClient } from "react-query";
+import { apiPatch } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
 type UpdateLeagueRequest = {
   league?: League;
@@ -23,7 +25,6 @@ export const useUpdateLeagueMutation = (
   const queryClient = useQueryClient();
   return useMutation<void, Error, MutationSettings>(
     async (settings) => {
-      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${leagueId}/update/`;
       const body = {
         league: {
           ...info.league,
@@ -46,21 +47,12 @@ export const useUpdateLeagueMutation = (
         }),
         deletedTeams: info.deletedTeams,
       };
-      const resp = await fetch(url, {
-        method: "PATCH",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-      if (!resp.ok) {
-        throw new Error(resp.statusText);
-      }
+      await apiPatch<void>(`/api/v1/league/${leagueId}/update/`, body);
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(["league", leagueId]);
-        queryClient.invalidateQueries(["teams", leagueId]);
+        queryClient.invalidateQueries(queryKeys.league(leagueId));
+        queryClient.invalidateQueries(queryKeys.teams(leagueId));
       },
     }
   );

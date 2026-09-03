@@ -1,19 +1,18 @@
 import { RosteredPlayer } from "@ff-mern/ff-types";
 import { useQuery } from "react-query";
+import { apiGet } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
-const fetchPlayers = async () => {
-  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/nflData/allPlayers/`;
-  const resp = await fetch(url);
-  if (!resp.ok) {
-    throw new Error(resp.statusText);
-  }
-  return await resp.json();
-};
+const fetchPlayers = () =>
+  apiGet<{ players: RosteredPlayer[] }>("/api/v1/nflData/allPlayers/");
 
 type GlobalPlayersResponse = {
   players: RosteredPlayer[];
 };
 
 export const usePlayers = () => {
-  return useQuery<GlobalPlayersResponse, Error>("players", fetchPlayers);
+  return useQuery<GlobalPlayersResponse, Error>(
+    queryKeys.players(),
+    fetchPlayers
+  );
 };

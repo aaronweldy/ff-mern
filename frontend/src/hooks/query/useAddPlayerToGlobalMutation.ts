@@ -1,5 +1,7 @@
 import { RosteredPlayer, AbbreviatedNflTeam, SinglePosition } from "@ff-mern/ff-types";
 import { useMutation, useQueryClient } from "react-query";
+import { apiPost } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
 type AddPlayerRequest = {
   fullName: string;
@@ -14,22 +16,12 @@ type AddPlayerResponse = {
 export const useAddPlayerToGlobalMutation = () => {
   const queryClient = useQueryClient();
   return useMutation<AddPlayerResponse, Error, AddPlayerRequest>(
-    async (playerData) => {
-      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/nflData/addPlayer/`;
-      const req = {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(playerData),
-      };
-      const data = await fetch(url, req);
-      if (!data.ok) {
-        throw new Error(data.statusText);
-      }
-      return await data.json();
-    },
+    async (playerData) =>
+      apiPost<AddPlayerResponse>(`/api/v1/nflData/addPlayer/`, playerData),
     {
       onSuccess: (data) => {
-        queryClient.setQueryData("players", data);
+        queryClient.setQueryData(queryKeys.players(), data);
+        queryClient.invalidateQueries(queryKeys.players());
       },
     }
   );

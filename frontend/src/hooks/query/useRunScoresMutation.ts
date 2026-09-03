@@ -1,5 +1,7 @@
 import { RunScoresResponse, Team } from "@ff-mern/ff-types";
 import { useMutation, useQueryClient } from "react-query";
+import { apiPost } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
 export const useRunScoresMutation = (
   id: string,
@@ -9,27 +11,22 @@ export const useRunScoresMutation = (
   const queryClient = useQueryClient();
   return useMutation<RunScoresResponse, Error>(
     "runScores",
-    async () => {
-      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${id}/runScores/`;
-      const req = {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, week, teams }),
-      };
-      const resp = await fetch(url, req);
-      if (!resp.ok) {
-        throw new Error(resp.statusText);
-      }
-      return resp.json();
-    },
+    async () =>
+      apiPost<RunScoresResponse>(`/api/v1/league/${id}/runScores/`, {
+        id,
+        week,
+        teams,
+      }),
     {
       onSuccess: (data) => {
-        queryClient.setQueryData(["teams", id], { teams: data.teams });
-        queryClient.setQueryData(["playerScores", id, week], {
+        queryClient.setQueryData(queryKeys.teams(id), { teams: data.teams });
+        queryClient.setQueryData(queryKeys.playerScores(id, week), {
           teams: data.teams,
           players: data.data,
         });
-        queryClient.invalidateQueries(["team"]);
+        queryClient.invalidateQueries(queryKeys.teams(id));
+        queryClient.invalidateQueries(queryKeys.playerScores(id, week));
+        queryClient.invalidateQueries(queryKeys.allTeams());
       },
     }
   );

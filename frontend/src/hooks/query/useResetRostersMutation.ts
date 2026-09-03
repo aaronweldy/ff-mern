@@ -1,25 +1,22 @@
 import { Team } from "@ff-mern/ff-types";
 import { useMutation, useQueryClient } from "react-query";
+import { apiPatch } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
 export const useResetRostersMutation = (leagueId: string) => {
   const queryClient = useQueryClient();
   return useMutation<Team[], Error>(
     async () => {
-      const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${leagueId}/resetAllRosters/`;
-      const req = {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-      };
-      const data = await fetch(url, req);
-      if (!data.ok) {
-        throw new Error(data.statusText);
-      }
-      const { teams } = await data.json();
-      return teams as Team[];
+      const { teams } = await apiPatch<{ teams: Team[] }>(
+        `/api/v1/league/${leagueId}/resetAllRosters/`
+      );
+      return teams;
     },
     {
       onSuccess: (data) => {
-        queryClient.setQueryData(["teams", leagueId], { teams: data });
+        queryClient.setQueryData(queryKeys.teams(leagueId), { teams: data });
+        queryClient.invalidateQueries(queryKeys.teams(leagueId));
+        queryClient.invalidateQueries(queryKeys.allTeams());
       },
     }
   );

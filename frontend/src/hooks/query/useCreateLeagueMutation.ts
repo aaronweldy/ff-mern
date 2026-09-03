@@ -1,5 +1,7 @@
 import { PositionInfo, Team } from "@ff-mern/ff-types";
-import { useMutation } from "react-query";
+import { useMutation, useQueryClient } from "react-query";
+import { apiPost } from "../../API/client";
+import { queryKeys } from "./queryKeys";
 
 type CreateLeagueType = {
   league: string;
@@ -15,18 +17,18 @@ type CreateLeagueResponse = {
 };
 
 export const useCreateLeagueMutation = (info: CreateLeagueType) => {
-  return useMutation<CreateLeagueResponse, Error, string>(async (id) => {
-    const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/create/`;
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
+  const queryClient = useQueryClient();
+  return useMutation<CreateLeagueResponse, Error, string>(
+    async (id) =>
+      apiPost<CreateLeagueResponse>(`/api/v1/league/create/`, {
+        ...info,
+        logo: id,
+      }),
+    {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries(queryKeys.league(data.id));
+        queryClient.invalidateQueries(queryKeys.teams(data.id));
       },
-      body: JSON.stringify({ ...info, logo: id }),
-    });
-    if (!resp.ok) {
-      throw new Error(resp.statusText);
     }
-    return (await resp.json()) as CreateLeagueResponse;
-  });
+  );
 };

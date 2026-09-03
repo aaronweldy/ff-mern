@@ -3,16 +3,14 @@ import { UserInfo } from "firebase/auth";
 import { useState } from "react";
 import { useQuery } from "react-query";
 import { Navigate, useParams } from "react-router-dom";
+import { apiGet } from "../../API/client";
 import { auth } from "../../firebase-config";
+import { queryKeys } from "../../hooks/query/queryKeys";
 
-const fetchCommCheck = async (leagueId: string, userId?: string) => {
-  const url = `${import.meta.env.VITE_PUBLIC_URL}/api/v1/league/${leagueId}/${userId}/isCommissioner/`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(res.statusText);
-  }
-  return res;
-};
+const fetchCommCheck = (leagueId: string, userId?: string) =>
+  apiGet<{ isCommissioner: boolean }>(
+    `/api/v1/league/${leagueId}/${userId}/isCommissioner/`
+  );
 
 export const CommissionerRoute = ({ children }: { children: JSX.Element }) => {
   const [redirect, setRedirect] = useState(false);
@@ -21,11 +19,10 @@ export const CommissionerRoute = ({ children }: { children: JSX.Element }) => {
   const userId = data?.uid;
   console.log(!!data?.uid, data?.uid);
   useQuery(
-    ["commissionerCheck", leagueId, data?.uid],
+    queryKeys.commissionerCheck(leagueId, data?.uid),
     () => fetchCommCheck(leagueId, data?.uid),
     {
-      onSuccess: async (resp) => {
-        const data: { isCommissioner: boolean } = await resp.json();
+      onSuccess: (data) => {
         if (!data.isCommissioner) {
           setRedirect(true);
         }
