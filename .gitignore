@@ -7,7 +7,7 @@ ff-mern-firebase*
 ff-types/.rollup.cache/**
 ff-types/.npmignore
 .firebase/**
-.github**
+
 
 !.yarn/cache
 !.yarn/releases

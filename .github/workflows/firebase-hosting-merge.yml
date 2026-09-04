@@ -1,0 +1,69 @@
+# Ship to production when master moves:
+#   1. frontend -> Firebase Hosting (live channel)
+#   2. scrapers -> Cloud Functions
+# The backend goes out via Render auto-deploy off master, so keep
+# frontend deploys paired with it: the new frontend sends ID tokens
+# and the old one breaks against the authed API.
+#
+# Required repo secrets:
+#   FIREBASE_SERVICE_ACCOUNT_FF_MERN (firebase init hosting:github)
+#   FIREBASE_TOKEN (firebase login:ci) - used for the functions deploy
+
+name: Deploy to production on merge
+
+'on':
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  hosting-live:
+    if: secrets.FIREBASE_SERVICE_ACCOUNT_FF_MERN != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.5
+
+      - name: Enable Corepack (yarn 3.8.5 via packageManager field)
+        run: corepack enable
+
+      - name: Install (immutable - lockfile must match package.json)
+        run: yarn install --immutable
+
+      - name: Build frontend (emits to frontend/build per firebase.json)
+        run: yarn workspace ff-mern build
+
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FF_MERN }}'
+          channelId: live
+          projectId: ff-mern
+
+  functions:
+    if: secrets.FIREBASE_TOKEN != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.5
+
+      - name: Enable Corepack (yarn 3.8.5 via packageManager field)
+        run: corepack enable
+
+      - name: Install (immutable - lockfile must match package.json)
+        run: yarn install --immutable
+
+      - name: Build functions (tsc emits lib/, predeploy is a no-op)
+        run: yarn workspace functions build
+
+      - name: Deploy functions
+        run: yarn firebase deploy --only functions --project ff-mern --token '${{ secrets.FIREBASE_TOKEN }}' --non-interactive

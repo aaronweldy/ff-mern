@@ -1,0 +1,35 @@
+# Preview the frontend on every PR via a Firebase Hosting preview channel.
+# Requires the FIREBASE_SERVICE_ACCOUNT_FF_MERN repo secret
+# (generate with: firebase init hosting:github).
+# Until the secret exists this job is skipped, not failed.
+
+name: Deploy to Firebase Hosting on PR
+
+'on': pull_request
+
+jobs:
+  build_and_preview:
+    if: github.event.pull_request.head.repo.full_name == github.repository && secrets.FIREBASE_SERVICE_ACCOUNT_FF_MERN != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.5
+
+      - name: Enable Corepack (yarn 3.8.5 via packageManager field)
+        run: corepack enable
+
+      - name: Install (immutable - lockfile must match package.json)
+        run: yarn install --immutable
+
+      - name: Build frontend (emits to frontend/build per firebase.json)
+        run: yarn workspace ff-mern build
+
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FF_MERN }}'
+          projectId: ff-mern
