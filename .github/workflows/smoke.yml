@@ -1,0 +1,32 @@
+# Render free instances sleep, which looks exactly like an outage
+# (503s that clear on their own). This pings the backend every
+# 15 minutes to keep it warm, and fails loudly when the API is
+# really down or the auth guard regresses.
+#
+# Checks:
+#   GET  /                          -> 200 (server is up)
+#   POST /api/v1/league/create/     -> 401 without a token (auth guard live)
+# No secrets needed.
+
+name: Render smoke and keep-warm
+
+'on':
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Health check
+        run: |
+          code=$(curl -s -m 90 -o /dev/null -w '%{http_code}' https://orca-ff.onrender.com/)
+          echo "GET / -> $code"
+          test "$code" = '200'
+
+      - name: Auth guard check (unauthed mutation must be rejected)
+        run: |
+          code=$(curl -s -m 90 -X POST https://orca-ff.onrender.com/api/v1/league/create/ -H 'Content-Type: application/json' -d '{}' -o /dev/null -w '%{http_code}')
+          echo "POST /api/v1/league/create/ without token -> $code"
+          test "$code" = '401'

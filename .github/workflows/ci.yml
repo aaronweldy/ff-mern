@@ -1,0 +1,48 @@
+name: CI
+
+# Fails fast on the exact breakages that bit us before:
+# - yarn.lock out of sync with package.json (--immutable install)
+# - backend tsc errors (missing deps, bad imports)
+# - frontend / functions builds
+# Lint is intentionally not run: both eslint setups are broken
+# pre-existing (frontend misses eslint-config-react-app, backend
+# lints stale dist output). Fix those, then add lint jobs here.
+
+'on':
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.5
+
+      - name: Enable Corepack (yarn 3.8.5 via packageManager field)
+        run: corepack enable
+
+      - name: Install (immutable - lockfile must match package.json)
+        run: yarn install --immutable
+
+      - name: Build ff-types
+        run: yarn workspace @ff-mern/ff-types build
+
+      - name: Build backend (tsc project refs)
+        run: yarn workspace backend build
+
+      - name: Backend tests
+        run: yarn workspace backend test --passWithNoTests
+
+      - name: Build frontend
+        run: yarn workspace ff-mern build
+
+      - name: Build functions
+        run: yarn workspace functions build

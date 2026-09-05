@@ -767,6 +767,7 @@ __metadata:
     firebase-admin: ^12.5.0
     rollup: ^2.64.0
     rollup-plugin-dts: ^4.1.0
+    typescript: ^4.5.5
   languageName: unknown
   linkType: soft
 
