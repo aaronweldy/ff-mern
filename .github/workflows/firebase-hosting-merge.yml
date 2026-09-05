@@ -19,7 +19,6 @@ name: Deploy to production on merge
 
 jobs:
   hosting-live:
-    if: secrets.FIREBASE_SERVICE_ACCOUNT_FF_MERN != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +45,6 @@ jobs:
           projectId: ff-mern
 
   functions:
-    if: secrets.FIREBASE_TOKEN != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
