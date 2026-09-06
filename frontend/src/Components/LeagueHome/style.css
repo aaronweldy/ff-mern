@@ -38,7 +38,11 @@
 
 .league-table-loading__table {
   max-width: max-content;
-  margin: 0 auto;
+}
+
+.league-standings-table {
+  margin: 0;
+  max-width: max-content;
 }
 
 .league-table-loading__table th,

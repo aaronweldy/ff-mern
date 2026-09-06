@@ -13,7 +13,7 @@ export const CumulativeScoreTable = ({
   league,
   id,
 }: CumulativeScoreTableProps) => (
-  <Table striped hover className="hide-cells centered-scrollable-table">
+  <Table striped hover className="hide-cells league-standings-table">
     <thead>
       <tr>
         <th />
@@ -102,7 +102,10 @@ export const CumulativeScoreTableLoadingState = ({
   return (
     <div className="league-table-loading" role="status" aria-live="polite">
       <span className="sr-only">Loading league standings</span>
-      <Table className="league-table-loading__table" aria-hidden="true">
+      <Table
+        className="league-standings-table league-table-loading__table"
+        aria-hidden="true"
+      >
         <thead>
           <tr>
             {Array.from({ length: columns }, (_, index) => (
