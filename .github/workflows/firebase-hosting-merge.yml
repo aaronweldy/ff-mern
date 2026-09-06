@@ -7,12 +7,9 @@
 #
 # Required repo secret:
 #   FIREBASE_SERVICE_ACCOUNT_FF_MERN (firebase init hosting:github)
-# Optional repo secret:
-#   FIREBASE_TOKEN (firebase login:ci) - enables the functions deploy
 #
-# The frontend hosting deploy can use the service account directly. Functions
-# still use the legacy Firebase CI token for now; skip that step when the
-# token is not configured so a missing optional secret cannot fail a merge.
+# Both deploys use this service account. It must have Firebase Hosting Admin,
+# Cloud Functions Admin, and Service Account User permissions in GCP.
 
 name: Deploy to production on merge
 
@@ -51,8 +48,6 @@ jobs:
 
   functions:
     runs-on: ubuntu-latest
-    env:
-      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -70,10 +65,18 @@ jobs:
       - name: Build functions (tsc emits lib/, predeploy is a no-op)
         run: yarn workspace functions build
 
-      - name: Deploy functions
-        if: ${{ env.FIREBASE_TOKEN != '' }}
-        run: yarn firebase deploy --only functions --project ff-mern --token "$FIREBASE_TOKEN" --non-interactive
+      - name: Configure Firebase application credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FF_MERN }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: |
+          test -n "$FIREBASE_SERVICE_ACCOUNT" || {
+            echo "FIREBASE_SERVICE_ACCOUNT_FF_MERN is not configured."
+            exit 1
+          }
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$GOOGLE_APPLICATION_CREDENTIALS"
 
-      - name: Skip functions deploy (FIREBASE_TOKEN is not configured)
-        if: ${{ env.FIREBASE_TOKEN == '' }}
-        run: echo "FIREBASE_TOKEN is not configured; skipping the functions deployment."
+      - name: Deploy functions
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: yarn firebase deploy --only functions --project ff-mern --non-interactive
