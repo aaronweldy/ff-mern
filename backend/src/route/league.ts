@@ -8,6 +8,7 @@ import {
   ScoringError,
   Team,
   PlayerScoreData,
+  CumulativePlayerScore,
   PlayerScoresResponse,
   CumulativePlayerScores,
   playerTeamIsNflAbbreviation,
@@ -31,6 +32,85 @@ import {
 const router = Router();
 
 type LeagueScoringDefault = "Standard" | "PPR";
+
+const getSortedCumulativePlayerScores = (
+  scores: CumulativePlayerScores
+) =>
+  Object.keys(scores)
+    .sort((a, b) => scores[b].totalPointsInSeason - scores[a].totalPointsInSeason)
+    .reduce((acc: CumulativePlayerScores, playerName: string) => {
+      acc[playerName] = scores[playerName];
+      return acc;
+    }, {});
+
+const getStoredLeagueScoringDocs = async (leagueId: string, year: number) => {
+  const collection = db.collection("leagueScoringData");
+  const documentRefs = Array.from({ length: 18 }, (_, index) =>
+    collection.doc(`${year}${index + 1}${leagueId}`)
+  );
+  const snapshots = await db.getAll(...documentRefs);
+  return snapshots.filter((doc) => doc.exists);
+};
+
+const getHistoricalCumulativePlayerScores = async (
+  leagueId: string,
+  year: number
+): Promise<CumulativePlayerScores> => {
+  const scoringDocs = await getStoredLeagueScoringDocs(leagueId, year);
+  const scores: CumulativePlayerScores = {};
+
+  scoringDocs.forEach((doc) => {
+    const week = Number(doc.id.slice(4, -leagueId.length));
+    if (!Number.isInteger(week) || week < 1 || week > 18) {
+      return;
+    }
+    const playerData = doc.data().playerData as PlayerScoreData | undefined;
+    if (!playerData) {
+      return;
+    }
+
+    Object.entries(playerData).forEach(([sanitizedName, data]) => {
+      const storedName = data.statistics?.Player;
+      const playerName =
+        typeof storedName === "string"
+          ? storedName.replace(/\s*\([^)]*\)\s*$/, "").trim()
+          : sanitizedName;
+      const existingScore: CumulativePlayerScore = scores[playerName] || {
+        position: data.position,
+        team: data.team,
+        totalPointsInSeason: 0,
+        pointsByWeek: Array(18).fill(0),
+      };
+      existingScore.position = data.position;
+      existingScore.team = data.team;
+      existingScore.pointsByWeek[week - 1] = data.scoring.totalPoints;
+      existingScore.totalPointsInSeason = existingScore.pointsByWeek.reduce(
+        (total, points) => total + points,
+        0
+      );
+      scores[playerName] = existingScore;
+    });
+  });
+
+  return getSortedCumulativePlayerScores(scores);
+};
+
+const getAvailableCumulativeScoreYears = async (leagueId: string) => {
+  const years = new Set<number>([getCurrentSeason()]);
+  const documentRefs = await db
+    .collection("leagueScoringData")
+    .listDocuments();
+  documentRefs.forEach((doc) => {
+    if (!doc.id.endsWith(leagueId)) {
+      return;
+    }
+    const year = Number(doc.id.slice(0, 4));
+    if (Number.isInteger(year) && year >= 2000 && year <= getCurrentSeason()) {
+      years.add(year);
+    }
+  });
+  return [...years].sort((a, b) => b - a);
+};
 
 // ---- Public reads (no auth) ----
 
@@ -461,8 +541,35 @@ router.post("/:leagueId/playerScores/", requireAuth, async (req, res) => {
   res.status(200).send(resp);
 });
 
+router.get("/:id/cumulativePlayerScores/years/", async (req, res) => {
+  const { id } = req.params;
+  const years = await getAvailableCumulativeScoreYears(id);
+  res.status(200).send({ years });
+});
+
 router.get("/:id/cumulativePlayerScores/", async (req, res) => {
   const { id } = req.params;
+  const requestedYear =
+    typeof req.query.year === "string" ? Number(req.query.year) : undefined;
+  if (
+    requestedYear !== undefined &&
+    (!Number.isInteger(requestedYear) ||
+      requestedYear < 2000 ||
+      requestedYear > getCurrentSeason())
+  ) {
+    res.status(400).send("Invalid scoring year");
+    return;
+  }
+
+  if (requestedYear !== undefined && requestedYear !== getCurrentSeason()) {
+    const historicalScores = await getHistoricalCumulativePlayerScores(
+      id,
+      requestedYear
+    );
+    res.status(200).send(historicalScores);
+    return;
+  }
+
   const cumulativeData = await db
     .collection("cumulativePlayerScores")
     .doc(id)
@@ -486,15 +593,7 @@ router.get("/:id/cumulativePlayerScores/", async (req, res) => {
     return;
   }
   const retData = cumulativeData.data() as CumulativePlayerScores;
-  const sortedData = Object.keys(retData)
-    .sort((a, b) => {
-      return retData[b].totalPointsInSeason - retData[a].totalPointsInSeason;
-    })
-    .reduce((acc: CumulativePlayerScores, i: string) => {
-      acc[i] = retData[i];
-      return acc;
-    }, {});
-  res.status(200).send(sortedData);
+  res.status(200).send(getSortedCumulativePlayerScores(retData));
 });
 
 router.get("/:leagueId/:userId/isCommissioner", (req, res) => {
