@@ -55,21 +55,6 @@
   transition: border 0.24s ease-in-out;
 }
 
-.image-fit {
-  max-width: 20%;
-  height: auto;
-}
-
-.image-fit-height {
-  width: 120px;
-  max-height: 120px;
-}
-
-.thumbnail-image {
-  width: 50px;
-  max-height: 50px;
-}
-
 .hide-cells {
   border-collapse: separate;
   empty-cells: hide;
@@ -200,12 +185,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-}
-
-.logo-image {
-  max-width: 2rem;
-  max-height: 2rem;
-  margin-right: 1em;
 }
 
 .player-played {

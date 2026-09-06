@@ -14,7 +14,6 @@ import {
   CardDeck,
   Col,
   Container,
-  Image,
   Row,
 } from "react-bootstrap";
 import { useParams } from "react-router-dom";
@@ -23,6 +22,7 @@ import { auth, storage } from "../../firebase-config";
 import { useTeamsByUser } from "../../hooks/query/useTeamsByUser";
 import { useUploadPhotoMutation } from "../../hooks/query/useUploadPhotoMutation";
 import ImageModal from "../shared/ImageModal";
+import { StableImage } from "../shared/StableImage";
 import PasswordModal from "./PasswordModal";
 
 type PasswordReducerState = {
@@ -215,13 +215,15 @@ const User = () => {
         <>
           <Row className="justify-content-center mb-3 mt-3">
             <Col sm="auto">
-              <Image
+              <StableImage
+                size="logo"
                 src={
                   imageUrl ||
                   `${import.meta.env.VITE_PUBLIC_URL}/football.jfif`
                 }
-                className="image-fit-height mr-3"
-                roundedCircle
+                alt="User profile"
+                className="rounded-circle"
+                frameClassName="mr-3"
               />
             </Col>
             <Col sm="auto">
@@ -283,11 +285,15 @@ const User = () => {
             userTeamsQuery.data.teams.map((team, index) => (
               <Card key={index} className="m-2">
                 <Card.Body className="d-flex flex-column align-content-end">
-                  <a href={`/league/${team.league}/team/${team.id}/`}>
-                    <Card.Img
-                      variant="bottom"
-                      className="mt-auto"
+                  <a
+                    className="stable-image-link"
+                    href={`/league/${team.league}/team/${team.id}/`}
+                  >
+                    <StableImage
+                      size="card"
                       src={teamLogos[team.id] || team.logo}
+                      alt={`${team.name} logo`}
+                      frameClassName="mt-auto"
                     />
                   </a>
                   <div className="mt-auto">

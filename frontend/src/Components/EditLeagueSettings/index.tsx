@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Button, Col, Container, Form, Image, Row } from "react-bootstrap";
+import { Button, Col, Container, Form, Row } from "react-bootstrap";
 import { useDropzone } from "react-dropzone";
 import { Navigate, useParams } from "react-router-dom";
 import { v4 } from "uuid";
@@ -20,6 +20,7 @@ import EditLineupSettingsForm from "../shared/EditLineupSettingsForm";
 import LeagueButton from "../shared/LeagueButton";
 import LeagueCreationHeader from "../shared/LeagueCreationHeader";
 import LeagueCreationTable from "../shared/LeagueCreationTable";
+import { StableImage } from "../shared/StableImage";
 
 function EditLeagueSettings() {
   const { id } = useParams() as { id: string };
@@ -212,7 +213,7 @@ function EditLeagueSettings() {
         </Row>
         <Row>
           <Col>
-            <Image className="image-fit" src={imageUrl} />
+            <StableImage size="preview" src={imageUrl} alt="League logo preview" />
           </Col>
         </Row>
         <Form.Row className="mb-3 mt-3">

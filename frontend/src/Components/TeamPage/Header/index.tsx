@@ -1,5 +1,6 @@
 import { Team } from "@ff-mern/ff-types";
-import { Col, Image, Row } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
+import { StableImage } from "../../shared/StableImage";
 
 type HeaderProps = {
   team: Team;
@@ -10,9 +11,10 @@ export const Header = ({ team, showModal }: HeaderProps) => {
   return (
     <Row className="mt-3 mb-3">
       <Col sm="auto" className="mt-1">
-        <Image
-          className="image-fit-height"
+        <StableImage
+          size="logo"
           src={team.logo || import.meta.env.VITE_DEFAULT_LOGO}
+          alt="Team logo"
         />
       </Col>
       <Col sm="auto">

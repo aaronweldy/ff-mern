@@ -4,6 +4,7 @@ import { Navbar, Button, NavDropdown } from "react-bootstrap";
 import { Navigate } from "react-router-dom";
 import { useAuthUser } from "@react-query-firebase/auth";
 import { useTeamsByUser } from "../../../hooks/query/useTeamsByUser";
+import { StableImage } from "../../shared/StableImage";
 import "../CSS/index.css";
 
 export const LogOutButtons = () => {
@@ -49,12 +50,11 @@ export const LogOutButtons = () => {
           )}
         </Navbar.Text>
         {user && user.data?.photoURL ? (
-          <img
+          <StableImage
+            size="nav"
             src={user.data?.photoURL}
-            className="d-inline-block align-top mr-3"
-            width="auto"
-            height="35"
             alt="User logo"
+            frameClassName="mr-3"
           />
         ) : (
           ""

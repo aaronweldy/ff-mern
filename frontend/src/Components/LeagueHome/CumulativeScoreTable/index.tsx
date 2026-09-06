@@ -1,5 +1,6 @@
 import { League, Team } from "@ff-mern/ff-types";
-import { Image, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
+import { OverlayTrigger, Table, Tooltip } from "react-bootstrap";
+import { StableImage } from "../../shared/StableImage";
 
 type CumulativeScoreTableProps = {
   teams: Team[];
@@ -37,9 +38,10 @@ export const CumulativeScoreTable = ({
         return (
           <tr key={i}>
             <td>
-              <Image
-                className="thumbnail-image"
+              <StableImage
+                size="thumbnail"
                 src={team.logo || import.meta.env.VITE_DEFAULT_LOGO}
+                alt="Team logo"
               />
             </td>
             <td>

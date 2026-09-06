@@ -3,6 +3,7 @@ import { Navbar } from "react-bootstrap";
 import { auth } from "../../firebase-config";
 import { LogOutButtons } from "./LogOutButtons";
 import { LoginButtons } from "./LoginButtons";
+import { StableImage } from "../shared/StableImage";
 
 const NavHeader = () => {
   const userQuery = useAuthUser("user", auth);
@@ -15,12 +16,11 @@ const NavHeader = () => {
   return (
     <Navbar bg="dark" expand="lg" variant="dark">
       <Navbar.Brand href="/">
-        <img
+        <StableImage
+          size="nav"
           src={`${import.meta.env.VITE_DEFAULT_LOGO}`}
-          className="d-inline-block align-top mr-2"
-          width="auto"
-          height="35"
           alt="League logo"
+          frameClassName="mr-2"
         />
         Orca Fantasy
       </Navbar.Brand>

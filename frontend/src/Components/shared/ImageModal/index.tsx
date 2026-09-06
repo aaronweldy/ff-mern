@@ -3,7 +3,6 @@ import {
   Button,
   Modal,
   ModalBody,
-  Image,
   Form,
   Col,
 } from "react-bootstrap";
@@ -11,6 +10,7 @@ import { useDropzone } from "react-dropzone";
 import React, { useState, useCallback, useEffect } from "react";
 import { storage } from "../../../firebase-config";
 import { ref, getDownloadURL } from "firebase/storage";
+import { StableImage } from "../StableImage";
 
 type ImageModalProps = {
   origName?: string;
@@ -72,7 +72,7 @@ const ImageModal = ({
           </Col>
         </Row>
         <Row className="justify-content-center">
-          <Image className="image-fit" src={imageUrl} />
+          <StableImage size="preview" src={imageUrl} alt="Team logo preview" />
         </Row>
       </ModalBody>
       <Modal.Footer className="d-flex justify-content-start">

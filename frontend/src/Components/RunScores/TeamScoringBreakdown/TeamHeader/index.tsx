@@ -1,4 +1,5 @@
-import { Col, Image, Row } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
+import { StableImage } from "../../../shared/StableImage";
 
 type HeaderProps = {
   name: string;
@@ -9,9 +10,10 @@ type HeaderProps = {
 export const TeamHeader = ({ name, logo, owner }: HeaderProps) => (
   <Row className="mb-3 align-items-center">
     <Col sm="auto">
-      <Image
-        className="image-fit-height"
+      <StableImage
+        size="logo"
         src={logo || import.meta.env.VITE_DEFAULT_LOGO}
+        alt="Team logo"
       />
     </Col>
     <Col sm="auto" className="align-items-center">

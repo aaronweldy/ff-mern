@@ -6,7 +6,7 @@ import {
 } from "@ff-mern/ff-types";
 import { ref, uploadString } from "firebase/storage";
 import React, { useCallback, useState } from "react";
-import { Button, Col, Container, Form, Image, Row } from "react-bootstrap";
+import { Button, Col, Container, Form, Row } from "react-bootstrap";
 import { useDropzone } from "react-dropzone";
 import { Navigate } from "react-router-dom";
 import { v4 } from "uuid";
@@ -15,6 +15,7 @@ import { useCreateLeagueMutation } from "../../hooks/query/useCreateLeagueMutati
 import EditLineupSettingsForm from "../shared/EditLineupSettingsForm";
 import LeagueCreationHeader from "../shared/LeagueCreationHeader";
 import LeagueCreationTable from "../shared/LeagueCreationTable";
+import { StableImage } from "../shared/StableImage";
 import { IncDecInput } from "./IncDecInput";
 import ScoringSettingCheckGroup, {
   ScoringType,
@@ -199,7 +200,7 @@ function CreateLeague() {
             </div>
           </Row>
           <Row>
-            <Image className="image-fit" src={imageUrl} />
+            <StableImage size="preview" src={imageUrl} alt="League logo preview" />
           </Row>
         </Form>
       ) : (
