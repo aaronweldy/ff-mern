@@ -140,9 +140,17 @@ export const LeagueHome = () => {
       <Row className="mb-3 mt-3 justify-content-center align-items-center">
         <LeagueName leagueName={league?.name} imgUrl={imgUrl} />
       </Row>
-      <Row className="mb-3 mt-3 justify-content-center">
+      <Row
+        className="mb-3 mt-3 justify-content-center league-commissioner-options-row"
+        aria-busy={user.isLoading}
+      >
         {userIsCommissioner ? (
           <CommissionerOptions leagueId={id} setDelete={setDelete} />
+        ) : user.isLoading ? (
+          <div
+            className="league-commissioner-options-loading"
+            aria-hidden="true"
+          />
         ) : (
           ""
         )}

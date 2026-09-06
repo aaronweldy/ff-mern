@@ -10,6 +10,28 @@
   justify-content: space-between;
 }
 
+.league-commissioner-options-row {
+  min-height: 3rem;
+}
+
+.league-commissioner-options-loading {
+  width: min(100%, 34rem);
+  height: 1rem;
+  background-color: #e9ecef;
+  border-radius: 0.25rem;
+  animation: league-table-loading-pulse 1.5s ease-in-out infinite;
+}
+
+@media (max-width: 767.98px) {
+  .league-commissioner-options-row {
+    min-height: 7rem;
+  }
+
+  .league-commissioner-options-loading {
+    height: 4.5rem;
+  }
+}
+
 .league-table-loading {
   width: 100%;
 }
