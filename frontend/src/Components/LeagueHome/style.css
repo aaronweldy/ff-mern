@@ -11,12 +11,11 @@
 }
 
 .league-table-loading {
-  overflow-x: auto;
+  width: 100%;
 }
 
 .league-table-loading__table {
-  width: max-content;
-  min-width: 100%;
+  max-width: max-content;
   margin: 0 auto;
 }
 
