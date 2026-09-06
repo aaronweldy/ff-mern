@@ -90,6 +90,122 @@
   z-index: 9999;
 }
 
+.team-page-loading {
+  padding-bottom: 3rem;
+}
+
+.team-page-skeleton {
+  background-color: #e9ecef;
+  border-radius: 0.25rem;
+  animation: team-page-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.team-page-skeleton--logo {
+  width: 120px;
+  height: 120px;
+}
+
+.team-page-skeleton-copy {
+  padding-top: 1rem;
+}
+
+.team-page-skeleton--title {
+  width: 220px;
+  height: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.team-page-skeleton--subtitle {
+  width: 140px;
+  height: 1rem;
+}
+
+.team-page-skeleton--week {
+  width: 115px;
+  height: 38px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.team-page-skeleton-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 38px;
+}
+
+.team-page-skeleton--button {
+  width: 72px;
+  height: 38px;
+}
+
+.team-page-skeleton--button-wide {
+  width: 168px;
+}
+
+.team-page-skeleton--updated {
+  width: 250px;
+  height: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.team-page-skeleton--heading {
+  width: 100px;
+  height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.team-page-skeleton-table {
+  max-width: 90vw;
+  margin-bottom: 1rem;
+  overflow-x: hidden;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+}
+
+.team-page-skeleton-table__row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(6rem, 1fr));
+  gap: 1rem;
+  min-width: 720px;
+  min-height: 3.25rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.team-page-skeleton-table__row--header {
+  min-height: 3rem;
+  border-top: 0;
+  background-color: #f8f9fa;
+}
+
+.team-page-skeleton--cell {
+  align-self: center;
+  width: 75%;
+  height: 0.9rem;
+}
+
+.team-page-skeleton-table__row:nth-child(3n) .team-page-skeleton--cell {
+  width: 55%;
+}
+
+@keyframes team-page-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team-page-skeleton {
+    animation: none;
+  }
+}
+
 @keyframes rotate-s-loader {
   from {
     transform: rotate(0);

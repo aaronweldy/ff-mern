@@ -9,3 +9,66 @@
 .justify-between {
   justify-content: space-between;
 }
+
+.league-table-loading {
+  overflow-x: auto;
+}
+
+.league-table-loading__table {
+  width: max-content;
+  min-width: 100%;
+  margin: 0 auto;
+}
+
+.league-table-loading__table th,
+.league-table-loading__table td {
+  min-width: 5rem;
+  height: 50px;
+  vertical-align: middle;
+}
+
+.league-table-loading__table th:first-child,
+.league-table-loading__table td:first-child {
+  min-width: 50px;
+}
+
+.league-table-loading__table th:nth-child(n + 4):not(:last-child),
+.league-table-loading__table td:nth-child(n + 4):not(:last-child) {
+  min-width: 3.5rem;
+}
+
+.league-table-loading__line,
+.league-table-loading__logo {
+  background-color: #e9ecef;
+  animation: league-table-loading-pulse 1.5s ease-in-out infinite;
+}
+
+.league-table-loading__line {
+  width: 70%;
+  height: 0.9rem;
+  border-radius: 0.25rem;
+}
+
+.league-table-loading__logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 0.25rem;
+}
+
+@keyframes league-table-loading-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .league-table-loading__line,
+  .league-table-loading__logo {
+    animation: none;
+  }
+}

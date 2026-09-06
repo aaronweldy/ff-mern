@@ -28,10 +28,16 @@ const TeamPage = () => {
     setWeek,
     nflScheduleQuery,
     defenseStatsQuery,
-    teamsLoading,
-    leagueLoading,
+    isLoading: scoringDataLoading,
   } = useLeagueScoringData(leagueId);
-  const { team, updateTeamMutation, setHighestProjectedLineupMutation, errorMessage, setErrorMessage } = useSingleTeam(id);
+  const {
+    team,
+    isLoading: teamLoading,
+    updateTeamMutation,
+    setHighestProjectedLineupMutation,
+    errorMessage,
+    setErrorMessage,
+  } = useSingleTeam(id);
   const user = useAuthUser(["user"], auth);
   const [showImageModal, setShowImageModal] = useState(false);
   const {
@@ -53,6 +59,13 @@ const TeamPage = () => {
     () => getWeeklyLineup(week, team, league?.lineupSettings),
     [week, team, league]
   );
+  const loadingStarterRows = league
+    ? Object.values(league.lineupSettings).reduce(
+        (total, positionCount) => total + positionCount,
+        0
+      )
+    : 8;
+  const loadingBenchRows = lineup.bench?.length || 6;
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
   const canEditRoster = useMemo(() => {
     if (!league) {
@@ -139,13 +152,13 @@ const TeamPage = () => {
     }
   };
 
-  if (leagueLoading || teamsLoading) {
-    return <div className="spinning-loader"></div>;
-  }
+  const pageIsLoading = scoringDataLoading || teamLoading || !user.isSuccess;
 
   return (
-    <Container>
-      {updateTeamMutation.isLoading || setHighestProjectedLineupMutation.isLoading ? <div className="spinning-loader"></div> : null}
+    <Container aria-busy={pageIsLoading}>
+      {updateTeamMutation.isLoading || setHighestProjectedLineupMutation.isLoading ? (
+        <div className="spinning-loader"></div>
+      ) : null}
       <ImageModal
         show={showImageModal}
         origName={(team && team!.name) || ""}
@@ -174,7 +187,12 @@ const TeamPage = () => {
       <Row className="mt-3">
         <LeagueButton id={leagueId} />
       </Row>
-      {team && league && user.isSuccess ? (
+      {pageIsLoading ? (
+        <TeamPageLoadingState
+          starterRows={loadingStarterRows}
+          benchRows={loadingBenchRows}
+        />
+      ) : team && league && user.isSuccess ? (
         <>
           <Header team={team} showModal={setShowImageModal} />
           <Row>
@@ -266,5 +284,69 @@ const TeamPage = () => {
     </Container>
   );
 };
+
+const TeamPageLoadingState = ({
+  starterRows,
+  benchRows,
+}: {
+  starterRows: number;
+  benchRows: number;
+}) => (
+  <div className="team-page-loading" role="status" aria-live="polite">
+    <span className="sr-only">Loading team page</span>
+
+    <Row className="mt-3 mb-3">
+      <Col sm="auto" className="mt-1">
+        <div className="team-page-skeleton team-page-skeleton--logo" />
+      </Col>
+      <Col sm="auto" className="team-page-skeleton-copy">
+        <div className="team-page-skeleton team-page-skeleton--title" />
+        <div className="team-page-skeleton team-page-skeleton--subtitle" />
+      </Col>
+    </Row>
+
+    <Row>
+      <Col sm={2}>
+        <div className="team-page-skeleton team-page-skeleton--week" />
+      </Col>
+      <Col className="mt-3">
+        <div className="team-page-skeleton-actions">
+          <div className="team-page-skeleton team-page-skeleton--button" />
+          <div className="team-page-skeleton team-page-skeleton--button team-page-skeleton--button-wide" />
+          <div className="team-page-skeleton team-page-skeleton--button team-page-skeleton--button-wide" />
+        </div>
+      </Col>
+    </Row>
+
+    <Row>
+      <div className="team-page-skeleton team-page-skeleton--updated" />
+    </Row>
+    <Row>
+      <div className="team-page-skeleton team-page-skeleton--heading" />
+    </Row>
+    <TeamTableLoadingState rows={starterRows} />
+    <Row>
+      <div className="team-page-skeleton team-page-skeleton--heading" />
+    </Row>
+    <TeamTableLoadingState rows={benchRows} />
+  </div>
+);
+
+const TeamTableLoadingState = ({ rows }: { rows: number }) => (
+  <div className="team-page-skeleton-table" aria-hidden="true">
+    <div className="team-page-skeleton-table__row team-page-skeleton-table__row--header">
+      {Array.from({ length: 6 }, (_, index) => (
+        <div className="team-page-skeleton team-page-skeleton--cell" key={`header-${index}`} />
+      ))}
+    </div>
+    {Array.from({ length: rows }, (_, rowIndex) => (
+      <div className="team-page-skeleton-table__row" key={`row-${rowIndex}`}>
+        {Array.from({ length: 6 }, (_, cellIndex) => (
+          <div className="team-page-skeleton team-page-skeleton--cell" key={`cell-${rowIndex}-${cellIndex}`} />
+        ))}
+      </div>
+    ))}
+  </div>
+);
 
 export default TeamPage;

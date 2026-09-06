@@ -87,3 +87,47 @@ export const CumulativeScoreTable = ({
     </tbody>
   </Table>
 );
+
+type CumulativeScoreTableLoadingStateProps = {
+  numWeeks?: number;
+  rows?: number;
+};
+
+export const CumulativeScoreTableLoadingState = ({
+  numWeeks = 18,
+  rows = 10,
+}: CumulativeScoreTableLoadingStateProps) => {
+  const columns = numWeeks + 4;
+
+  return (
+    <div className="league-table-loading" role="status" aria-live="polite">
+      <span className="sr-only">Loading league standings</span>
+      <Table className="league-table-loading__table" aria-hidden="true">
+        <thead>
+          <tr>
+            {Array.from({ length: columns }, (_, index) => (
+              <th key={`header-${index}`}>
+                <div className="league-table-loading__line" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }, (_, rowIndex) => (
+            <tr key={`row-${rowIndex}`}>
+              {Array.from({ length: columns }, (_, cellIndex) => (
+                <td key={`cell-${rowIndex}-${cellIndex}`}>
+                  {cellIndex === 0 ? (
+                    <div className="league-table-loading__logo" />
+                  ) : (
+                    <div className="league-table-loading__line" />
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </div>
+  );
+};
