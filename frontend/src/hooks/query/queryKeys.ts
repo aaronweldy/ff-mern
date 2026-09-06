@@ -7,8 +7,10 @@ export const queryKeys = {
   players: () => ["players"] as const,
   playerScores: (leagueId: string, week: number) =>
     ["playerScores", leagueId, week] as const,
-  cumulativePlayerScores: (leagueId: string) =>
-    ["cumulativePlayerScores", leagueId] as const,
+  cumulativePlayerScoreYears: (leagueId: string) =>
+    ["cumulativePlayerScoreYears", leagueId] as const,
+  cumulativePlayerScores: (leagueId: string, year: number) =>
+    ["cumulativePlayerScores", leagueId, year] as const,
   nflSchedule: () => ["nflSchedule"] as const,
   nflDefenseStats: () => ["nflDefenseStats"] as const,
   draftForLeague: (leagueId: string) => ["draftForLeague", leagueId] as const,
