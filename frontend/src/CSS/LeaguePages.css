@@ -179,6 +179,23 @@
   overflow-y: scroll;
 }
 
+.cumulative-player-table-wrapper {
+  max-width: 100%;
+  max-height: 70vh;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.cumulative-player-table {
+  min-width: max-content;
+  width: max-content;
+}
+
+.cumulative-player-table th,
+.cumulative-player-table td {
+  white-space: nowrap;
+}
+
 .spaced-span {
   display: inline-flex;
   align-items: center;

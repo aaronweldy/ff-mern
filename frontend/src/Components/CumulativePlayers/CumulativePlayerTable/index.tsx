@@ -15,8 +15,12 @@ export const CumulativePlayerTable = ({
   return (
     <Row className="justify-content-center mt-3">
       <Col>
-        <div className="max-height-table">
-          <Table striped bordered className="left-scrollable-table">
+        <div className="cumulative-player-table-wrapper">
+          <Table
+            striped
+            bordered
+            className="left-scrollable-table cumulative-player-table"
+          >
             <thead>
               <tr>
                 <th
