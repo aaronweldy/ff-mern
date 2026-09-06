@@ -13,6 +13,7 @@ import {
 import { Navigate } from "react-router-dom";
 import { auth } from "../../firebase-config";
 import { useLeagueSearchMutations } from "../../hooks/query/useLeagueSearchMutations";
+import { StableImage } from "../shared/StableImage";
 
 const JoinLeague = () => {
   const [leagueName, setLeagueName] = useState("");
@@ -59,10 +60,11 @@ const JoinLeague = () => {
               Object.entries(findLeagueQuery.data).map(([id, league]) => {
                 return (
                   <Card key={league.name + id} className="card-size">
-                    <Card.Img
-                      variant="bottom"
-                      className="mt-auto"
+                    <StableImage
+                      size="card"
                       src={urlMap[id] || import.meta.env.VITE_DEFAULT_LOGO}
+                      alt={`${league.name} logo`}
+                      frameClassName="mt-auto"
                     />
                     <Card.Title className="d-flex justify-content-center">
                       <div className="font-weight-bold">{league.name}</div>

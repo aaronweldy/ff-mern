@@ -1,4 +1,5 @@
-import { Col, Image } from "react-bootstrap";
+import { Col } from "react-bootstrap";
+import { StableImage } from "../../shared/StableImage";
 
 type LeagueNameProps = {
   leagueName?: string;
@@ -7,7 +8,12 @@ type LeagueNameProps = {
 
 export const LeagueName = ({ leagueName, imgUrl }: LeagueNameProps) => (
   <>
-    {imgUrl ? <Image className="image-fit-height" src={imgUrl} rounded /> : ""}
+    <StableImage
+      size="logo"
+      src={imgUrl}
+      alt="League logo"
+      className="rounded"
+    />
     <Col sm="auto">
       <h1>{leagueName}</h1>
     </Col>

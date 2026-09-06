@@ -1,4 +1,4 @@
-import { Team, TeamWeekInfo } from "@ff-mern/ff-types";
+import { TeamWeekInfo } from "@ff-mern/ff-types";
 import { useAuthUser } from "@react-query-firebase/auth";
 import "firebase/auth";
 import { getDownloadURL, ref } from "firebase/storage";
@@ -16,7 +16,10 @@ import { useTeams } from "../../hooks/query/useTeams";
 import { ConfirmationModal } from "../shared/ConfirmationModal";
 import { CommissionerOptions } from "./CommissionerOptions";
 import { CreateDraftModal, DraftFormState } from "./CreateDraftModal";
-import { CumulativeScoreTable } from "./CumulativeScoreTable";
+import {
+  CumulativeScoreTable,
+  CumulativeScoreTableLoadingState,
+} from "./CumulativeScoreTable";
 import { LeagueDeletionModal } from "./LeagueDeletionModal";
 import { LeagueName } from "./LeagueName";
 import { LiveDraftRow } from "./LiveDraftRow";
@@ -24,10 +27,9 @@ import "./style.css";
 
 export const LeagueHome = () => {
   const { id } = useParams() as { id: string };
-  const { league } = useLeague(id);
-  const { teams: initTeams } = useTeams(id);
+  const { league, isLoading: leagueLoading } = useLeague(id);
+  const { teams: initTeams, query: teamsQuery } = useTeams(id);
   const deleteLeagueQuery = useDeleteLeagueMutation(id);
-  const [teams, setTeams] = useState<Team[]>([]);
   const [showDelete, setDelete] = useState(false);
   const [redirect, setRedirect] = useState(false);
   const [imgUrl, setImgUrl] = useState("");
@@ -35,6 +37,15 @@ export const LeagueHome = () => {
   const [showDeleteDraftModal, setShowDeleteDraft] = useState(false);
   const draftQuery = useDraftForLeague(id);
   const user = useAuthUser("user", auth);
+  const teams = useMemo(() => {
+    const reducer = (acc: number, info: TeamWeekInfo) =>
+      acc + info.weekScore + info.addedPoints;
+
+    return [...initTeams].sort(
+      (a, b) =>
+        b.weekInfo.reduce(reducer, 0) - a.weekInfo.reduce(reducer, 0)
+    );
+  }, [initTeams]);
   const deleteDraftMutation = useDeleteDraftMutation(
     id,
     draftQuery.data?.draft?.settings.draftId || ""
@@ -45,27 +56,19 @@ export const LeagueHome = () => {
     league
   );
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (newUser) => {
-      if (newUser && league) {
-        const sortedTeams = initTeams.sort((a, b) => {
-          const reducer = (acc: number, i: TeamWeekInfo) =>
-            acc + i.weekScore + i.addedPoints;
-          return b.weekInfo.reduce(reducer, 0) - a.weekInfo.reduce(reducer, 0);
-        });
-        setTeams(sortedTeams);
-        if (league.logo !== import.meta.env.VITE_DEFAULT_LOGO) {
-          getDownloadURL(ref(storage, `logos/${league.logo}`)).then((url) => {
-            setImgUrl(url);
-          }).catch((err) => {
-            console.log(err);
-          });
-        } else {
-          setImgUrl(league.logo);
-        }
-      }
-    });
-    return () => unsub();
-  }, [id, user, league, initTeams]);
+    if (!league) {
+      return;
+    }
+    if (league.logo !== import.meta.env.VITE_DEFAULT_LOGO) {
+      getDownloadURL(ref(storage, `logos/${league.logo}`)).then((url) => {
+        setImgUrl(url);
+      }).catch((err) => {
+        console.log(err);
+      });
+    } else {
+      setImgUrl(league.logo);
+    }
+  }, [league]);
   const liveDraftExists = useMemo(() => {
     return (
       draftQuery.isSuccess &&
@@ -93,6 +96,11 @@ export const LeagueHome = () => {
     deleteDraftMutation.mutate();
     setShowDeleteDraft(false);
   };
+
+  const leagueTableLoading = leagueLoading || teamsQuery.isLoading;
+  const loadingTeamRows = teamsQuery.isLoading
+    ? Math.max(initTeams.length, 10)
+    : Math.max(teams.length, 1);
 
   if (redirect && deleteLeagueQuery.isSuccess) {
     return <Navigate to="/" />;
@@ -132,18 +140,31 @@ export const LeagueHome = () => {
       <Row className="mb-3 mt-3 justify-content-center align-items-center">
         <LeagueName leagueName={league?.name} imgUrl={imgUrl} />
       </Row>
-      <Row className="mb-3 mt-3 justify-content-center">
+      <Row
+        className="mb-3 mt-3 justify-content-center league-commissioner-options-row"
+        aria-busy={user.isLoading}
+      >
         {userIsCommissioner ? (
           <CommissionerOptions leagueId={id} setDelete={setDelete} />
+        ) : user.isLoading ? (
+          <div
+            className="league-commissioner-options-loading"
+            aria-hidden="true"
+          />
         ) : (
           ""
         )}
       </Row>
       <Row className="mt-3 table-wrapper pr-1">
         <Col>
-          {league && (
+          {leagueTableLoading ? (
+            <CumulativeScoreTableLoadingState
+              numWeeks={league?.numWeeks}
+              rows={loadingTeamRows}
+            />
+          ) : league ? (
             <CumulativeScoreTable id={id} league={league} teams={teams} />
-          )}
+          ) : null}
         </Col>
       </Row>
       <Row className="justify-content-center mb-3">

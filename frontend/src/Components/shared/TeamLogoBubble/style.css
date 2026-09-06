@@ -11,9 +11,3 @@
   width: 2em;
   height: 2em;
 }
-
-.bubble-image {
-  max-width: 2em;
-  max-height: 2em;
-  object-fit: contain;
-}

@@ -1,5 +1,6 @@
 import { League, Team } from "@ff-mern/ff-types";
-import { Image, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
+import { OverlayTrigger, Table, Tooltip } from "react-bootstrap";
+import { StableImage } from "../../shared/StableImage";
 
 type CumulativeScoreTableProps = {
   teams: Team[];
@@ -12,7 +13,7 @@ export const CumulativeScoreTable = ({
   league,
   id,
 }: CumulativeScoreTableProps) => (
-  <Table striped hover className="hide-cells centered-scrollable-table">
+  <Table striped hover className="hide-cells league-standings-table">
     <thead>
       <tr>
         <th />
@@ -37,9 +38,10 @@ export const CumulativeScoreTable = ({
         return (
           <tr key={i}>
             <td>
-              <Image
-                className="thumbnail-image"
+              <StableImage
+                size="thumbnail"
                 src={team.logo || import.meta.env.VITE_DEFAULT_LOGO}
+                alt="Team logo"
               />
             </td>
             <td>
@@ -85,3 +87,50 @@ export const CumulativeScoreTable = ({
     </tbody>
   </Table>
 );
+
+type CumulativeScoreTableLoadingStateProps = {
+  numWeeks?: number;
+  rows?: number;
+};
+
+export const CumulativeScoreTableLoadingState = ({
+  numWeeks = 18,
+  rows = 10,
+}: CumulativeScoreTableLoadingStateProps) => {
+  const columns = numWeeks + 4;
+
+  return (
+    <div className="league-table-loading" role="status" aria-live="polite">
+      <span className="sr-only">Loading league standings</span>
+      <Table
+        className="league-standings-table league-table-loading__table"
+        aria-hidden="true"
+      >
+        <thead>
+          <tr>
+            {Array.from({ length: columns }, (_, index) => (
+              <th key={`header-${index}`}>
+                <div className="league-table-loading__line" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }, (_, rowIndex) => (
+            <tr key={`row-${rowIndex}`}>
+              {Array.from({ length: columns }, (_, cellIndex) => (
+                <td key={`cell-${rowIndex}-${cellIndex}`}>
+                  {cellIndex === 0 ? (
+                    <div className="league-table-loading__logo" />
+                  ) : (
+                    <div className="league-table-loading__line" />
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </div>
+  );
+};
