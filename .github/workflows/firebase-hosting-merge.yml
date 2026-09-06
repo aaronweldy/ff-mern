@@ -5,9 +5,14 @@
 # frontend deploys paired with it: the new frontend sends ID tokens
 # and the old one breaks against the authed API.
 #
-# Required repo secrets:
+# Required repo secret:
 #   FIREBASE_SERVICE_ACCOUNT_FF_MERN (firebase init hosting:github)
-#   FIREBASE_TOKEN (firebase login:ci) - used for the functions deploy
+# Optional repo secret:
+#   FIREBASE_TOKEN (firebase login:ci) - enables the functions deploy
+#
+# The frontend hosting deploy can use the service account directly. Functions
+# still use the legacy Firebase CI token for now; skip that step when the
+# token is not configured so a missing optional secret cannot fail a merge.
 
 name: Deploy to production on merge
 
@@ -46,6 +51,8 @@ jobs:
 
   functions:
     runs-on: ubuntu-latest
+    env:
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -64,4 +71,9 @@ jobs:
         run: yarn workspace functions build
 
       - name: Deploy functions
-        run: yarn firebase deploy --only functions --project ff-mern --token '${{ secrets.FIREBASE_TOKEN }}' --non-interactive
+        if: ${{ env.FIREBASE_TOKEN != '' }}
+        run: yarn firebase deploy --only functions --project ff-mern --token "$FIREBASE_TOKEN" --non-interactive
+
+      - name: Skip functions deploy (FIREBASE_TOKEN is not configured)
+        if: ${{ env.FIREBASE_TOKEN == '' }}
+        run: echo "FIREBASE_TOKEN is not configured; skipping the functions deployment."
