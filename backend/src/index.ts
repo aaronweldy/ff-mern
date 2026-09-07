@@ -27,17 +27,24 @@ import { requireAuth } from "./middleware/auth.js";
 const app = express();
 const server = createServer(app);
 
-// CORS allowlist from env (FRONTEND_URL) + local dev
+// CORS allowlist from env (FRONTEND_URL) + local dev + Firebase preview
+// channels (https://ff-mern--<branch>-<hash>.web.app) so PR previews can
+// talk to the same backend.
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ].filter((o): o is string => Boolean(o));
 
+const previewOriginPattern = /^https:\/\/ff-mern(--[a-z0-9-]+)?\.web\.app$/;
+
+const isAllowedOrigin = (origin: string): boolean =>
+  allowedOrigins.includes(origin) || previewOriginPattern.test(origin);
+
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
     // Allow non-browser clients (no Origin header) and allowlisted origins
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || isAllowedOrigin(origin)) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
@@ -53,7 +60,13 @@ const io = new Server<
   SocketData
 >(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin || isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"), false);
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
