@@ -16,10 +16,18 @@ const formatNflOpponent = (opp: TeamSchedule | undefined, week: Week, withHomeAw
         return "n/a"
     }
     if (week in opp) {
-        if (withHomeAway) {
-            return opp[week].isHome ? FullTeamToAbbreviation[opp[week].opponent as FullNflTeam] : `@${FullTeamToAbbreviation[opp[week].opponent as FullNflTeam]}`;
+        const opponent = opp[week].opponent;
+        if (opponent === "BYE") {
+            return "BYE";
         }
-        return opp[week].opponent;
+        if (withHomeAway) {
+            // Schedule docs contain both full names ("los angeles chargers")
+            // and legacy abbreviations ("LAC"). Pass abbreviations through so
+            // InlineTeamTile never receives undefined.
+            const abbr = (FullTeamToAbbreviation[opponent as FullNflTeam] ?? opponent) as AbbreviatedNflTeam;
+            return opp[week].isHome ? abbr : `@${abbr}`;
+        }
+        return opponent;
     }
     return "BYE";
 }
@@ -30,24 +38,24 @@ export const MatchupOverlay: React.FC<MatchupOverlayProps> = ({
     week,
     nflDefenseStats,
 }) => {
+    const opponentName = opponentTeam?.[week]?.opponent as FullNflTeam | undefined;
+    // Defense stats can be empty or missing an opponent (e.g. stale schedule
+    // format, "BYE", or a failed scrape). Never let a missing entry crash the
+    // page — fall back to "n/a" like the no-game case.
+    const rank = opponentName
+        ? nflDefenseStats?.[opponentName]?.[player.position]
+        : undefined;
     return (
         <OverlayTrigger
             placement="top"
             overlay={
                 <Tooltip id={`tooltip-${player.fullName}`}>
                     Matchup vs. Position: {
-                        opponentTeam && opponentTeam[week]
-                            ? (
-                                <NflRankedText
-                                    rank={
-                                        nflDefenseStats[
-                                        opponentTeam[week].opponent as FullNflTeam
-                                        ][player.position]
-                                    }
-                                />
-                            ) : (
-                                "n/a"
-                            )
+                        rank != null ? (
+                            <NflRankedText rank={rank} />
+                        ) : (
+                            "n/a"
+                        )
                     }
                 </Tooltip>
             }
