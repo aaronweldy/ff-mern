@@ -40,14 +40,34 @@ const parseHtmlTables = (
   const tables: Array<Array<Record<string, string>>> = [];
   $("table").each((_, table) => {
     const $table = $(table);
-    const $headerRow =
-      $table.find("thead tr").first().length > 0
-        ? $table.find("thead tr").first()
-        : $table.find("tr").first();
+    // FantasyPros stats tables have a two-row thead: a group row
+    // (PASSING/RUSHING/MISC) followed by the actual stat row. Always use
+    // the header row with the most cells so group rows are skipped.
+    // Tables with a single header row behave exactly as before.
+    const $headRows = $table.find("thead tr");
+    let $headerRow = $table.find("tr").first();
+    if ($headRows.length > 0) {
+      let maxCells = -1;
+      $headRows.each((__, row) => {
+        const cellCount = $(row).find("th, td").length;
+        if (cellCount > maxCells) {
+          maxCells = cellCount;
+          $headerRow = $(row);
+        }
+      });
+    }
     const headers: string[] = [];
+    const seenCounts: Record<string, number> = {};
     $headerRow.find("th, td").each((index, cell) => {
-      const text = $(cell).text().trim().replace(/\s+/g, " ");
-      headers.push(text === "" ? String(index) : text);
+      let text = $(cell).text().trim().replace(/\s+/g, " ");
+      if (text === "") {
+        text = String(index);
+      }
+      // Duplicate column names (e.g. passing/rushing ATT/YDS/TD) get
+      // _2/_3 suffixes, matching the DatabasePlayer key convention.
+      const seen = seenCounts[text] ?? 0;
+      seenCounts[text] = seen + 1;
+      headers.push(seen === 0 ? text : `${text}_${seen + 1}`);
     });
     if (headers.length === 0) return;
     const rows: Array<Record<string, string>> = [];
