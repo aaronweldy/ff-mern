@@ -5,9 +5,11 @@
 # frontend deploys paired with it: the new frontend sends ID tokens
 # and the old one breaks against the authed API.
 #
-# Required repo secrets:
+# Required repo secret:
 #   FIREBASE_SERVICE_ACCOUNT_FF_MERN (firebase init hosting:github)
-#   FIREBASE_TOKEN (firebase login:ci) - used for the functions deploy
+#
+# Both deploys use this service account. It must have Firebase Hosting Admin,
+# Cloud Functions Admin, and Service Account User permissions in GCP.
 
 name: Deploy to production on merge
 
@@ -63,5 +65,18 @@ jobs:
       - name: Build functions (tsc emits lib/, predeploy is a no-op)
         run: yarn workspace functions build
 
+      - name: Configure Firebase application credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FF_MERN }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: |
+          test -n "$FIREBASE_SERVICE_ACCOUNT" || {
+            echo "FIREBASE_SERVICE_ACCOUNT_FF_MERN is not configured."
+            exit 1
+          }
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$GOOGLE_APPLICATION_CREDENTIALS"
+
       - name: Deploy functions
-        run: yarn firebase deploy --only functions --project ff-mern --token '${{ secrets.FIREBASE_TOKEN }}' --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: yarn firebase deploy --only functions --project ff-mern --non-interactive

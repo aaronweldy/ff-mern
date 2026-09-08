@@ -17,38 +17,30 @@ import { initSocket } from "./socket/draft/index.js";
 import { requireAuth } from "./middleware/auth.js";
 const app = express();
 const server = createServer(app);
-// CORS allowlist from env (FRONTEND_URL) + local dev + Firebase preview
-// channels (https://ff-mern--<branch>-<hash>.web.app) so PR previews can
-// talk to the same backend.
+// CORS allowlist from env (FRONTEND_URL) + local dev. Firebase Hosting
+// preview channels use a unique hostname for every PR, for example:
+//   https://ff-mern--pr14-codex-historical-cum-lsubcwtv.web.app
+// Keep the pattern scoped to this Firebase site instead of allowing every
+// *.web.app origin.
 const allowedOrigins = [
     process.env.FRONTEND_URL,
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ].filter((o) => Boolean(o));
-const previewOriginPattern = /^https:\/\/ff-mern(--[a-z0-9-]+)?\.web\.app$/;
-const isAllowedOrigin = (origin) => allowedOrigins.includes(origin) || previewOriginPattern.test(origin);
+const firebasePreviewOrigin = /^https:\/\/ff-mern--[a-z0-9-]+\.web\.app$/i;
+const isAllowedOrigin = (origin) => !origin || allowedOrigins.includes(origin) || firebasePreviewOrigin.test(origin);
 const corsOptions = {
     origin: (origin, callback) => {
-        // Allow non-browser clients (no Origin header) and allowlisted origins
-        if (!origin || isAllowedOrigin(origin)) {
-            callback(null, true);
-        }
-        else {
-            callback(new Error("Not allowed by CORS"));
-        }
+        // Allow non-browser clients (no Origin header) and allowlisted origins.
+        // Returning false for an unknown origin lets the request finish normally
+        // without turning a rejected CORS preflight into a 500 response.
+        callback(null, isAllowedOrigin(origin));
     },
     credentials: true,
 };
 const io = new Server(server, {
     cors: {
-        origin: (origin, callback) => {
-            if (!origin || isAllowedOrigin(origin)) {
-                callback(null, true);
-            }
-            else {
-                callback(new Error("Not allowed by CORS"), false);
-            }
-        },
+        origin: [...allowedOrigins, firebasePreviewOrigin],
         methods: ["GET", "POST"],
         credentials: true,
     },
