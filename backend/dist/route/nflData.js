@@ -3,6 +3,7 @@ import { Router } from "express";
 import { db } from "../config/firebase-config.js";
 import { fetchPlayers } from "../utils/fetchRoutes.js";
 import { RosteredPlayer } from "@ff-mern/ff-types";
+import { requireAuth } from "../middleware/auth.js";
 const router = Router();
 router.get("/allPlayers/", async (_, res) => {
     const allPlayers = await db.collection("globalPlayers").doc("players").get();
@@ -19,7 +20,7 @@ router.get("/allPlayers/", async (_, res) => {
         res.status(200).send({ players: allPlayers.data().players });
     }
 });
-router.post("/syncPlayers/", async (_, res) => {
+router.post("/syncPlayers/", requireAuth, async (_, res) => {
     try {
         const players = await fetchPlayers();
         const deconstructedPlayers = players.map((player) => instanceToPlain(player));
@@ -34,7 +35,7 @@ router.post("/syncPlayers/", async (_, res) => {
         res.status(500).send({ error: "Failed to sync players" });
     }
 });
-router.post("/addPlayer/", async (req, res) => {
+router.post("/addPlayer/", requireAuth, async (req, res) => {
     try {
         const { fullName, team, position } = req.body;
         if (!fullName || !team || !position) {

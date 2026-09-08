@@ -7,7 +7,69 @@ import { playerTeamIsNflAbbreviation, getCurrentSeason, } from "@ff-mern/ff-type
 import { fetchPlayers, getTeamsInLeague, scoreAllPlayers, } from "../utils/fetchRoutes.js";
 import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
 import { handleKickerBackupResolution, handleNonKickerBackupResolution, } from "../utils/backupResolution.js";
+import { isLeagueCommissioner, requireAuth, } from "../middleware/auth.js";
 const router = Router();
+const getSortedCumulativePlayerScores = (scores) => Object.keys(scores)
+    .sort((a, b) => scores[b].totalPointsInSeason - scores[a].totalPointsInSeason)
+    .reduce((acc, playerName) => {
+    acc[playerName] = scores[playerName];
+    return acc;
+}, {});
+const getStoredLeagueScoringDocs = async (leagueId, year) => {
+    const collection = db.collection("leagueScoringData");
+    const documentRefs = Array.from({ length: 18 }, (_, index) => collection.doc(`${year}${index + 1}${leagueId}`));
+    const snapshots = await db.getAll(...documentRefs);
+    return snapshots.filter((doc) => doc.exists);
+};
+const getHistoricalCumulativePlayerScores = async (leagueId, year) => {
+    const scoringDocs = await getStoredLeagueScoringDocs(leagueId, year);
+    const scores = {};
+    scoringDocs.forEach((doc) => {
+        const week = Number(doc.id.slice(4, -leagueId.length));
+        if (!Number.isInteger(week) || week < 1 || week > 18) {
+            return;
+        }
+        const playerData = doc.data().playerData;
+        if (!playerData) {
+            return;
+        }
+        Object.entries(playerData).forEach(([sanitizedName, data]) => {
+            const storedName = data.statistics?.Player;
+            const playerName = typeof storedName === "string"
+                ? storedName.replace(/\s*\([^)]*\)\s*$/, "").trim()
+                : sanitizedName;
+            const existingScore = scores[playerName] || {
+                position: data.position,
+                team: data.team,
+                totalPointsInSeason: 0,
+                pointsByWeek: Array(18).fill(0),
+            };
+            existingScore.position = data.position;
+            existingScore.team = data.team;
+            existingScore.pointsByWeek[week - 1] = data.scoring.totalPoints;
+            existingScore.totalPointsInSeason = existingScore.pointsByWeek.reduce((total, points) => total + points, 0);
+            scores[playerName] = existingScore;
+        });
+    });
+    return getSortedCumulativePlayerScores(scores);
+};
+const getAvailableCumulativeScoreYears = async (leagueId) => {
+    const years = new Set([getCurrentSeason()]);
+    const documentRefs = await db
+        .collection("leagueScoringData")
+        .listDocuments();
+    documentRefs.forEach((doc) => {
+        if (!doc.id.endsWith(leagueId)) {
+            return;
+        }
+        const year = Number(doc.id.slice(0, 4));
+        if (Number.isInteger(year) && year >= 2000 && year <= getCurrentSeason()) {
+            years.add(year);
+        }
+    });
+    return [...years].sort((a, b) => b - a);
+};
+// ---- Public reads (no auth) ----
 router.get("/find/:query/", async (req, res) => {
     const query = req.params["query"];
     const startString = query.slice(0, 3);
@@ -42,30 +104,39 @@ router.get("/:id/teams/", async (req, res) => {
         res.status(500).send();
     }
 });
-router.post("/create/", async (req, res) => {
+router.post("/create/", requireAuth, async (req, res) => {
     const { league, teams, logo, posInfo, scoring, numWeeks, numSuperflex } = req.body;
+    if (typeof league !== "string" || league.trim() === "") {
+        res.status(400).send({ error: "League name is required." });
+        return;
+    }
+    if (!Array.isArray(teams)) {
+        res.status(400).send({ error: "Teams must be an array." });
+        return;
+    }
+    const validScoring = ["Standard", "PPR", "Custom"];
+    if (typeof scoring !== "string" || !validScoring.includes(scoring)) {
+        res
+            .status(400)
+            .send({ error: `Scoring must be one of: ${validScoring.join(", ")}.` });
+        return;
+    }
     const leagueId = v4();
-    db.collection("leagues")
-        .doc(leagueId)
-        .set({
-        name: league,
-        lineupSettings: posInfo,
-        logo,
-        numWeeks,
-        numSuperflex,
-        lastScoredWeek: 0,
-    })
-        .then(async () => {
+    try {
+        await db.collection("leagues").doc(leagueId).set({
+            name: league,
+            lineupSettings: posInfo,
+            logo,
+            numWeeks,
+            numSuperflex,
+            lastScoredWeek: 0,
+        });
         const comms = [];
         for await (const team of teams) {
             const teamId = v4();
-            await admin
-                .auth()
-                .getUserByEmail(team.ownerName)
-                .then(async (user) => {
-                db.collection("teams")
-                    .doc(teamId)
-                    .set({
+            try {
+                const user = await admin.auth().getUserByEmail(team.ownerName);
+                await db.collection("teams").doc(teamId).set({
                     ...team,
                     owner: user.uid,
                     id: teamId,
@@ -75,12 +146,10 @@ router.post("/create/", async (req, res) => {
                 });
                 if (team.isCommissioner)
                     comms.push(user.uid);
-            })
-                .catch(async (err) => {
+            }
+            catch (err) {
                 console.log(err);
-                db.collection("teams")
-                    .doc(teamId)
-                    .set({
+                await db.collection("teams").doc(teamId).set({
                     ...team,
                     name: team.name,
                     owner: "default",
@@ -90,24 +159,38 @@ router.post("/create/", async (req, res) => {
                     league: leagueId,
                     leagueLogo: logo,
                 });
-            });
+            }
         }
-        db.collection("leagues")
-            .doc(leagueId)
-            .update({
+        await db.collection("leagues").doc(leagueId).update({
             commissioners: comms,
             scoringSettings: scoring === "Custom"
                 ? []
                 : defaultScoringSettings[scoring],
-        })
-            .then(() => {
-            res.status(200).json({ id: leagueId });
         });
-    });
+        res.status(200).json({ id: leagueId });
+    }
+    catch (e) {
+        console.log("POST /league/create/ failed", e);
+        if (!res.headersSent) {
+            res.status(500).send({ error: "Failed to create league." });
+        }
+    }
 });
-router.post("/:id/join/", async (req, res) => {
+router.post("/:id/join/", requireAuth, async (req, res) => {
     const { id } = req.params;
-    const { owner } = req.body;
+    const uid = req.user.uid;
+    const tokenEmail = req.user.email;
+    const requestedOwner = req.body.owner;
+    // Never trust a client-supplied owner email that differs from the token.
+    if (requestedOwner && tokenEmail && requestedOwner !== tokenEmail) {
+        res.status(403).send("Owner email does not match authenticated user.");
+        return;
+    }
+    const ownerEmail = tokenEmail ?? requestedOwner;
+    if (!ownerEmail) {
+        res.status(400).send("Authenticated user has no email on record.");
+        return;
+    }
     const firstValidTeam = await db
         .collection("teams")
         .where("league", "==", id)
@@ -124,14 +207,28 @@ router.post("/:id/join/", async (req, res) => {
             teamData = doc.data();
         });
         console.log(firstValidTeam.size);
-        admin
-            .auth()
-            .getUserByEmail(owner)
-            .then(async (user) => {
+        if (tokenEmail) {
+            // Identity already verified via ID token; no email lookup needed.
             await db
                 .collection("teams")
                 .doc(teamData.id)
-                .update({ owner: user.uid, ownerName: owner });
+                .update({ owner: uid, ownerName: ownerEmail });
+            const respUrl = `/league/${id}/team/${teamData.id}/`;
+            res.status(200).json({ url: respUrl });
+            return;
+        }
+        admin
+            .auth()
+            .getUserByEmail(ownerEmail)
+            .then(async (user) => {
+            if (user.uid !== uid) {
+                res.status(403).send("Invalid user.");
+                return;
+            }
+            await db
+                .collection("teams")
+                .doc(teamData.id)
+                .update({ owner: user.uid, ownerName: ownerEmail });
             const respUrl = `/league/${id}/team/${teamData.id}/`;
             res.status(200).json({ url: respUrl });
         })
@@ -141,11 +238,12 @@ router.post("/:id/join/", async (req, res) => {
         });
     }
 });
-router.post("/:id/delete/", async (req, res) => {
+router.post("/:id/delete/", requireAuth, async (req, res) => {
     const { id } = req.params;
-    const { user } = req.body;
+    // Ownership comes from the verified ID token, never the request body.
+    const uid = req.user.uid;
     const leagueDoc = await db.collection("leagues").doc(id).get();
-    if (!leagueDoc.data().commissioners.includes(user))
+    if (!leagueDoc.data().commissioners.includes(uid))
         return res
             .status(403)
             .send("User is not a commissioner, and is therefore unauthorized to delete this league.");
@@ -175,9 +273,13 @@ router.get("/:leagueId/teams/", async (req, res) => {
         res.status(200).json({ teams });
     });
 });
-router.patch("/:leagueId/updateScoringSettings/", async (req, res) => {
+router.patch("/:leagueId/updateScoringSettings/", requireAuth, async (req, res) => {
     const { settings } = req.body;
     const { leagueId } = req.params;
+    if (!(await isLeagueCommissioner(leagueId, req.user.uid))) {
+        res.status(403).send("Only commissioners may update scoring settings.");
+        return;
+    }
     const leagueRef = db.collection("leagues").doc(leagueId);
     leagueRef
         .update({ scoringSettings: settings })
@@ -188,8 +290,12 @@ router.patch("/:leagueId/updateScoringSettings/", async (req, res) => {
         res.status(200).send({ league: updatedLeague.data() });
     });
 });
-router.patch("/:leagueId/update/", async (req, res) => {
+router.patch("/:leagueId/update/", requireAuth, async (req, res) => {
     const { leagueId } = req.params;
+    if (!(await isLeagueCommissioner(leagueId, req.user.uid))) {
+        res.status(403).send("Only commissioners may update the league.");
+        return;
+    }
     const { league, teams, deletedTeams, } = req.body;
     await db
         .collection("leagues")
@@ -253,9 +359,13 @@ router.patch("/:leagueId/update/", async (req, res) => {
     }
     res.status(200).send("Updated all league settings");
 });
-router.post("/:leagueId/runScores/", async (req, res) => {
+router.post("/:leagueId/runScores/", requireAuth, async (req, res) => {
     const { week } = req.body;
     const { leagueId } = req.params;
+    if (!(await isLeagueCommissioner(leagueId, req.user.uid))) {
+        res.status(403).send("Only commissioners may run scores.");
+        return;
+    }
     const teams = await getTeamsInLeague(leagueId);
     const league = (await db.collection("leagues").doc(leagueId).get()).data();
     if (week > league.numWeeks) {
@@ -307,7 +417,7 @@ router.post("/:leagueId/runScores/", async (req, res) => {
     console.log(`successful runScores for league ${leagueId}`);
     updateCumulativeStats(leagueId, week, data);
 });
-router.post("/:leagueId/playerScores/", async (req, res) => {
+router.post("/:leagueId/playerScores/", requireAuth, async (req, res) => {
     const { leagueId } = req.params;
     const { players, week } = req.body;
     const teams = await getTeamsInLeague(leagueId);
@@ -347,8 +457,26 @@ router.post("/:leagueId/playerScores/", async (req, res) => {
     };
     res.status(200).send(resp);
 });
+router.get("/:id/cumulativePlayerScores/years/", async (req, res) => {
+    const { id } = req.params;
+    const years = await getAvailableCumulativeScoreYears(id);
+    res.status(200).send({ years });
+});
 router.get("/:id/cumulativePlayerScores/", async (req, res) => {
     const { id } = req.params;
+    const requestedYear = typeof req.query.year === "string" ? Number(req.query.year) : undefined;
+    if (requestedYear !== undefined &&
+        (!Number.isInteger(requestedYear) ||
+            requestedYear < 2000 ||
+            requestedYear > getCurrentSeason())) {
+        res.status(400).send("Invalid scoring year");
+        return;
+    }
+    if (requestedYear !== undefined && requestedYear !== getCurrentSeason()) {
+        const historicalScores = await getHistoricalCumulativePlayerScores(id, requestedYear);
+        res.status(200).send(historicalScores);
+        return;
+    }
     const cumulativeData = await db
         .collection("cumulativePlayerScores")
         .doc(id)
@@ -369,15 +497,7 @@ router.get("/:id/cumulativePlayerScores/", async (req, res) => {
         return;
     }
     const retData = cumulativeData.data();
-    const sortedData = Object.keys(retData)
-        .sort((a, b) => {
-        return retData[b].totalPointsInSeason - retData[a].totalPointsInSeason;
-    })
-        .reduce((acc, i) => {
-        acc[i] = retData[i];
-        return acc;
-    }, {});
-    res.status(200).send(sortedData);
+    res.status(200).send(getSortedCumulativePlayerScores(retData));
 });
 router.get("/:leagueId/:userId/isCommissioner", (req, res) => {
     const { leagueId, userId } = req.params;
@@ -397,8 +517,12 @@ router.get("/:leagueId/:userId/isCommissioner", (req, res) => {
         res.status(200).send({ isCommissioner: true });
     });
 });
-router.patch("/:leagueId/resetAllRosters/", async (req, res) => {
+router.patch("/:leagueId/resetAllRosters/", requireAuth, async (req, res) => {
     const { leagueId } = req.params;
+    if (!(await isLeagueCommissioner(leagueId, req.user.uid))) {
+        res.status(403).send("Only commissioners may reset rosters.");
+        return;
+    }
     const league = (await db.collection("leagues").doc(leagueId).get()).data();
     const teams = await getTeamsInLeague(leagueId);
     await db.collection("cumulativePlayerScores").doc(leagueId).delete();
