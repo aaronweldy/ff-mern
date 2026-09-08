@@ -1,9 +1,12 @@
 import { Router } from "express";
+import express from "express";
 import env from "dotenv";
 import { db } from "../config/firebase-config.js";
 import { getCurrentSeason } from "@ff-mern/ff-types";
+import { requireAuth } from "../middleware/auth.js";
 const router = Router();
 env.config();
+// Public reads
 router.get("/:id/leagues/", async (req, res) => {
     const teams = [];
     const { id } = req.params;
@@ -54,8 +57,14 @@ router.get("/:id/trades/", async (req, res) => {
     }
     res.status(200).send({ trades: response, userProposed });
 });
-router.post("/:id/updatePhoto", (req, res) => {
+// Photo upload allows a larger body than the 1mb global default.
+router.post("/:id/updatePhoto", express.json({ limit: "10mb" }), requireAuth, (req, res) => {
     const { id } = req.params;
+    // Users may only update their own photo; never trust a client-supplied id.
+    if (!req.user || req.user.uid !== id) {
+        res.status(403).send({ error: "Cannot update another user's photo" });
+        return;
+    }
     const { url } = req.body;
     db.collection("users")
         .doc(id)

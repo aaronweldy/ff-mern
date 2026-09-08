@@ -1,6 +1,5 @@
 import { convertedScoringTypes, RosteredPlayer, sanitizePlayerName, getCurrentSeason, AbbreviationToFullTeam, } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
-import fetch from "node-fetch";
 import { load } from "cheerio";
 import { get } from './tableScraper.js';
 export const positions = ["qb", "rb", "wr", "te", "k"];
@@ -18,7 +17,7 @@ export const fetchPlayerProjections = async (week) => {
     const season = getCurrentSeason();
     const check = await db
         .collection("playerProjections")
-        .doc(`${season}${week}`)
+        .doc(`${season}week${week}`)
         .get();
     if (check.exists) {
         return check.data();

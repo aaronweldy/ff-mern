@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../config/firebase-config.js";
+import { requireAuth } from "../middleware/auth.js";
 const router = Router();
 const addPlayerToTeam = (player, firstTeam, secondTeam) => {
     if (player.fromTeam === firstTeam.id) {
@@ -11,14 +12,20 @@ const addPlayerToTeam = (player, firstTeam, secondTeam) => {
         firstTeam.rosteredPlayers.push(player.player);
     }
 };
-router.post("/propose/", async (req, res) => {
+router.post("/propose/", requireAuth, async (req, res) => {
     const trade = req.body;
+    // Proposer must own the first team involved; never trust client identity.
+    const proposingTeam = (await db.collection("teams").doc(trade.teamsInvolved[0]).get()).data();
+    if (!proposingTeam || proposingTeam.owner !== req.user.uid) {
+        res.status(403).send();
+        return;
+    }
     db.collection("trades").doc(trade.id).set(trade);
     res.status(200).send();
 });
-router.delete("/:id/", async (req, res) => {
+router.delete("/:id/", requireAuth, async (req, res) => {
     const { id } = req.params;
-    const { userId } = req.body;
+    const userId = req.user.uid;
     const trade = await db.collection("trades").doc(id).get();
     if (!trade.exists) {
         res.status(404).send();
@@ -33,9 +40,9 @@ router.delete("/:id/", async (req, res) => {
     db.collection("trades").doc(id).delete();
     res.status(200).send();
 });
-router.patch("/:id/reject/", async (req, res) => {
+router.patch("/:id/reject/", requireAuth, async (req, res) => {
     const { id } = req.params;
-    const { userId } = req.body;
+    const userId = req.user.uid;
     const trade = await db.collection("trades").doc(id).get();
     if (!trade.exists) {
         res.status(403).send();
@@ -51,9 +58,9 @@ router.patch("/:id/reject/", async (req, res) => {
     await db.collection("trades").doc(id).set(tradeData);
     res.status(200).send();
 });
-router.patch("/:id/accept/", async (req, res) => {
+router.patch("/:id/accept/", requireAuth, async (req, res) => {
     const { id } = req.params;
-    const { userId } = req.body;
+    const userId = req.user.uid;
     const trade = await db.collection("trades").doc(id).get();
     if (!trade.exists) {
         res.status(403).send();

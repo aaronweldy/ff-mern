@@ -37,7 +37,7 @@ export const fetchPlayerProjections = async (week: Week) => {
   const season = getCurrentSeason();
   const check = await db
     .collection("playerProjections")
-    .doc(`${season}${week}`)
+    .doc(`${season}week${week}`)
     .get();
   if (check.exists) {
     return check.data() as Record<string, number>;
