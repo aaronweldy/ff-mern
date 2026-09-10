@@ -41,6 +41,9 @@ jobs:
       - name: Backend tests
         run: yarn workspace backend test --passWithNoTests
 
+      - name: Scoring regression tests
+        run: yarn workspace backend test:scoring
+
       - name: Build frontend
         run: yarn workspace ff-mern build
 
