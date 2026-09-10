@@ -1,0 +1,55 @@
+[debug] [2026-09-06T16:13:04.610Z] ----------------------------------------------------------------------
+[debug] [2026-09-06T16:13:04.611Z] Command:       /home/aweldy/.nvm/versions/node/v20.19.5/bin/node /home/aweldy/ff-mern/node_modules/firebase-tools/lib/bin/firebase.js projects:list --token  --non-interactive --debug
+[debug] [2026-09-06T16:13:04.611Z] CLI Version:   13.35.1
+[debug] [2026-09-06T16:13:04.611Z] Platform:      linux
+[debug] [2026-09-06T16:13:04.611Z] Node Version:  v20.19.5
+[debug] [2026-09-06T16:13:04.612Z] Time:          Sun Sep 06 2026 09:13:04 GMT-0700 (Pacific Daylight Time)
+[debug] [2026-09-06T16:13:04.612Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-06T16:13:04.753Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-06T16:13:04.754Z] > authorizing via signed-in user (aaronweldy2@gmail.com)
+[debug] [2026-09-06T16:13:04.757Z] Checked if tokens are valid: false, expires at: 1788590407525
+[debug] [2026-09-06T16:13:04.757Z] Checked if tokens are valid: false, expires at: 1788590407525
+[debug] [2026-09-06T16:13:04.758Z] > refreshing access token with scopes: []
+[debug] [2026-09-06T16:13:04.759Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-09-06T16:13:04.759Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-09-06T16:13:04.951Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-09-06T16:13:04.951Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-09-06T16:13:04.958Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-09-06T16:13:05.338Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-09-06T16:13:09.593Z] ----------------------------------------------------------------------
+[debug] [2026-09-06T16:13:09.594Z] Command:       /home/aweldy/.nvm/versions/node/v20.19.5/bin/node /home/aweldy/ff-mern/node_modules/firebase-tools/lib/bin/firebase.js projects:list --token invalid --non-interactive --debug
+[debug] [2026-09-06T16:13:09.594Z] CLI Version:   13.35.1
+[debug] [2026-09-06T16:13:09.594Z] Platform:      linux
+[debug] [2026-09-06T16:13:09.595Z] Node Version:  v20.19.5
+[debug] [2026-09-06T16:13:09.595Z] Time:          Sun Sep 06 2026 09:13:09 GMT-0700 (Pacific Daylight Time)
+[debug] [2026-09-06T16:13:09.595Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-06T16:13:09.734Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-06T16:13:09.734Z] > authorizing via --token option
+[warn] ⚠  Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started 
+[debug] [2026-09-06T16:13:09.736Z] No OAuth tokens found
+[debug] [2026-09-06T16:13:09.736Z] No OAuth tokens found
+[debug] [2026-09-06T16:13:09.736Z] > refreshing access token with scopes: []
+[debug] [2026-09-06T16:13:09.738Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-09-06T16:13:09.738Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-09-06T16:13:09.878Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-09-06T16:13:09.879Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-09-06T16:13:09.879Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-09-06T16:13:09.975Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 401
+[debug] [2026-09-06T16:13:09.975Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-09-06T16:13:09.975Z] Got a 401 Unauthenticated error for a call that required authentication. Refreshing tokens.
+[debug] [2026-09-06T16:13:09.976Z] No OAuth tokens found
+[debug] [2026-09-06T16:13:09.976Z] No OAuth tokens found
+[debug] [2026-09-06T16:13:09.976Z] > refreshing access token with scopes: []
+[debug] [2026-09-06T16:13:09.976Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-09-06T16:13:09.976Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-09-06T16:13:10.039Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-09-06T16:13:10.039Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-09-06T16:13:10.040Z] Request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000 had HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+[debug] [2026-09-06T16:13:10.040Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000 had HTTP Error: 401, Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.
+    at responseToError (/home/aweldy/ff-mern/node_modules/firebase-tools/lib/responseToError.js:52:12)
+    at RetryOperation._fn (/home/aweldy/ff-mern/node_modules/firebase-tools/lib/apiv2.js:312:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to list Firebase projects. See firebase-debug.log for more info.

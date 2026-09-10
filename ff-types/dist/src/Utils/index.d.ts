@@ -1,0 +1,21 @@
+import { SinglePosition, ScoringCategory, StatKey } from "..";
+import { AbbreviatedNflTeam } from "../Constants";
+import { Position } from "../Player";
+export declare const sanitizePlayerName: (name: string) => string;
+export declare const sanitizeNflScheduleTeamName: (name: string) => AbbreviatedNflTeam;
+export declare const playerTeamIsNflAbbreviation: (team: string) => team is AbbreviatedNflTeam;
+export declare const convertedScoringTypes: Record<SinglePosition, Partial<Record<ScoringCategory, StatKey>>>;
+export declare const scoringTypes: string[];
+export declare const getCurrentSeason: () => number;
+export declare const lineupOrder: {
+    QB: number;
+    RB: number;
+    WR: number;
+    TE: number;
+    K: number;
+    "WR/RB": number;
+    "WR/RB/TE": number;
+    "QB/WR/RB/TE": number;
+    bench: number;
+};
+export declare const lineupSorter: (a: Position, b: Position) => number;
