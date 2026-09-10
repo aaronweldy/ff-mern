@@ -124,6 +124,12 @@ declare class Team {
     static generateSimplifiedInfo(team: Team): SimplifiedTeamInfo;
 }
 type TeamWeekInfo = {
+    scoringLineup?: FinalizedLineup;
+    substitutions?: {
+        starter: string;
+        backup: string;
+        slot: string;
+    }[];
     weekScore: number;
     addedPoints: number;
     finalizedLineup: FinalizedLineup;

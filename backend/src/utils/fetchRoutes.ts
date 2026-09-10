@@ -189,7 +189,8 @@ export const fetchWeeklyStats = async (week: number) => {
 export const scoreAllPlayers = async (
   league: League,
   leagueId: string,
-  week: number
+  week: number,
+  persist = true
 ) => {
   const data: PlayerScoreData = {};
   const statsAtt = await fetchWeeklyStats(week);
@@ -273,7 +274,7 @@ export const scoreAllPlayers = async (
     };
   });
   const yearWeek = getCurrentSeason() + week.toString();
-  await db
+  if (persist) await db
     .collection("leagueScoringData")
     .doc(yearWeek + leagueId)
     .set({ playerData: data });
