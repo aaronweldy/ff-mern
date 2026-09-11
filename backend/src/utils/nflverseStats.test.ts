@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DatabasePlayer } from "@ff-mern/ff-types";
 import { defaultScoringSettings } from "../constants/league.js";
-import { compareNflverseStats } from "./nflverseParity.js";
+import {
+  canonicalizePlayerName,
+  compareNflverseStats,
+} from "./nflverseParity.js";
 import { normalizeNflverseWeeklyStat } from "./nflverseStats.js";
 import { calculatePlayerScore } from "./scoring.js";
 
@@ -25,8 +28,8 @@ const legacyAaronRodgers: Pick<
   ATT_2: "1",
   YDS_2: "-1",
   TD_2: "0",
-  PCT: "73.33",
-  "Y/A": "8.13",
+  PCT: "73.30",
+  "Y/A": "8.10",
   "Y/CMP": "11.09",
   FL: "0",
 };
@@ -99,6 +102,21 @@ describe("nflverse weekly-stat parity", () => {
     });
 
     assert.equal(stat?.team, "LAR");
+  });
+
+  it("converts nflverse's Jacksonville abbreviation to the application's abbreviation", () => {
+    const stat = normalizeNflverseWeeklyStat({
+      player_display_name: "Trevor Lawrence",
+      position: "QB",
+      team: "JAX",
+    });
+
+    assert.equal(stat?.team, "JAC");
+  });
+
+  it("matches legacy player suffixes and known display-name aliases", () => {
+    assert.equal(canonicalizePlayerName("aaron jones sr"), "aaron jones");
+    assert.equal(canonicalizePlayerName("hollywood brown"), "marquise brown");
   });
 
   it("produces the same Standard and PPR scores as the legacy stat shape", () => {

@@ -25,8 +25,12 @@ const numeric = (row: NflverseWeeklyStatRow, field: string): number =>
   Number(row[field] || 0);
 
 const normalizeTeam = (team: string): AbbreviatedNflTeam =>
-  // nflverse uses LA for the Rams, while the application uses LAR.
-  (team === "LA" ? "LAR" : team) as AbbreviatedNflTeam;
+  // nflverse uses LA for the Rams and JAX for Jacksonville, while the
+  // application historically stores LAR and JAC.
+  (team === "LA" ? "LAR" : team === "JAX" ? "JAC" : team) as AbbreviatedNflTeam;
+
+const legacyRate = (numerator: number, denominator: number): string =>
+  denominator === 0 ? "0" : (numerator / denominator).toFixed(1);
 
 /**
  * Converts nflverse's weekly player statistics into the legacy FantasyPros
@@ -59,9 +63,17 @@ export const normalizeNflverseWeeklyStat = (
     FL: numberAt(row, "fumbles_lost_total"),
     REC: numberAt(row, "receptions"),
     TGT: numberAt(row, "targets"),
-    "Y/R": ratio(numeric(row, "receiving_yards"), receptions),
-    "Y/A": ratio(position === "QB" ? numeric(row, "passing_yards") : numeric(row, "rushing_yards"), position === "QB" ? attempts : carries),
-    PCT: ratio(completions * 100, attempts),
+    "Y/R": legacyRate(numeric(row, "receiving_yards"), receptions),
+    "Y/A":
+      position === "QB"
+        ? ratio(
+            Number(legacyRate(numeric(row, "passing_yards"), attempts)),
+            1
+          )
+        : position === "RB"
+          ? legacyRate(numeric(row, "rushing_yards"), carries)
+          : "0",
+    PCT: ratio(Number(legacyRate(completions * 100, attempts)), 1),
     "Y/CMP": ratio(numeric(row, "passing_yards"), completions),
     YDS_2: numberAt(row, position === "QB" ? "rushing_yards" : position === "RB" ? "receiving_yards" : "rushing_yards"),
     TD_2: numberAt(row, position === "QB" ? "rushing_tds" : position === "RB" ? "receiving_tds" : "rushing_tds"),
