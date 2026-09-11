@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Container, Button, Row, Col } from "react-bootstrap";
+import { Container, Button, Row, Col, Alert } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
 import TeamScoringBreakdown from "./TeamScoringBreakdown";
 import EditWeek from "../shared/EditWeek";
@@ -24,16 +24,17 @@ const RunScores = () => {
     playerData,
     isLoading: leagueDataLoading,
   } = useLeagueScoringData(id);
-  console.log(playerData)
+  console.log(playerData);
   const [selectedTeamId, setSelectedTeamId] = useState<string>();
   const { team: selectedTeam, isLoading: teamLoading } =
     useSingleTeam(selectedTeamId);
   const [selectedDisplay, setDisplay] = useState<ScoringToggleType>("scoring");
-  const { mutate: runScores, isLoading: scoresLoading } = useRunScoresMutation(
-    id,
-    week || 1,
-    teams
-  );
+  const {
+    mutate: runScores,
+    isLoading: scoresLoading,
+    data: scoringResult,
+    error: scoringError,
+  } = useRunScoresMutation(id, week || 1, teams);
   const dataLoading = leagueDataLoading || teamLoading || scoresLoading;
 
   useEffect(() => {
@@ -98,11 +99,28 @@ const RunScores = () => {
       )}
       <Row className="mb-3">
         <Col>
-          <Button variant="success" onClick={() => runScores()}>
+          <Button
+            variant="success"
+            disabled={scoresLoading}
+            onClick={() => runScores()}
+          >
             Calculate Scores
           </Button>
         </Col>
       </Row>
+      {scoringError && <Alert variant="danger">{scoringError.message}</Alert>}
+      {!!scoringResult?.errors.length && (
+        <Alert variant="warning">
+          <p>Scores saved with the following warnings:</p>
+          <ul>
+            {scoringResult.errors.map((warning, index) => (
+              <li key={index}>
+                {warning.team.name}: {warning.desc}
+              </li>
+            ))}
+          </ul>
+        </Alert>
+      )}
       {dataLoading ? <div className="spinning-loader" /> : ""}
     </Container>
   );

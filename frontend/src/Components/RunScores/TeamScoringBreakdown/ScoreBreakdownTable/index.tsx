@@ -52,10 +52,13 @@ export const ScoreBreakdownTable = ({
       </tr>
     </thead>
     <tbody>
-      {Object.keys(team.weekInfo[week].finalizedLineup)
+      {Object.keys(
+        team.weekInfo[week].scoringLineup ?? team.weekInfo[week].finalizedLineup
+      )
         .sort((a, b) => lineupSorter(a as Position, b as Position))
         .reduce((acc: JSX.Element[], pos) => {
-          const players = team.weekInfo[week].finalizedLineup[pos as Position];
+          const players = (team.weekInfo[week].scoringLineup ??
+            team.weekInfo[week].finalizedLineup)[pos as Position];
           players.forEach((player, i) => {
             const data = playerData[player.sanitizedName];
             acc.push(

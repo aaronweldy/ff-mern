@@ -137,7 +137,7 @@ export const fetchWeeklyStats = async (week) => {
         .set({ playerMap: usableStats });
     return usableStats;
 };
-export const scoreAllPlayers = async (league, leagueId, week) => {
+export const scoreAllPlayers = async (league, leagueId, week, persist = true) => {
     const data = {};
     const statsAtt = await fetchWeeklyStats(week);
     if (Object.keys(statsAtt).length === 0) {
@@ -158,10 +158,11 @@ export const scoreAllPlayers = async (league, leagueId, week) => {
         };
     });
     const yearWeek = getCurrentSeason() + week.toString();
-    await db
-        .collection("leagueScoringData")
-        .doc(yearWeek + leagueId)
-        .set({ playerData: data });
+    if (persist)
+        await db
+            .collection("leagueScoringData")
+            .doc(yearWeek + leagueId)
+            .set({ playerData: data });
     return data;
 };
 export const getTeamsInLeague = async (id) => {

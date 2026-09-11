@@ -44,6 +44,9 @@ jobs:
       - name: Backend tests
         run: pnpm --filter backend test --passWithNoTests
 
+      - name: Scoring regression tests
+        run: yarn workspace backend test:scoring
+
       - name: Build frontend
         run: pnpm --filter ff-mern build
 

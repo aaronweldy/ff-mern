@@ -11,7 +11,6 @@ import {
   CumulativePlayerScore,
   PlayerScoresResponse,
   CumulativePlayerScores,
-  playerTeamIsNflAbbreviation,
   getCurrentSeason,
   DraftState,
 } from "@ff-mern/ff-types";
@@ -22,9 +21,9 @@ import {
 } from "../utils/fetchRoutes.js";
 import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
 import {
-  handleKickerBackupResolution,
-  handleNonKickerBackupResolution,
-} from "../utils/backupResolution.js";
+  resolveScoringLineup,
+  fetchCompletedTeams,
+} from "../utils/scoringResolution.js";
 import {
   isLeagueCommissioner,
   requireAuth,
@@ -420,76 +419,84 @@ router.patch("/:leagueId/update/", requireAuth, async (req, res) => {
   res.status(200).send("Updated all league settings");
 });
 
-router.post("/:leagueId/runScores/", requireAuth, async (req, res) => {
-  const { week }: { week: number; teams: Team[] } = req.body;
-  const { leagueId } = req.params;
-  if (!(await isLeagueCommissioner(leagueId, req.user!.uid))) {
-    res.status(403).send("Only commissioners may run scores.");
-    return;
-  }
-  const teams = await getTeamsInLeague(leagueId);
-  const league = (
-    await db.collection("leagues").doc(leagueId).get()
-  ).data() as League;
-  if (week > league.numWeeks) {
-    res.status(400).send("Week is out of range");
-    return;
-  }
-  const errors: ScoringError[] = [];
-  const data = await scoreAllPlayers(league, leagueId, week);
-  if (Object.keys(data).length === 0) {
-    await db
-      .collection("leagues")
-      .doc(leagueId)
-      .update({ lastScoredWeek: week });
-    res.status(400).send("No stats exist for week.");
-    return;
-  }
-  const datePST = new Date().toLocaleString('en-US', { timeZone: "America/Los_Angeles" });
-  const curDay = new Date(datePST).getDay();
-  console.log("Processing lineups for teams in week " + week + " on day " + curDay);
-  teams.forEach(async (team) => {
-    team.weekInfo[week].weekScore = 0;
-    Object.values(team.weekInfo[week].finalizedLineup).forEach((players) => {
-      players
-        .filter((player) => player.fullName !== "")
-        .forEach((player) => {
-          let sanitizedPlayerName = player.sanitizedName;
-
-          if (!(sanitizedPlayerName in data)) {
-            return;
-          }
-          if (player.position !== "K") {
-            sanitizedPlayerName = handleNonKickerBackupResolution(
-              team,
-              player,
-              week,
-              data[sanitizedPlayerName].statistics.G,
-              data[sanitizedPlayerName].scoring.totalPoints
-            );
-          } else {
-            sanitizedPlayerName = handleKickerBackupResolution(
-              team,
-              player,
-              week,
-              data
-            );
-          }
-          if (!playerTeamIsNflAbbreviation(player.team)) {
-            player.team = data[player.sanitizedName].team;
-          }
-          const playerData = data[sanitizedPlayerName];
-          if (player.lineup !== "bench") {
-            team.weekInfo[week].weekScore += playerData.scoring.totalPoints;
-          }
-        });
+router.post("/:leagueId/runScores/", requireAuth, async (req, res, next) => {
+  try {
+    const { week } = req.body;
+    const { leagueId } = req.params;
+    if (!(await isLeagueCommissioner(leagueId, req.user!.uid))) {
+      res.status(403).send("Only commissioners may run scores.");
+      return;
+    }
+    const leagueRef = db.collection("leagues").doc(leagueId);
+    const league = (await leagueRef.get()).data() as League;
+    if (
+      !league ||
+      !Number.isInteger(week) ||
+      week < 1 ||
+      week > league.numWeeks
+    ) {
+      res.status(400).send("Week is out of range");
+      return;
+    }
+    const data = await scoreAllPlayers(league, leagueId, week, false);
+    if (!Object.keys(data).length) {
+      res.status(400).send("No stats exist for week.");
+      return;
+    }
+    if (
+      Object.values(data).some(
+        (player) => !Number.isFinite(player.scoring.totalPoints)
+      )
+    ) {
+      throw new Error(
+        "Scoring data contains invalid points; scores were not saved."
+      );
+    }
+    // A failed status lookup aborts the run before any writes.
+    const completed = await fetchCompletedTeams(getCurrentSeason(), week);
+    const result = await db.runTransaction(async (transaction) => {
+      const leagueSnapshot = await transaction.get(leagueRef);
+      if (JSON.stringify(leagueSnapshot.data()?.scoringSettings) !== JSON.stringify(league.scoringSettings)) {
+        throw new Error("Scoring settings changed during this run; please calculate scores again.");
+      }
+      const snapshot = await transaction.get(
+        db.collection("teams").where("league", "==", leagueId)
+      );
+      await updateCumulativeStats(leagueId, week, data, transaction);
+      const teams: Team[] = [];
+      const errors: ScoringError[] = [];
+      for (const doc of snapshot.docs) {
+        const team = doc.data() as Team;
+        const resolved = resolveScoringLineup(team, week, data, completed);
+        errors.push(...resolved.errors);
+        team.weekInfo[week] = {
+          ...team.weekInfo[week],
+          weekScore: resolved.weekScore,
+          scoringLineup: resolved.lineup,
+          substitutions: resolved.substitutions,
+        };
+        transaction.update(doc.ref, { weekInfo: team.weekInfo });
+        teams.push(team);
+      }
+      transaction.set(
+        db
+          .collection("leagueScoringData")
+          .doc(`${getCurrentSeason()}${week}${leagueId}`),
+        { playerData: data }
+      );
+      transaction.update(leagueRef, {
+        lastScoredWeek: Math.max(
+          week,
+          leagueSnapshot.data()?.lastScoredWeek || 0
+        ),
+      });
+      return { teams, errors };
     });
-    await db.collection("teams").doc(team.id).update({ ...team });
-  });
-  await db.collection("leagues").doc(leagueId).update({ lastScoredWeek: week });
-  res.status(200).json({ teams, errors, data });
-  console.log(`successful runScores for league ${leagueId}`);
-  updateCumulativeStats(leagueId, week, data);
+    res.status(200).json({ ...result, data });
+    console.log(`successful runScores for league ${leagueId}`);
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.post("/:leagueId/playerScores/", requireAuth, async (req, res) => {
