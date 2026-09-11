@@ -42,7 +42,7 @@ jobs:
         run: pnpm --filter backend build
 
       - name: Backend tests
-        run: pnpm --filter backend test --passWithNoTests
+        run: pnpm --filter backend test:parity
 
       - name: Scoring regression tests
         run: pnpm --filter backend test:scoring
