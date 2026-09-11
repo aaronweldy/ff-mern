@@ -13,7 +13,7 @@ type Arguments = {
 };
 
 const usage =
-  "Usage: yarn workspace backend compare:nflverse -- <season> <week> [--league <leagueId>]";
+  "Usage: pnpm --filter backend compare:nflverse -- <season> <week> [--league <leagueId>]";
 
 const parseArguments = (args: string[]): Arguments => {
   const commandArgs = args[0] === "--" ? args.slice(1) : args;

@@ -3,7 +3,7 @@ import { db } from "../config/firebase-config.js";
 import { normalizeNflverseWeeklyStat } from "../utils/nflverseStats.js";
 import { compareNflverseStats } from "../utils/nflverseParity.js";
 const STATS_URL = (season) => `https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_${season}.csv`;
-const usage = "Usage: yarn workspace backend compare:nflverse -- <season> <week> [--league <leagueId>]";
+const usage = "Usage: pnpm --filter backend compare:nflverse -- <season> <week> [--league <leagueId>]";
 const parseArguments = (args) => {
     const commandArgs = args[0] === "--" ? args.slice(1) : args;
     const [seasonText, weekText, ...options] = commandArgs;

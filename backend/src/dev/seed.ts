@@ -6,7 +6,7 @@
  *   FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 \
  *   GCLOUD_PROJECT=ff-mern \
  *   npx tsx src/dev/seed.ts
- * or: yarn seed:dev  (sets the env vars for you)
+ * or: pnpm seed:dev  (sets the env vars for you)
  *
  * Creates (idempotently):
  * - Auth user dev@orca.local / OrcaDev123!  (uid: dev-orca-1)

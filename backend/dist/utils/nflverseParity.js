@@ -1,12 +1,11 @@
 import { convertedScoringTypes, } from "@ff-mern/ff-types";
 import { calculatePlayerScore } from "./scoring.js";
-const scoreStatKeys = new Set([
+const commonParityFields = new Set([
     "team",
     "position",
     "G",
-    ...Object.values(convertedScoringTypes).flatMap((positionStats) => Object.values(positionStats).filter((key) => Boolean(key))),
 ]);
-export const nflverseParityFields = [...scoreStatKeys];
+export const nflverseParityFields = [...commonParityFields];
 const valuesMatch = (legacy, nflverse) => {
     const legacyNumber = Number(legacy);
     const nflverseNumber = Number(nflverse);
@@ -16,6 +15,20 @@ const valuesMatch = (legacy, nflverse) => {
     return legacy === nflverse;
 };
 const isSinglePosition = (value) => value === "QB" || value === "RB" || value === "WR" || value === "TE" || value === "K";
+const playerNameAliases = {
+    "drew ogletree": "andrew ogletree",
+    "joshua palmer": "josh palmer",
+    "hollywood brown": "marquise brown",
+    "tre' harris": "tre harris",
+};
+export const canonicalizePlayerName = (name) => {
+    const withoutSuffix = name.replace(/\s+(?:jr|sr|ii|iii|iv|v)$/i, "").trim();
+    return playerNameAliases[withoutSuffix] || withoutSuffix;
+};
+const fieldsForPosition = (position) => [
+    ...commonParityFields,
+    ...Object.values(convertedScoringTypes[position]).filter((key) => Boolean(key)),
+];
 /**
  * Compares the current FantasyPros-shaped cache with normalized nflverse data.
  * It is intentionally side-effect free so the command-line audit and tests use
@@ -24,16 +37,22 @@ const isSinglePosition = (value) => value === "QB" || value === "RB" || value ==
 export const compareNflverseStats = (legacyStats, nflverseStats, scoringSettings) => {
     const legacyPlayers = Object.keys(legacyStats).sort();
     const nflversePlayers = Object.keys(nflverseStats).sort();
-    const missingFromNflverse = legacyPlayers.filter((player) => !(player in nflverseStats));
-    const missingFromLegacy = nflversePlayers.filter((player) => !(player in legacyStats));
+    const nflverseByCanonicalName = new Map(nflversePlayers.map((player) => [canonicalizePlayerName(player), player]));
+    const legacyByCanonicalName = new Map(legacyPlayers.map((player) => [canonicalizePlayerName(player), player]));
+    const missingFromNflverse = legacyPlayers.filter((player) => !nflverseByCanonicalName.has(canonicalizePlayerName(player)));
+    const missingFromLegacy = nflversePlayers.filter((player) => !legacyByCanonicalName.has(canonicalizePlayerName(player)));
     const statMismatches = [];
     const scoreMismatches = [];
     for (const player of legacyPlayers) {
-        const nflverse = nflverseStats[player];
-        if (!nflverse)
+        const nflversePlayer = nflverseByCanonicalName.get(canonicalizePlayerName(player));
+        if (!nflversePlayer)
             continue;
+        const nflverse = nflverseStats[nflversePlayer];
         const legacy = legacyStats[player];
-        for (const field of nflverseParityFields) {
+        const position = legacy.position.toUpperCase();
+        if (!isSinglePosition(position))
+            continue;
+        for (const field of fieldsForPosition(position)) {
             const legacyValue = legacy[field] || "0";
             const nflverseValue = nflverse[field] || "0";
             if (!valuesMatch(legacyValue, nflverseValue)) {
@@ -45,8 +64,7 @@ export const compareNflverseStats = (legacyStats, nflverseStats, scoringSettings
                 });
             }
         }
-        const position = legacy.position.toUpperCase();
-        if (!scoringSettings || !isSinglePosition(position))
+        if (!scoringSettings)
             continue;
         const legacyScore = calculatePlayerScore(legacy, position, scoringSettings).totalPoints;
         const nflverseScore = calculatePlayerScore(nflverse, position, scoringSettings).totalPoints;

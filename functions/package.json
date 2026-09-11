@@ -3,18 +3,18 @@
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
-    "serve": "npm run build && firebase emulators:start --only functions",
-    "shell": "npm run build && firebase functions:shell",
-    "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "serve": "pnpm build && pnpm exec firebase emulators:start --only functions",
+    "shell": "pnpm build && pnpm exec firebase functions:shell",
+    "start": "pnpm shell",
+    "deploy": "pnpm exec firebase deploy --only functions",
+    "logs": "pnpm exec firebase functions:log"
   },
   "engines": {
     "node": "20"
   },
   "main": "lib/index.js",
   "dependencies": {
-    "@ff-mern/ff-types": "^2.0.10",
+    "@ff-mern/ff-types": "workspace:*",
     "cheerio": "^1.0.0-rc.10",
     "firebase-admin": "^12.5.0",
     "firebase-functions": "latest"

@@ -13,7 +13,7 @@ Personal project to create a season-long, total-score-based fantasy football pla
 ## Run the website
 - **Client**:
   - Create a **.env** file with the values `REACT_APP_PUBLIC_URL`, `REACT_APP_BACKEND_URL`, `REACT_APP_DEFAULT_LOGO` provided
-  - npm start
+  - pnpm --filter ff-mern start
 - **Server**
   - Set up a firebase project & create a firebase config file
   - **firebase serve**

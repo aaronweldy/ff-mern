@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Orca Fantasy Football is a MERN stack application with a monorepo structure using Yarn workspaces. It's a season-long, total-score-based fantasy football platform with real-time draft functionality and comprehensive league management.
+Orca Fantasy Football is a MERN stack application with a monorepo structure using pnpm workspaces. It's a season-long, total-score-based fantasy football platform with real-time draft functionality and comprehensive league management.
 
 ## Workspace Structure
 
@@ -16,27 +16,27 @@ Orca Fantasy Football is a MERN stack application with a monorepo structure usin
 ## Development Commands
 
 ### Frontend (from frontend/)
-- `yarn start` - Start development server
-- `yarn build` - Build for production
-- `yarn test` - Run tests
-- `yarn lint` - Run ESLint
-- `yarn deploy` - Build and deploy to Firebase
+- `pnpm start` - Start development server
+- `pnpm build` - Build for production
+- `pnpm test` - Run tests
+- `pnpm lint` - Run ESLint
+- `pnpm deploy` - Build and deploy to Firebase
 
 ### Backend (from backend/)
-- `yarn start` - Build and start server (tsc -b -v && node .)
-- `yarn build` - Compile TypeScript (tsc -b -v)
-- `yarn test` - Run Jest tests with coverage
-- `yarn lint` - Run ESLint
-- `yarn dbon` - Start MongoDB locally
-- `yarn dboff` - Stop MongoDB
+- `pnpm start` - Build and start server (tsc -b -v && node .)
+- `pnpm build` - Compile TypeScript (tsc -b -v)
+- `pnpm test` - Run Jest tests with coverage
+- `pnpm lint` - Run ESLint
+- `pnpm dbon` - Start MongoDB locally
+- `pnpm dboff` - Stop MongoDB
 
 ### ff-types (from ff-types/)
-- `yarn build` - Build TypeScript definitions and bundle with Rollup
+- `pnpm build` - Build TypeScript definitions and bundle with Rollup
 
 ### Functions (from functions/)
-- `yarn build` - Compile TypeScript
-- `yarn serve` - Start Firebase emulator
-- `yarn deploy` - Deploy to Firebase
+- `pnpm build` - Compile TypeScript
+- `pnpm serve` - Start Firebase emulator
+- `pnpm deploy` - Deploy to Firebase
 
 ## Architecture
 
