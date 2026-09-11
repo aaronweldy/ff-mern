@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DatabasePlayer } from "@ff-mern/ff-types";
 import { defaultScoringSettings } from "../constants/league.js";
+import { compareNflverseStats } from "./nflverseParity.js";
 import { normalizeNflverseWeeklyStat } from "./nflverseStats.js";
 import { calculatePlayerScore } from "./scoring.js";
 
@@ -141,5 +142,40 @@ describe("nflverse weekly-stat parity", () => {
         `${format} kicker score`
       );
     }
+  });
+
+  it("reports a field and point difference with the player name that needs review", () => {
+    const legacy = {
+      "aaron rodgers": legacyAaronRodgers as DatabasePlayer,
+    };
+    const nflverse = {
+      "aaron rodgers": {
+        ...legacyAaronRodgers,
+        TD: "3",
+      } as DatabasePlayer,
+    };
+
+    const report = compareNflverseStats(
+      legacy,
+      nflverse,
+      defaultScoringSettings.Standard
+    );
+
+    assert.deepEqual(report.statMismatches, [
+      {
+        player: "aaron rodgers",
+        field: "TD",
+        legacy: "4",
+        nflverse: "3",
+      },
+    ]);
+    assert.deepEqual(report.scoreMismatches, [
+      {
+        player: "aaron rodgers",
+        legacy: 25.66,
+        nflverse: 21.66,
+        delta: -4,
+      },
+    ]);
   });
 });
