@@ -1,7 +1,7 @@
 name: CI
 
 # Fails fast on the exact breakages that bit us before:
-# - yarn.lock out of sync with package.json (--immutable install)
+# - pnpm-lock.yaml out of sync with package.json (--frozen-lockfile install)
 # - backend tsc errors (missing deps, bad imports)
 # - frontend / functions builds
 # Lint is intentionally not run: both eslint setups are broken
@@ -26,26 +26,29 @@ jobs:
         with:
           node-version: 20.19.5
 
-      - name: Enable Corepack (yarn 3.8.5 via packageManager field)
-        run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+          run_install: false
 
-      - name: Install (immutable - lockfile must match package.json)
-        run: yarn install --immutable
+      - name: Install (frozen lockfile must match package.json)
+        run: pnpm install --frozen-lockfile
 
       - name: Build ff-types
-        run: yarn workspace @ff-mern/ff-types build
+        run: pnpm --filter @ff-mern/ff-types build
 
       - name: Build backend (tsc project refs)
-        run: yarn workspace backend build
+        run: pnpm --filter backend build
 
       - name: Backend tests
-        run: yarn workspace backend test --passWithNoTests
+        run: pnpm --filter backend test:parity
 
       - name: Scoring regression tests
-        run: yarn workspace backend test:scoring
+        run: pnpm --filter backend test:scoring
 
       - name: Build frontend
-        run: yarn workspace ff-mern build
+        run: pnpm --filter ff-mern build
 
       - name: Build functions
-        run: yarn workspace functions build
+        run: pnpm --filter functions build

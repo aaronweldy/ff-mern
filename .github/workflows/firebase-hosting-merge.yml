@@ -30,14 +30,17 @@ jobs:
         with:
           node-version: 20.19.5
 
-      - name: Enable Corepack (yarn 3.8.5 via packageManager field)
-        run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+          run_install: false
 
-      - name: Install (immutable - lockfile must match package.json)
-        run: yarn install --immutable
+      - name: Install (frozen lockfile must match package.json)
+        run: pnpm install --frozen-lockfile
 
       - name: Build frontend (emits to frontend/build per firebase.json)
-        run: yarn workspace ff-mern build
+        run: pnpm --filter ff-mern build
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -56,14 +59,17 @@ jobs:
         with:
           node-version: 20.19.5
 
-      - name: Enable Corepack (yarn 3.8.5 via packageManager field)
-        run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+          run_install: false
 
-      - name: Install (immutable - lockfile must match package.json)
-        run: yarn install --immutable
+      - name: Install (frozen lockfile must match package.json)
+        run: pnpm install --frozen-lockfile
 
       - name: Build functions (tsc emits lib/, predeploy is a no-op)
-        run: yarn workspace functions build
+        run: pnpm --filter functions build
 
       - name: Configure Firebase application credentials
         env:
@@ -79,4 +85,4 @@ jobs:
       - name: Deploy functions
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
-        run: yarn firebase deploy --only functions --project ff-mern --non-interactive
+        run: pnpm exec firebase deploy --only functions --project ff-mern --non-interactive

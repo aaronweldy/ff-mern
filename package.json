@@ -6,7 +6,7 @@
     "ff-types",
     "functions"
   ],
-  "packageManager": "yarn@3.8.5",
+  "packageManager": "pnpm@12.3.4",
   "dependencies": {
     "firebase-tools": "^13.20.1",
     "react-query": "^3.34.16"

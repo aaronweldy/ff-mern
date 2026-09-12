@@ -1,6 +1,6 @@
 # Scoring and backup resolution
 
-Run the regression suite with `yarn workspace backend test:scoring`.
+Run the regression suite with `pnpm --filter backend test:scoring`.
 
 Scoring always starts from `finalizedLineup`, the submitted lineup. The result
 is saved separately as `scoringLineup`, with a substitution record for each slot.

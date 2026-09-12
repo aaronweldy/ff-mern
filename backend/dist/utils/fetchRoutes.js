@@ -1,7 +1,8 @@
-import { convertedScoringTypes, RosteredPlayer, sanitizePlayerName, getCurrentSeason, AbbreviationToFullTeam, } from "@ff-mern/ff-types";
+import { RosteredPlayer, sanitizePlayerName, getCurrentSeason, AbbreviationToFullTeam, } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
 import { load } from "cheerio";
 import { get } from './tableScraper.js';
+import { calculatePlayerScore } from "./scoring.js";
 export const positions = ["qb", "rb", "wr", "te", "k"];
 export const longPositions = [
     "Quarterbacks",
@@ -145,55 +146,13 @@ export const scoreAllPlayers = async (league, leagueId, week, persist = true) =>
     const stats = await fetchWeeklySnapCount(week.toString());
     const players = Object.values(stats).map((player) => new RosteredPlayer(player.Player.slice(0, player.Player.indexOf("(") - 1), player.team, player.position.toUpperCase()));
     players.forEach((player) => {
-        const catPoints = league.scoringSettings
-            .filter((set) => set.position.indexOf(player.position) >= 0)
-            .map((category) => {
-            const cat = category["category"];
-            const hashVal = cat.qualifier === "between"
-                ? `${cat.qualifier}|${cat.thresholdMax}${cat.thresholdMin}|${cat.statType}`
-                : `${cat.qualifier}|${cat.threshold}|${cat.statType}`;
-            let points = 0;
-            try {
-                const statNumber = Number.parseFloat(stats[player.sanitizedName][convertedScoringTypes[player.position][cat.statType]]);
-                if (isNaN(statNumber))
-                    return { hashVal: 0 };
-                switch (cat.qualifier) {
-                    case "per":
-                        //console.log(`stat: ${statNumber}, thresh: ${cat.threshold}`);
-                        points = (statNumber / cat.threshold) * category.points;
-                        break;
-                    case "greater than":
-                        if (statNumber >= cat.threshold)
-                            points = category.points;
-                        break;
-                    case "between":
-                        if (statNumber >= (cat.thresholdMin || Infinity) &&
-                            statNumber <= (cat.thresholdMax || -Infinity))
-                            points = category.points;
-                        break;
-                }
-                const successMins = category.minimums.filter((min) => {
-                    const statNumber = Number.parseFloat(stats[player.sanitizedName][convertedScoringTypes[player.position][min.statType]]);
-                    return statNumber >= min.threshold;
-                });
-                const retObj = {};
-                retObj[hashVal] =
-                    successMins.length === category.minimums.length ? points : 0;
-                return retObj;
-            }
-            catch (error) {
-                console.error(`Error finding stats for player ${player.fullName}, ${player.position}:`, error);
-                return { [hashVal]: 0 };
-            }
-        });
+        const score = calculatePlayerScore(stats[player.sanitizedName], player.position, league.scoringSettings);
         data[player.sanitizedName] = {
             team: stats[player.sanitizedName].team,
             position: player.position,
             scoring: {
-                totalPoints: Number.parseFloat(catPoints
-                    .reduce((acc, i) => acc + Object.values(i)[0], 0)
-                    .toPrecision(4)),
-                categories: Object.assign({}, ...catPoints),
+                totalPoints: score.totalPoints,
+                categories: score.categories,
             },
             statistics: stats[player.sanitizedName],
         };
