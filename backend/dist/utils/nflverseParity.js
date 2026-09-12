@@ -43,6 +43,7 @@ export const compareNflverseStats = (legacyStats, nflverseStats, scoringSettings
     const missingFromLegacy = nflversePlayers.filter((player) => !legacyByCanonicalName.has(canonicalizePlayerName(player)));
     const statMismatches = [];
     const scoreMismatches = [];
+    const scoreMatches = [];
     for (const player of legacyPlayers) {
         const nflversePlayer = nflverseByCanonicalName.get(canonicalizePlayerName(player));
         if (!nflversePlayer)
@@ -76,6 +77,13 @@ export const compareNflverseStats = (legacyStats, nflverseStats, scoringSettings
                 delta: nflverseScore - legacyScore,
             });
         }
+        else if (scoreMatches.length < 10) {
+            scoreMatches.push({
+                player,
+                legacy: legacyScore,
+                nflverse: nflverseScore,
+            });
+        }
     }
     return {
         legacyPlayerCount: legacyPlayers.length,
@@ -84,6 +92,7 @@ export const compareNflverseStats = (legacyStats, nflverseStats, scoringSettings
         missingFromLegacy,
         statMismatches,
         scoreMismatches,
+        scoreMatches,
     };
 };
 //# sourceMappingURL=nflverseParity.js.map
