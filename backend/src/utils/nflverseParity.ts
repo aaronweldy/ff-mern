@@ -29,6 +29,12 @@ export type ScoreMismatch = {
   delta: number;
 };
 
+export type ScoreMatch = {
+  player: string;
+  legacy: number;
+  nflverse: number;
+};
+
 export type NflverseParityReport = {
   legacyPlayerCount: number;
   nflversePlayerCount: number;
@@ -36,6 +42,7 @@ export type NflverseParityReport = {
   missingFromLegacy: string[];
   statMismatches: StatMismatch[];
   scoreMismatches: ScoreMismatch[];
+  scoreMatches: ScoreMatch[];
 };
 
 const valuesMatch = (legacy: string, nflverse: string): boolean => {
@@ -95,6 +102,7 @@ export const compareNflverseStats = (
   );
   const statMismatches: StatMismatch[] = [];
   const scoreMismatches: ScoreMismatch[] = [];
+  const scoreMatches: ScoreMatch[] = [];
 
   for (const player of legacyPlayers) {
     const nflversePlayer = nflverseByCanonicalName.get(
@@ -136,6 +144,12 @@ export const compareNflverseStats = (
         nflverse: nflverseScore,
         delta: nflverseScore - legacyScore,
       });
+    } else if (scoreMatches.length < 10) {
+      scoreMatches.push({
+        player,
+        legacy: legacyScore,
+        nflverse: nflverseScore,
+      });
     }
   }
 
@@ -146,5 +160,6 @@ export const compareNflverseStats = (
     missingFromLegacy,
     statMismatches,
     scoreMismatches,
+    scoreMatches,
   };
 };

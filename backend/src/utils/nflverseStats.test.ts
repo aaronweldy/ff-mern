@@ -8,6 +8,7 @@ import {
 } from "./nflverseParity.js";
 import { normalizeNflverseWeeklyStat } from "./nflverseStats.js";
 import { calculatePlayerScore } from "./scoring.js";
+import { parseNflverseWeeklyStats } from "./nflverseWeekStats.js";
 
 // These rows are from the completed 2025 regular-season opener. The expected
 // values are the fields the existing FantasyPros scraper stores for scoring.
@@ -117,6 +118,22 @@ describe("nflverse weekly-stat parity", () => {
   it("matches legacy player suffixes and known display-name aliases", () => {
     assert.equal(canonicalizePlayerName("aaron jones sr"), "aaron jones");
     assert.equal(canonicalizePlayerName("hollywood brown"), "marquise brown");
+  });
+
+  it("parses and filters a weekly nflverse csv before normalizing it", () => {
+    const stats = parseNflverseWeeklyStats(
+      [
+        "player_display_name,position,team,season,week,season_type,attempts,completions,passing_yards",
+        "Aaron Rodgers,QB,PIT,2026,1,REG,30,22,244",
+        "Aaron Rodgers,QB,PIT,2026,2,REG,20,12,120",
+        "Postseason Player,QB,PIT,2026,1,POST,20,12,120",
+      ].join("\n"),
+      2026,
+      1
+    );
+
+    assert.deepEqual(Object.keys(stats), ["aaron rodgers"]);
+    assert.equal(stats["aaron rodgers"].YDS, "244");
   });
 
   it("produces the same Standard and PPR scores as the legacy stat shape", () => {

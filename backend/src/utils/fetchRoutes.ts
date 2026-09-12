@@ -16,6 +16,8 @@ import { db } from "../config/firebase-config.js";
 import { load } from "cheerio";
 import { get } from './tableScraper.js';
 import { calculatePlayerScore } from "./scoring.js";
+import { compareNflverseStats } from "./nflverseParity.js";
+import { loadNflverseWeeklyStats } from "./nflverseWeekStats.js";
 
 export type ScrapedPlayer = Record<string, string>;
 export type TableScraperStatsResponse = Omit<DatabasePlayer, "CP%" | "Y/CMP">;
@@ -185,6 +187,81 @@ export const fetchWeeklyStats = async (week: number) => {
   return usableStats;
 };
 
+const NFLVERSE_CACHE_TTL_MS = 5 * 60 * 1000;
+
+const fetchNflverseWeeklyStats = async (
+  season: number,
+  week: number
+): Promise<Record<string, DatabasePlayer>> => {
+  const reference = db.collection("nflverseWeekStats").doc(`${season}week${week}`);
+  const cached = await reference.get();
+  const fetchedAt = cached.data()?.fetchedAt as string | undefined;
+  const cachedStats = cached.data()?.playerMap as Record<string, DatabasePlayer> | undefined;
+  if (
+    cachedStats &&
+    fetchedAt &&
+    Date.now() - new Date(fetchedAt).getTime() < NFLVERSE_CACHE_TTL_MS
+  ) {
+    return cachedStats;
+  }
+
+  const playerMap = await loadNflverseWeeklyStats(season, week);
+  await reference.set({
+    fetchedAt: new Date().toISOString(),
+    playerMap,
+  });
+  return playerMap;
+};
+
+const recordNflverseShadowComparison = async (
+  season: number,
+  week: number,
+  league: League,
+  leagueId: string,
+  legacyStats: Record<string, DatabasePlayer>
+): Promise<void> => {
+  try {
+    const nflverseStats = await fetchNflverseWeeklyStats(season, week);
+    if (Object.keys(nflverseStats).length === 0) return;
+    const report = compareNflverseStats(
+      legacyStats,
+      nflverseStats,
+      league.scoringSettings
+    );
+    await db
+      .collection("leagueNflverseParity")
+      .doc(`${season}week${week}${leagueId}`)
+      .set({
+        season,
+        week,
+        leagueId,
+        calculatedAt: new Date().toISOString(),
+        summary: {
+          legacyPlayerCount: report.legacyPlayerCount,
+          nflversePlayerCount: report.nflversePlayerCount,
+          sharedPlayerCount:
+            report.legacyPlayerCount - report.missingFromNflverse.length,
+          missingFromNflverseCount: report.missingFromNflverse.length,
+          missingFromLegacyCount: report.missingFromLegacy.length,
+          statMismatchCount: report.statMismatches.length,
+          scoreMismatchCount: report.scoreMismatches.length,
+        },
+        differences: {
+          missingFromNflverse: report.missingFromNflverse,
+          missingFromLegacy: report.missingFromLegacy,
+          statMismatches: report.statMismatches,
+          scoreMismatches: report.scoreMismatches,
+        },
+      });
+  } catch (error) {
+    // Shadow data must never prevent the current scoring source from running.
+    console.error(
+      `nflverse shadow comparison failed for ${season} week ${week}, league ${leagueId}:`,
+      error
+    );
+  }
+};
+
 export const scoreAllPlayers = async (
   league: League,
   leagueId: string,
@@ -197,6 +274,13 @@ export const scoreAllPlayers = async (
     return data;
   }
   const stats = await fetchWeeklySnapCount(week.toString() as Week);
+  await recordNflverseShadowComparison(
+    getCurrentSeason(),
+    week,
+    league,
+    leagueId,
+    stats
+  );
   const players = Object.values(stats).map(
     (player) =>
       new RosteredPlayer(
