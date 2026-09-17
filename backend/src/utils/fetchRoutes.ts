@@ -29,6 +29,28 @@ export const longPositions = [
   "Tight Ends",
 ];
 
+const getUsableProjectionMap = (
+  data: unknown
+): Record<string, number> | null => {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return null;
+  }
+
+  const projections = Object.entries(data).filter(
+    ([playerName, projection]) =>
+      playerName !== "" &&
+      typeof projection === "number" &&
+      Number.isFinite(projection)
+  );
+
+  // One valid entry per position is the minimum signal that a cached scrape
+  // contains useful data. In particular, an empty Firestore document must not
+  // become a permanent cache hit after a page was temporarily unavailable.
+  return projections.length >= positions.length
+    ? Object.fromEntries(projections)
+    : null;
+};
+
 const sliceTeamFromName = (name: string) => {
   const lastSpace = name.lastIndexOf(" ");
   return name.substring(0, lastSpace);
@@ -40,26 +62,48 @@ export const fetchPlayerProjections = async (week: Week) => {
     .collection("playerProjections")
     .doc(`${season}week${week}`)
     .get();
-  if (check.exists) {
-    return check.data() as Record<string, number>;
+  const cachedProjections = getUsableProjectionMap(check.data());
+  if (cachedProjections) {
+    return cachedProjections;
   }
+  if (check.exists) {
+    console.warn(
+      `Ignoring unusable projection cache for ${season} week ${week}`
+    );
+  }
+
   const scrapedProjections: Record<string, number> = {};
   for (const pos of positions) {
     const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=${week}`;
     const tableData = await get(url);
-    for (const player of tableData[0] as ScrapedPlayerProjection[]) {
-      if (player.Player !== "") {
-        scrapedProjections[
-          sliceTeamFromName(sanitizePlayerName(player.Player))
-        ] = parseFloat(player.FPTS);
+    let parsedForPosition = 0;
+    for (const player of (tableData[0] ?? []) as ScrapedPlayerProjection[]) {
+      if (!player.Player) {
+        continue;
       }
+      const projection = Number.parseFloat(player.FPTS);
+      const playerName = sliceTeamFromName(sanitizePlayerName(player.Player));
+      if (!playerName || !Number.isFinite(projection)) {
+        continue;
+      }
+      scrapedProjections[playerName] = projection;
+      parsedForPosition++;
+    }
+    if (parsedForPosition === 0) {
+      throw new Error(`No usable ${pos} projections returned for week ${week}`);
     }
   }
+
+  const usableProjections = getUsableProjectionMap(scrapedProjections);
+  if (!usableProjections) {
+    throw new Error(`No usable projections returned for week ${week}`);
+  }
+
   await db
     .collection("playerProjections")
     .doc(`${season}week${week}`)
-    .set(scrapedProjections);
-  return scrapedProjections;
+    .set(usableProjections);
+  return usableProjections;
 };
 
 export const fetchPlayers = () => {
