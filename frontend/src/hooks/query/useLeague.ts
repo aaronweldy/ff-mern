@@ -14,7 +14,12 @@ export const useLeague = (id: string) => {
   const queryClient = useQueryClient();
   const { data, isLoading, isSuccess, ...rest } = useQuery(
     queryKeys.league(id),
-    () => getLeagueData(id)
+    () => getLeagueData(id),
+    {
+      // Scheduled scoring runs outside the browser. Poll the small league
+      // document so open scoring/lineup pages see lastScoredWeek promptly.
+      refetchInterval: 60 * 1000,
+    }
   );
   const league = data?.league;
   // Optimistic-UI helper kept for callers that edit league fields locally

@@ -16,10 +16,10 @@ export const useLeagueScoringData = (id: string) => {
   const nflScheduleQuery = useNflSchedule();
   const defenseStatsQuery = useNflDefenseStats();
   useEffect(() => {
-    if (league) {
+    if (league?.lastScoredWeek !== undefined) {
       setWeek(league.lastScoredWeek || 1);
     }
-  }, [league]);
+  }, [league?.lastScoredWeek]);
 
   const isLoading = useMemo(() => {
     return (

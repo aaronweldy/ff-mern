@@ -1,5 +1,19 @@
 import admin from "../config/firebase-config.js";
 /**
+ * Allows the scheduled scorer to call the scoring endpoint without creating
+ * a Firebase user session. The token must be configured on both services.
+ * This check is only used by the scoring route; normal API auth remains
+ * Firebase-token based.
+ */
+export const isScoringServiceRequest = (req) => {
+    const expected = process.env.SCORING_SERVICE_TOKEN?.trim();
+    const provided = req.headers["x-scoring-service-token"];
+    return Boolean(expected &&
+        typeof provided === "string" &&
+        provided.length > 0 &&
+        provided === expected);
+};
+/**
  * Verifies `Authorization: Bearer <idToken>` via firebase-admin
  * `auth.verifyIdToken()`. On success sets `req.user = { uid, email }`
  * and calls next(). On failure responds 401.
@@ -24,6 +38,13 @@ export const requireAuth = async (req, res, next) => {
         console.log("requireAuth: verifyIdToken failed", e);
         res.status(401).send({ error: "Invalid or expired ID token" });
     }
+};
+export const requireAuthOrScoringService = (req, res, next) => {
+    if (isScoringServiceRequest(req)) {
+        next();
+        return;
+    }
+    void requireAuth(req, res, next);
 };
 /**
  * Optional variant: populates req.user when a valid token is present,

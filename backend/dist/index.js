@@ -14,7 +14,7 @@ import draft from "./route/draft.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { initSocket } from "./socket/draft/index.js";
-import { requireAuth } from "./middleware/auth.js";
+import { isScoringServiceRequest, requireAuth } from "./middleware/auth.js";
 const app = express();
 const server = createServer(app);
 // CORS allowlist from env (FRONTEND_URL) + local dev. Firebase Hosting
@@ -74,6 +74,13 @@ app.use((req, res, next) => {
 // requireAuth on their POST/PATCH/PUT/DELETE routes for defense in depth).
 app.use("/api/v1", (req, res, next) => {
     if (["POST", "PATCH", "PUT", "DELETE"].includes(req.method)) {
+        // The scheduled scorer is a narrowly scoped service caller. Other
+        // mutating routes still require a Firebase ID token.
+        if (req.method === "POST" &&
+            /^\/api\/v1\/league\/[^/]+\/runScores\/?$/.test(req.originalUrl.split("?")[0]) &&
+            isScoringServiceRequest(req)) {
+            return next();
+        }
         return requireAuth(req, res, next);
     }
     next();

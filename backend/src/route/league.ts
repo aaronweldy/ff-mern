@@ -26,7 +26,9 @@ import {
 } from "../utils/scoringResolution.js";
 import {
   isLeagueCommissioner,
+  isScoringServiceRequest,
   requireAuth,
+  requireAuthOrScoringService,
 } from "../middleware/auth.js";
 const router = Router();
 
@@ -419,85 +421,97 @@ router.patch("/:leagueId/update/", requireAuth, async (req, res) => {
   res.status(200).send("Updated all league settings");
 });
 
-router.post("/:leagueId/runScores/", requireAuth, async (req, res, next) => {
-  try {
-    const { week } = req.body;
-    const { leagueId } = req.params;
-    if (!(await isLeagueCommissioner(leagueId, req.user!.uid))) {
-      res.status(403).send("Only commissioners may run scores.");
-      return;
-    }
-    const leagueRef = db.collection("leagues").doc(leagueId);
-    const league = (await leagueRef.get()).data() as League;
-    if (
-      !league ||
-      !Number.isInteger(week) ||
-      week < 1 ||
-      week > league.numWeeks
-    ) {
-      res.status(400).send("Week is out of range");
-      return;
-    }
-    const data = await scoreAllPlayers(league, leagueId, week, false);
-    if (!Object.keys(data).length) {
-      res.status(400).send("No stats exist for week.");
-      return;
-    }
-    if (
-      Object.values(data).some(
-        (player) => !Number.isFinite(player.scoring.totalPoints)
-      )
-    ) {
-      throw new Error(
-        "Scoring data contains invalid points; scores were not saved."
-      );
-    }
-    // A failed status lookup aborts the run before any writes.
-    const completed = await fetchCompletedTeams(getCurrentSeason(), week);
-    const result = await db.runTransaction(async (transaction) => {
-      const leagueSnapshot = await transaction.get(leagueRef);
-      if (JSON.stringify(leagueSnapshot.data()?.scoringSettings) !== JSON.stringify(league.scoringSettings)) {
-        throw new Error("Scoring settings changed during this run; please calculate scores again.");
+router.post(
+  "/:leagueId/runScores/",
+  requireAuthOrScoringService,
+  async (req, res, next) => {
+    try {
+      const { week } = req.body;
+      const { leagueId } = req.params;
+      if (
+        !isScoringServiceRequest(req) &&
+        !(await isLeagueCommissioner(leagueId, req.user!.uid))
+      ) {
+        res.status(403).send("Only commissioners may run scores.");
+        return;
       }
-      const snapshot = await transaction.get(
-        db.collection("teams").where("league", "==", leagueId)
-      );
-      await updateCumulativeStats(leagueId, week, data, transaction);
-      const teams: Team[] = [];
-      const errors: ScoringError[] = [];
-      for (const doc of snapshot.docs) {
-        const team = doc.data() as Team;
-        const resolved = resolveScoringLineup(team, week, data, completed);
-        errors.push(...resolved.errors);
-        team.weekInfo[week] = {
-          ...team.weekInfo[week],
-          weekScore: resolved.weekScore,
-          scoringLineup: resolved.lineup,
-          substitutions: resolved.substitutions,
-        };
-        transaction.update(doc.ref, { weekInfo: team.weekInfo });
-        teams.push(team);
+      const leagueRef = db.collection("leagues").doc(leagueId);
+      const league = (await leagueRef.get()).data() as League;
+      if (
+        !league ||
+        !Number.isInteger(week) ||
+        week < 1 ||
+        week > league.numWeeks
+      ) {
+        res.status(400).send("Week is out of range");
+        return;
       }
-      transaction.set(
-        db
-          .collection("leagueScoringData")
-          .doc(`${getCurrentSeason()}${week}${leagueId}`),
-        { playerData: data }
-      );
-      transaction.update(leagueRef, {
-        lastScoredWeek: Math.max(
-          week,
-          leagueSnapshot.data()?.lastScoredWeek || 0
-        ),
+      const data = await scoreAllPlayers(league, leagueId, week, false);
+      if (!Object.keys(data).length) {
+        res.status(400).send("No stats exist for week.");
+        return;
+      }
+      if (
+        Object.values(data).some(
+          (player) => !Number.isFinite(player.scoring.totalPoints)
+        )
+      ) {
+        throw new Error(
+          "Scoring data contains invalid points; scores were not saved."
+        );
+      }
+      // A failed status lookup aborts the run before any writes.
+      const completed = await fetchCompletedTeams(getCurrentSeason(), week);
+      const result = await db.runTransaction(async (transaction) => {
+        const leagueSnapshot = await transaction.get(leagueRef);
+        if (
+          JSON.stringify(leagueSnapshot.data()?.scoringSettings) !==
+          JSON.stringify(league.scoringSettings)
+        ) {
+          throw new Error(
+            "Scoring settings changed during this run; please calculate scores again."
+          );
+        }
+        const snapshot = await transaction.get(
+          db.collection("teams").where("league", "==", leagueId)
+        );
+        await updateCumulativeStats(leagueId, week, data, transaction);
+        const teams: Team[] = [];
+        const errors: ScoringError[] = [];
+        for (const doc of snapshot.docs) {
+          const team = doc.data() as Team;
+          const resolved = resolveScoringLineup(team, week, data, completed);
+          errors.push(...resolved.errors);
+          team.weekInfo[week] = {
+            ...team.weekInfo[week],
+            weekScore: resolved.weekScore,
+            scoringLineup: resolved.lineup,
+            substitutions: resolved.substitutions,
+          };
+          transaction.update(doc.ref, { weekInfo: team.weekInfo });
+          teams.push(team);
+        }
+        transaction.set(
+          db
+            .collection("leagueScoringData")
+            .doc(`${getCurrentSeason()}${week}${leagueId}`),
+          { playerData: data }
+        );
+        transaction.update(leagueRef, {
+          lastScoredWeek: Math.max(
+            week,
+            leagueSnapshot.data()?.lastScoredWeek || 0
+          ),
+        });
+        return { teams, errors };
       });
-      return { teams, errors };
-    });
-    res.status(200).json({ ...result, data });
-    console.log(`successful runScores for league ${leagueId}`);
-  } catch (error) {
-    next(error);
+      res.status(200).json({ ...result, data });
+      console.log(`successful runScores for league ${leagueId}`);
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 router.post("/:leagueId/playerScores/", requireAuth, async (req, res) => {
   const { leagueId } = req.params;

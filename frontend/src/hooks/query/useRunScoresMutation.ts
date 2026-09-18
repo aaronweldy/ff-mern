@@ -27,6 +27,9 @@ export const useRunScoresMutation = (
         queryClient.invalidateQueries(queryKeys.teams(id));
         queryClient.invalidateQueries(queryKeys.playerScores(id, week));
         queryClient.invalidateQueries(queryKeys.allTeams());
+        // runScores advances league.lastScoredWeek on the server. Refresh
+        // that cache so the week selector/lineups page moves immediately.
+        queryClient.invalidateQueries(queryKeys.league(id));
       },
     }
   );

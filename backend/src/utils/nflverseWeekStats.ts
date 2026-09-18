@@ -4,7 +4,7 @@ import { normalizeNflverseWeeklyStat } from "./nflverseStats.js";
 const playerStatsUrl = (season: number) =>
   `https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_${season}.csv`;
 
-const parseCsv = (csv: string): Record<string, string>[] => {
+const parseCsvRows = (csv: string): string[][] => {
   const rows: string[][] = [];
   let row: string[] = [];
   let value = "";
@@ -36,12 +36,7 @@ const parseCsv = (csv: string): Record<string, string>[] => {
     rows.push(row);
   }
 
-  const [header, ...dataRows] = rows;
-  return dataRows
-    .filter((dataRow) => dataRow.length === header.length)
-    .map((dataRow) =>
-      Object.fromEntries(header.map((field, index) => [field, dataRow[index]]))
-    );
+  return rows;
 };
 
 export const parseNflverseWeeklyStats = (
@@ -50,17 +45,42 @@ export const parseNflverseWeeklyStats = (
   week: number
 ): Record<string, DatabasePlayer> => {
   const stats: Record<string, DatabasePlayer> = {};
-  for (const row of parseCsv(csv)) {
+  const [header, ...dataRows] = parseCsvRows(csv);
+  if (!header || header.length === 0) return stats;
+
+  const column = (name: string) => header.indexOf(name);
+  const seasonColumn = column("season");
+  const weekColumn = column("week");
+  const seasonTypeColumn = column("season_type");
+  const displayNameColumn = column("player_display_name");
+  const playerNameColumn = column("player_name");
+  if (
+    seasonColumn < 0 ||
+    weekColumn < 0 ||
+    seasonTypeColumn < 0 ||
+    (displayNameColumn < 0 && playerNameColumn < 0)
+  ) {
+    return stats;
+  }
+
+  for (const dataRow of dataRows) {
     if (
-      Number(row.season) !== season ||
-      Number(row.week) !== week ||
-      row.season_type !== "REG"
+      dataRow.length !== header.length ||
+      Number(dataRow[seasonColumn]) !== season ||
+      Number(dataRow[weekColumn]) !== week ||
+      dataRow[seasonTypeColumn] !== "REG"
     ) {
       continue;
     }
+    const row = Object.fromEntries(
+      header.map((field, index) => [field, dataRow[index]])
+    );
     const normalized = normalizeNflverseWeeklyStat(row);
     if (!normalized) continue;
-    const name = String(row.player_display_name || row.player_name);
+    const name = String(
+      dataRow[displayNameColumn] ||
+        (playerNameColumn >= 0 ? dataRow[playerNameColumn] : "")
+    );
     stats[sanitizePlayerName(name)] = normalized;
   }
   return stats;
