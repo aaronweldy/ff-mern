@@ -11,9 +11,9 @@ const normalizeTeam = (team) =>
 (team === "LA" ? "LAR" : team === "JAX" ? "JAC" : team);
 const legacyRate = (numerator, denominator) => denominator === 0 ? "0" : (numerator / denominator).toFixed(1);
 /**
- * Converts nflverse's weekly player statistics into the legacy FantasyPros
- * shape consumed by the current scoring engine. This is intentionally a pure
- * adapter so it can be parity-tested before it is wired into production.
+ * Converts nflverse's weekly player statistics into the normalized shape
+ * consumed by the scoring engine. This remains a pure adapter so it can also
+ * be checked against the legacy source by the parity tooling.
  */
 export const normalizeNflverseWeeklyStat = (row) => {
     const position = String(row.position || "").toUpperCase();

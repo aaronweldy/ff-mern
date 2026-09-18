@@ -36,6 +36,23 @@ const IDEMPOTENCY_WINDOW_MS = 20 * 60 * 60 * 1000; // 20h for daily jobs
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+const runWithConcurrency = async <T>(
+  items: T[],
+  limit: number,
+  task: (item: T) => Promise<void>
+): Promise<void> => {
+  let nextIndex = 0;
+  const worker = async (): Promise<void> => {
+    while (nextIndex < items.length) {
+      const item = items[nextIndex++];
+      await task(item);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker())
+  );
+};
+
 /**
  * Validate SERVER_URL env var.
  * @return {string|null} Normalized URL or null when invalid/missing.
@@ -728,18 +745,32 @@ export const fetchNflSchedule = onSchedule("every day 00:00", async () => {
 });
 
 export const runScoresForAllLeagues = onSchedule(
-  "0 2,22 * * *",
+  { schedule: "every 10 minutes", timeoutSeconds: 540 },
   async () => {
     const serverUrl = getServerUrl();
-    if (!serverUrl) {
+    const scoringToken = process.env.SCORING_SERVICE_TOKEN?.trim();
+    if (!serverUrl || !scoringToken) {
+      if (!scoringToken) {
+        console.error(
+          "SCORING_SERVICE_TOKEN is missing. Skipping scheduled scoring."
+        );
+      }
       return;
     }
-    let latestWeek = "1";
+
+    let latestWeek = 0;
     try {
-      latestWeek = (await getWeekFromPuppeteer()) || "1";
+      const games = await fetchGamesCsvInfo();
+      latestWeek = games.latestScoredWeek[getCurrentSeason()] ?? 0;
     } catch (err) {
-      console.error("Failed to determine latest week, defaulting to 1:", err);
+      console.error("Failed to determine latest nflverse week:", err);
+      return;
     }
+    if (latestWeek < 1) {
+      console.log("No completed nflverse games found; skipping scheduled scoring.");
+      return;
+    }
+
     let allLeagues;
     try {
       allLeagues = await db.collection("leagues").get();
@@ -751,11 +782,12 @@ export const runScoresForAllLeagues = onSchedule(
       console.log("No leagues found, nothing to score.");
       return;
     }
-    for (const league of allLeagues.docs) {
+
+    await runWithConcurrency(allLeagues.docs, 5, async (league) => {
       const leagueId = league.id;
       const url = `${serverUrl}/api/v1/league/${leagueId}/runScores/`;
       console.log("fetching league at url: ", url);
-      const body = { week: parseInt(latestWeek) || 1 };
+      const body = { week: latestWeek };
       try {
         const response = await fetchWithRetry(
           url,
@@ -763,6 +795,7 @@ export const runScoresForAllLeagues = onSchedule(
             method: "POST",
             headers: {
               "content-type": "application/json",
+              "x-scoring-service-token": scoringToken,
             },
             body: JSON.stringify(body),
           },
@@ -777,11 +810,9 @@ export const runScoresForAllLeagues = onSchedule(
             `attempts (backend may be down), continuing:`,
           err
         );
-        continue;
+        return;
       }
-      // Small delay to avoid hammering the backend when many leagues exist.
-      await sleep(500);
-    }
+    });
   }
 );
 

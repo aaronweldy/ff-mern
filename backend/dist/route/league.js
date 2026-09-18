@@ -7,7 +7,7 @@ import { getCurrentSeason, } from "@ff-mern/ff-types";
 import { fetchPlayers, getTeamsInLeague, scoreAllPlayers, } from "../utils/fetchRoutes.js";
 import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
 import { resolveScoringLineup, fetchCompletedTeams, } from "../utils/scoringResolution.js";
-import { isLeagueCommissioner, requireAuth, } from "../middleware/auth.js";
+import { isLeagueCommissioner, isScoringServiceRequest, requireAuth, requireAuthOrScoringService, } from "../middleware/auth.js";
 const router = Router();
 const getSortedCumulativePlayerScores = (scores) => Object.keys(scores)
     .sort((a, b) => scores[b].totalPointsInSeason - scores[a].totalPointsInSeason)
@@ -359,11 +359,12 @@ router.patch("/:leagueId/update/", requireAuth, async (req, res) => {
     }
     res.status(200).send("Updated all league settings");
 });
-router.post("/:leagueId/runScores/", requireAuth, async (req, res, next) => {
+router.post("/:leagueId/runScores/", requireAuthOrScoringService, async (req, res, next) => {
     try {
         const { week } = req.body;
         const { leagueId } = req.params;
-        if (!(await isLeagueCommissioner(leagueId, req.user.uid))) {
+        if (!isScoringServiceRequest(req) &&
+            !(await isLeagueCommissioner(leagueId, req.user.uid))) {
             res.status(403).send("Only commissioners may run scores.");
             return;
         }
@@ -388,7 +389,8 @@ router.post("/:leagueId/runScores/", requireAuth, async (req, res, next) => {
         const completed = await fetchCompletedTeams(getCurrentSeason(), week);
         const result = await db.runTransaction(async (transaction) => {
             const leagueSnapshot = await transaction.get(leagueRef);
-            if (JSON.stringify(leagueSnapshot.data()?.scoringSettings) !== JSON.stringify(league.scoringSettings)) {
+            if (JSON.stringify(leagueSnapshot.data()?.scoringSettings) !==
+                JSON.stringify(league.scoringSettings)) {
                 throw new Error("Scoring settings changed during this run; please calculate scores again.");
             }
             const snapshot = await transaction.get(db.collection("teams").where("league", "==", leagueId));

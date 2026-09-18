@@ -13,14 +13,11 @@ import {
   AbbreviationToFullTeam,
 } from "@ff-mern/ff-types";
 import { db } from "../config/firebase-config.js";
-import { load } from "cheerio";
 import { get } from './tableScraper.js';
 import { calculatePlayerScore } from "./scoring.js";
-import { compareNflverseStats } from "./nflverseParity.js";
 import { loadNflverseWeeklyStats } from "./nflverseWeekStats.js";
 
 export type ScrapedPlayer = Record<string, string>;
-export type TableScraperStatsResponse = Omit<DatabasePlayer, "CP%" | "Y/CMP">;
 export const positions = ["qb", "rb", "wr", "te", "k"];
 export const longPositions = [
   "Quarterbacks",
@@ -140,169 +137,50 @@ export const fetchPlayers = () => {
   });
 };
 
-export const fetchLatestFantasyProsScoredWeek = async (targetWeek: string) => {
-  const data = await (
-    await fetch(
-      `https://www.fantasypros.com/nfl/stats/qb.php?week=${targetWeek}&range=week`
-    )
-  ).text();
-  const $ = load(data);
-  return [parseInt($(".select-links").eq(0).find(":selected").text()), parseInt($("#single-week").attr("value"))];
-};
-
-/**
- * Fetches the weekly stats that were previously stored by fetchWeeklyStats.
- * Note: Snap count fetching was removed because the FantasyPros snap counts page
- * is now gated behind a registration wall. Backup resolution now uses the "G" (games played)
- * stat instead of snap counts.
- */
-export const fetchWeeklySnapCount = async (week: Week) => {
-  const year = getCurrentSeason();
-  console.log(year);
-  const curStats = (
-    await db
-      .collection("weekStats")
-      .doc(year + "week" + week)
-      .get()
-  ).data().playerMap as Record<string, DatabasePlayer>;
-  return curStats;
-};
-
-export const fetchWeeklyStats = async (week: number) => {
-  const year = getCurrentSeason();
-  console.log("season is: ", year);
-  const [season, latestScoredWeek] = await fetchLatestFantasyProsScoredWeek(
-    week.toString()
-  );
-  console.log("Parsed season: " + season);
-  const usableStats: Record<string, DatabasePlayer> = {};
-  if (latestScoredWeek < week || season < year) {
-    console.log("No stats for " + season + " week " + week + " available");
-    return usableStats;
-  }
-  for await (const pos of positions) {
-    const url = `https://www.fantasypros.com/nfl/stats/${pos}.php?year=${year}&week=${week}&range=week`;
-    const table: TableScraperStatsResponse[][] = await get(url);
-    for (const player of table[0]) {
-      const hashedName = sanitizePlayerName(player["Player"]);
-      if (hashedName) {
-        const team = hashedName
-          .slice(hashedName.indexOf("(") + 1, hashedName.indexOf(")"))
-          .toUpperCase() as AbbreviatedNflTeam;
-        usableStats[
-          sanitizePlayerName(hashedName.slice(0, hashedName.indexOf("(") - 1))
-        ] =
-          pos === "qb"
-            ? {
-              ...player,
-              team,
-              position: pos,
-              PCT: Number.parseFloat(player["PCT"]).toFixed(2).toString(),
-              "Y/A":
-                Number.parseFloat(player["Y/A"]).toFixed(2).toString() || "0",
-              "Y/A_2": (
-                Number.parseFloat(player["YDS_2"]) /
-                (Number.parseFloat(player["ATT_2"]) || 1)
-              )
-                .toFixed(2)
-                .toString(),
-              "Y/CMP": (
-                Number.parseFloat(player["YDS"]) /
-                (Number.parseFloat(player["CMP"]) || 1)
-              )
-                .toFixed(2)
-                .toString(),
-            }
-            : {
-              ...player,
-              team,
-              position: pos,
-              PCT: "0",
-              "Y/A": player["Y/A"] || "0",
-              "Y/CMP": "0",
-            };
-      }
-    }
-  }
-  await db
-    .collection("weekStats")
-    .doc(year + "week" + week)
-    .set({ playerMap: usableStats });
-  return usableStats;
-};
-
 const NFLVERSE_CACHE_TTL_MS = 5 * 60 * 1000;
+const nflverseInflight = new Map<
+  string,
+  Promise<Record<string, DatabasePlayer>>
+>();
 
-const fetchNflverseWeeklyStats = async (
+export const fetchNflverseWeeklyStats = async (
   season: number,
   week: number
 ): Promise<Record<string, DatabasePlayer>> => {
-  const reference = db.collection("nflverseWeekStats").doc(`${season}week${week}`);
-  const cached = await reference.get();
-  const fetchedAt = cached.data()?.fetchedAt as string | undefined;
-  const cachedStats = cached.data()?.playerMap as Record<string, DatabasePlayer> | undefined;
-  if (
-    cachedStats &&
-    fetchedAt &&
-    Date.now() - new Date(fetchedAt).getTime() < NFLVERSE_CACHE_TTL_MS
-  ) {
-    return cachedStats;
-  }
+  const cacheKey = `${season}week${week}`;
+  const inflight = nflverseInflight.get(cacheKey);
+  if (inflight) return inflight;
 
-  const playerMap = await loadNflverseWeeklyStats(season, week);
-  await reference.set({
-    fetchedAt: new Date().toISOString(),
-    playerMap,
-  });
-  return playerMap;
-};
+  const loadAndCache = (async (): Promise<Record<string, DatabasePlayer>> => {
+    const reference = db.collection("nflverseWeekStats").doc(cacheKey);
+    const cached = await reference.get();
+    const fetchedAt = cached.data()?.fetchedAt as string | undefined;
+    const cachedStats = cached.data()?.playerMap as Record<string, DatabasePlayer> | undefined;
+    if (
+      cachedStats &&
+      Object.keys(cachedStats).length > 0 &&
+      fetchedAt &&
+      Date.now() - new Date(fetchedAt).getTime() < NFLVERSE_CACHE_TTL_MS
+    ) {
+      return cachedStats;
+    }
 
-const recordNflverseShadowComparison = async (
-  season: number,
-  week: number,
-  league: League,
-  leagueId: string,
-  legacyStats: Record<string, DatabasePlayer>
-): Promise<void> => {
-  try {
-    const nflverseStats = await fetchNflverseWeeklyStats(season, week);
-    if (Object.keys(nflverseStats).length === 0) return;
-    const report = compareNflverseStats(
-      legacyStats,
-      nflverseStats,
-      league.scoringSettings
-    );
-    await db
-      .collection("leagueNflverseParity")
-      .doc(`${season}week${week}${leagueId}`)
-      .set({
-        season,
-        week,
-        leagueId,
-        calculatedAt: new Date().toISOString(),
-        summary: {
-          legacyPlayerCount: report.legacyPlayerCount,
-          nflversePlayerCount: report.nflversePlayerCount,
-          sharedPlayerCount:
-            report.legacyPlayerCount - report.missingFromNflverse.length,
-          missingFromNflverseCount: report.missingFromNflverse.length,
-          missingFromLegacyCount: report.missingFromLegacy.length,
-          statMismatchCount: report.statMismatches.length,
-          scoreMismatchCount: report.scoreMismatches.length,
-        },
-        differences: {
-          missingFromNflverse: report.missingFromNflverse,
-          missingFromLegacy: report.missingFromLegacy,
-          statMismatches: report.statMismatches,
-          scoreMismatches: report.scoreMismatches,
-        },
+    const playerMap = await loadNflverseWeeklyStats(season, week);
+    // Do not cache an empty/future week. This lets the next scoring attempt
+    // see newly published nflverse data instead of holding a false cache hit.
+    if (Object.keys(playerMap).length > 0) {
+      await reference.set({
+        fetchedAt: new Date().toISOString(),
+        playerMap,
       });
-  } catch (error) {
-    // Shadow data must never prevent the current scoring source from running.
-    console.error(
-      `nflverse shadow comparison failed for ${season} week ${week}, league ${leagueId}:`,
-      error
-    );
+    }
+    return playerMap;
+  })();
+  nflverseInflight.set(cacheKey, loadAndCache);
+  try {
+    return await loadAndCache;
+  } finally {
+    nflverseInflight.delete(cacheKey);
   }
 };
 
@@ -313,40 +191,29 @@ export const scoreAllPlayers = async (
   persist = true
 ) => {
   const data: PlayerScoreData = {};
-  const statsAtt = await fetchWeeklyStats(week);
-  if (Object.keys(statsAtt).length === 0) {
+  const stats = await fetchNflverseWeeklyStats(getCurrentSeason(), week);
+  if (Object.keys(stats).length === 0) {
     return data;
   }
-  const stats = await fetchWeeklySnapCount(week.toString() as Week);
-  await recordNflverseShadowComparison(
-    getCurrentSeason(),
-    week,
-    league,
-    leagueId,
-    stats
-  );
-  const players = Object.values(stats).map(
-    (player) =>
-      new RosteredPlayer(
-        player.Player.slice(0, player.Player.indexOf("(") - 1),
-        player.team as AbbreviatedNflTeam,
-        player.position.toUpperCase() as SinglePosition
-      )
-  );
-  players.forEach((player) => {
+  Object.entries(stats).forEach(([sanitizedName, statistics]) => {
+    const player = new RosteredPlayer(
+      statistics.Player.slice(0, statistics.Player.indexOf("(") - 1),
+      statistics.team as AbbreviatedNflTeam,
+      statistics.position.toUpperCase() as SinglePosition
+    );
     const score = calculatePlayerScore(
-      stats[player.sanitizedName],
+      statistics,
       player.position,
       league.scoringSettings
     );
-    data[player.sanitizedName] = {
-      team: stats[player.sanitizedName].team as AbbreviatedNflTeam,
+    data[sanitizedName] = {
+      team: statistics.team as AbbreviatedNflTeam,
       position: player.position,
       scoring: {
         totalPoints: score.totalPoints,
         categories: score.categories,
       },
-      statistics: stats[player.sanitizedName],
+      statistics,
     };
   });
   const yearWeek = getCurrentSeason() + week.toString();
