@@ -18,6 +18,7 @@ import {
 import { load } from "cheerio";
 import admin from "firebase-admin";
 import { onRequest } from "firebase-functions/https";
+import { defineSecret } from "firebase-functions/params";
 import { onSchedule } from "firebase-functions/scheduler";
 
 admin.initializeApp();
@@ -27,6 +28,7 @@ const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
 const CHECKPOINT_COLLECTION = "fetchCheckpoints";
 const IDEMPOTENCY_WINDOW_MS = 20 * 60 * 60 * 1000; // 20h for daily jobs
+const scoringServiceToken = defineSecret("SCORING_SERVICE_TOKEN");
 
 /**
  * Sleep helper for backoff / rate-limit delays.
@@ -745,10 +747,14 @@ export const fetchNflSchedule = onSchedule("every day 00:00", async () => {
 });
 
 export const runScoresForAllLeagues = onSchedule(
-  { schedule: "every 10 minutes", timeoutSeconds: 540 },
+  {
+    schedule: "every 10 minutes",
+    timeoutSeconds: 540,
+    secrets: [scoringServiceToken],
+  },
   async () => {
     const serverUrl = getServerUrl();
-    const scoringToken = process.env.SCORING_SERVICE_TOKEN?.trim();
+    const scoringToken = scoringServiceToken.value().trim();
     if (!serverUrl || !scoringToken) {
       if (!scoringToken) {
         console.error(
