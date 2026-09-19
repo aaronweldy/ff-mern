@@ -4,7 +4,7 @@ import {
   Week,
   LineupSettings,
 } from "@ff-mern/ff-types";
-import { DropdownButton, Dropdown } from "react-bootstrap";
+import { Alert, DropdownButton, Dropdown } from "react-bootstrap";
 import { UseMutationResult } from "react-query";
 
 type QuicksetDropdownProps = {
@@ -18,30 +18,42 @@ export const QuicksetDropdown = ({
   mutationFn,
   lineupSettings,
 }: QuicksetDropdownProps) => (
-  <DropdownButton id="quickset-lineup" title="Quick Set Lineup">
-    {week > 1 && (
+  <>
+    <DropdownButton
+      id="quickset-lineup"
+      title={mutationFn.isLoading ? "Setting Lineup…" : "Quick Set Lineup"}
+      disabled={mutationFn.isLoading}
+    >
+      {week > 1 && (
+        <Dropdown.Item
+          onClick={() =>
+            mutationFn.mutate({
+              week: week.toString() as Week,
+              type: "LastWeek",
+              lineupSettings,
+            })
+          }
+        >
+          Use Last Week's Lineup
+        </Dropdown.Item>
+      )}
       <Dropdown.Item
         onClick={() =>
           mutationFn.mutate({
             week: week.toString() as Week,
-            type: "LastWeek",
+            type: "Projection",
             lineupSettings,
           })
         }
       >
-        Use Last Week's Lineup
+        Use Highest Projected Lineup
       </Dropdown.Item>
+    </DropdownButton>
+    {mutationFn.isError && (
+      <Alert variant="danger" className="mt-2" role="alert">
+        {mutationFn.error?.message ||
+          "Unable to set the lineup. Please try again."}
+      </Alert>
     )}
-    <Dropdown.Item
-      onClick={() =>
-        mutationFn.mutate({
-          week: week.toString() as Week,
-          type: "Projection",
-          lineupSettings,
-        })
-      }
-    >
-      Use Highest Projected Lineup
-    </Dropdown.Item>
-  </DropdownButton>
+  </>
 );

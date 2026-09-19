@@ -2,10 +2,9 @@ import {
   AbbreviatedNflTeam,
   AbbreviationToFullTeam,
   FinalizedLineup,
-  FinalizedPlayer,
+  LineupSettings,
   NFLSchedule,
   QuicksetLineupType,
-  setPlayerName,
   Team,
   Week,
 } from "@ff-mern/ff-types";
@@ -18,6 +17,7 @@ import {
   isLeagueCommissioner,
   requireAuth,
 } from "../middleware/auth.js";
+import { buildProjectedLineup } from "../utils/projectedLineup.js";
 const router = Router();
 
 // Typeguard to check if a team is a valid NFL team (not "None")
@@ -143,10 +143,12 @@ router.post("/setLineupFromProjection/", requireAuth, async (req, res) => {
     team,
     week,
     type,
+    lineupSettings,
   }: {
     team: Team;
     week: Week;
     type: QuicksetLineupType;
+    lineupSettings?: LineupSettings;
   } = req.body;
   if (!(await canModifyTeam(req.user!.uid, team.id))) {
     res.status(403).send("Not authorized to update this team");
@@ -164,51 +166,23 @@ router.post("/setLineupFromProjection/", requireAuth, async (req, res) => {
     res.status(401).send();
     return;
   }
-  const projections = await fetchPlayerProjections(week);
-  const newLineup = { ...team.weekInfo[week].finalizedLineup };
-  const usedPlayers = new Set<string>();
-  for (const pos of Object.keys(
-    team.weekInfo[weekNum].finalizedLineup
-  ) as Array<keyof FinalizedLineup>) {
-    if (pos === "bench") {
-      continue;
-    }
-    const playerOptions = team.rosteredPlayers
-      .filter(
-        (player) =>
-          pos.indexOf(player.position) > -1 &&
-          !usedPlayers.has(player.sanitizedName)
-      )
-      .sort(
-        (a, b) =>
-          (projections[b.sanitizedName] || 0) -
-          (projections[a.sanitizedName] || 0)
-      );
-    for (const player of playerOptions) {
-      console.log(pos, player.fullName, projections[player.sanitizedName]);
-    }
-    for (let i = 0; i < newLineup[pos].length; i++) {
-      if (i < playerOptions.length) {
-        usedPlayers.add(playerOptions[i].sanitizedName);
-        setPlayerName(newLineup[pos][i], playerOptions[i].fullName);
-        newLineup[pos][i].team = playerOptions[i].team;
-      } else {
-        setPlayerName(newLineup[pos][i], "");
-        newLineup[pos][i].team = "None";
-      }
-    }
-  }
-  newLineup.bench = team.rosteredPlayers
-    .filter((player) => !usedPlayers.has(player.sanitizedName))
-    .map((player) => {
-      const newPlayer = new FinalizedPlayer(
-        player.fullName,
-        player.position,
-        player.team,
-        "bench"
-      );
-      return JSON.parse(JSON.stringify(newPlayer)) as FinalizedPlayer;
+  let projections: Record<string, number>;
+  try {
+    projections = await fetchPlayerProjections(week);
+  } catch (error) {
+    console.error(`Projection fetch failed for week ${week}`, error);
+    res.status(503).send({
+      message: `Complete projections are unavailable for week ${week}. Your lineup has not been changed. Please try again later.`,
     });
+    return;
+  }
+  let newLineup: FinalizedLineup;
+  try {
+    newLineup = buildProjectedLineup(team.rosteredPlayers, team.weekInfo[week].finalizedLineup, projections, lineupSettings);
+  } catch (error) {
+    res.status(422).send({ message: error instanceof Error ? error.message : "Unable to build the projected lineup." });
+    return;
+  }
   team.weekInfo[weekNum].finalizedLineup = newLineup;
   await db.collection("teams").doc(team.id).set(team);
   res.status(200).send({ team });

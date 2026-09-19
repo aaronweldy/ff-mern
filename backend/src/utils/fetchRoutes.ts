@@ -3,12 +3,10 @@ import {
   League,
   PlayerScoreData,
   RosteredPlayer,
-  sanitizePlayerName,
   SinglePosition,
   Team,
   AbbreviatedNflTeam,
   Week,
-  ScrapedPlayerProjection,
   getCurrentSeason,
   AbbreviationToFullTeam,
 } from "@ff-mern/ff-types";
@@ -17,8 +15,15 @@ import { get } from './tableScraper.js';
 import { calculatePlayerScore } from "./scoring.js";
 import { loadNflverseWeeklyStats } from "./nflverseWeekStats.js";
 
+import {
+  projectionPositions,
+  readProjectionCache,
+} from "./projectionCache.js";
+
+import { loadSleeperProjections } from "./sleeperProjections.js";
+
 export type ScrapedPlayer = Record<string, string>;
-export const positions = ["qb", "rb", "wr", "te", "k"];
+export const positions = [...projectionPositions];
 export const longPositions = [
   "Quarterbacks",
   "Running Backs",
@@ -26,81 +31,27 @@ export const longPositions = [
   "Tight Ends",
 ];
 
-const getUsableProjectionMap = (
-  data: unknown
-): Record<string, number> | null => {
-  if (!data || typeof data !== "object" || Array.isArray(data)) {
-    return null;
-  }
-
-  const projections = Object.entries(data).filter(
-    ([playerName, projection]) =>
-      playerName !== "" &&
-      typeof projection === "number" &&
-      Number.isFinite(projection)
-  );
-
-  // One valid entry per position is the minimum signal that a cached scrape
-  // contains useful data. In particular, an empty Firestore document must not
-  // become a permanent cache hit after a page was temporarily unavailable.
-  return projections.length >= positions.length
-    ? Object.fromEntries(projections)
-    : null;
-};
-
-const sliceTeamFromName = (name: string) => {
-  const lastSpace = name.lastIndexOf(" ");
-  return name.substring(0, lastSpace);
-};
+const projectionInflight = new Map<string, Promise<Record<string, number>>>();
 
 export const fetchPlayerProjections = async (week: Week) => {
   const season = getCurrentSeason();
-  const check = await db
-    .collection("playerProjections")
-    .doc(`${season}week${week}`)
-    .get();
-  const cachedProjections = getUsableProjectionMap(check.data());
-  if (cachedProjections) {
-    return cachedProjections;
+  const cacheKey = `${season}week${week}`;
+  const inflight = projectionInflight.get(cacheKey);
+  if (inflight) return inflight;
+  const load = (async () => {
+    const reference = db.collection("playerProjections").doc(cacheKey);
+    const cached = readProjectionCache((await reference.get()).data());
+    if (cached) return cached;
+    const fresh = await loadSleeperProjections(season, Number(week));
+    await reference.set(fresh);
+    return fresh.projections;
+  })();
+  projectionInflight.set(cacheKey, load);
+  try {
+    return await load;
+  } finally {
+    projectionInflight.delete(cacheKey);
   }
-  if (check.exists) {
-    console.warn(
-      `Ignoring unusable projection cache for ${season} week ${week}`
-    );
-  }
-
-  const scrapedProjections: Record<string, number> = {};
-  for (const pos of positions) {
-    const url = `https://www.fantasypros.com/nfl/projections/${pos}.php?week=${week}`;
-    const tableData = await get(url);
-    let parsedForPosition = 0;
-    for (const player of (tableData[0] ?? []) as ScrapedPlayerProjection[]) {
-      if (!player.Player) {
-        continue;
-      }
-      const projection = Number.parseFloat(player.FPTS);
-      const playerName = sliceTeamFromName(sanitizePlayerName(player.Player));
-      if (!playerName || !Number.isFinite(projection)) {
-        continue;
-      }
-      scrapedProjections[playerName] = projection;
-      parsedForPosition++;
-    }
-    if (parsedForPosition === 0) {
-      throw new Error(`No usable ${pos} projections returned for week ${week}`);
-    }
-  }
-
-  const usableProjections = getUsableProjectionMap(scrapedProjections);
-  if (!usableProjections) {
-    throw new Error(`No usable projections returned for week ${week}`);
-  }
-
-  await db
-    .collection("playerProjections")
-    .doc(`${season}week${week}`)
-    .set(usableProjections);
-  return usableProjections;
 };
 
 export const fetchPlayers = () => {
