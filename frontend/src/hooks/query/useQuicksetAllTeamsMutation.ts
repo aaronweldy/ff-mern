@@ -49,7 +49,10 @@ export const useUpdateAllTeamsMutation = (
     },
     {
       onSuccess: (data) => {
-        console.log(data);
+        data.teams.forEach((team) => {
+          queryClient.setQueryData(queryKeys.team(team.id), { team });
+          queryClient.invalidateQueries(queryKeys.team(team.id));
+        });
         queryClient.setQueryData(queryKeys.teams(leagueId), {
           teams: data.teams,
         });
