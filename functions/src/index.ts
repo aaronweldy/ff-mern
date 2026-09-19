@@ -287,9 +287,17 @@ const DEFENSE_FPTS_POSITIONS = [
   { pos: "K" as SinglePosition, fp: "k" },
 ];
 
-// nflverse uses LA for the Rams; our team codes use LAR.
+// nflverse includes historical team abbreviations in the all-seasons schedule.
+// Normalize them to the current codes used by the rest of the application.
+const NFLVERSE_TEAM_CODE_ALIASES: Record<string, string> = {
+  LA: "LAR",
+  STL: "LAR",
+  SD: "LAC",
+  OAK: "LV",
+};
+
 const normalizeNflverseTeamCode = (code: string): string =>
-  code === "LA" ? "LAR" : code;
+  NFLVERSE_TEAM_CODE_ALIASES[code] ?? code;
 
 const GAMES_CSV_URL =
   "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv";
