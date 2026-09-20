@@ -1,10 +1,10 @@
 import { DatabasePlayer, sanitizePlayerName } from "@ff-mern/ff-types";
 import { normalizeNflverseWeeklyStat } from "./nflverseStats.js";
 
-const playerStatsUrl = (season: number) =>
+export const playerStatsUrl = (season: number) =>
   `https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_${season}.csv`;
 
-const parseCsvRows = (csv: string): string[][] => {
+export const parseCsvRows = (csv: string): string[][] => {
   const rows: string[][] = [];
   let row: string[] = [];
   let value = "";

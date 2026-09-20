@@ -1,3 +1,7 @@
+import { createHash } from "node:crypto";
+import { defaultScoringSettings } from "../constants/league.js";
+import { loadDefenseStatsSource } from "../utils/defenseStatsSource.js";
+import { rankDefenseSample } from "../utils/defenseVsPosition.js";
 import { instanceToPlain } from "class-transformer";
 import { Router } from "express";
 import { db } from "../config/firebase-config.js";
@@ -80,11 +84,56 @@ router.get("/nflSchedule/", async (_, res) => {
   res.status(200).send(resp);
 });
 
-router.get("/nflDefenseStats/", async (_, res) => {
-  const data = (
-    await db.collection("nflDefenseVsPositionStats").doc("dist").get()
-  ).data();
-  res.status(200).send({ data });
+router.get("/nflDefenseStats/", async (req, res) => {
+  try {
+    const leagueId = req.query.leagueId;
+    if (leagueId !== undefined && (typeof leagueId !== "string" || !leagueId || leagueId.includes("/"))) {
+      res.status(400).send({ error: "Invalid league ID" });
+      return;
+    }
+    let settings = defaultScoringSettings.Standard;
+    if (typeof leagueId === "string") {
+      const league = await db.collection("leagues").doc(leagueId).get();
+      if (!league.exists) {
+        res.status(404).send({ error: "League not found" });
+        return;
+      }
+      settings = league.data().scoringSettings;
+      if (!Array.isArray(settings)) throw new Error("Missing league scoring settings");
+    }
+    // Versioned and keyed by scoring rules so a failed refresh never serves
+    // FantasyPros rankings or rankings calculated with different rules.
+    const key = createHash("sha256").update(JSON.stringify(settings)).digest("hex");
+    const reference = db.collection("nflverseDefenseRankings").doc(`v1-${key}`);
+    const cached = (await reference.get()).data();
+    if (cached && Date.now() - Date.parse(cached.metadata.fetchedAt) < 5 * 60 * 1000) {
+      res.status(200).send(cached);
+      return;
+    }
+    try {
+      const source = await loadDefenseStatsSource();
+      const ranked = rankDefenseSample(source.sample, settings);
+      if (cached?.metadata?.season === source.sample.season &&
+          Object.entries(cached.metadata.gamesPlayed as Record<string, number>).some(
+            ([team, count]) => (ranked.metadata.gamesPlayed[team] || 0) < count
+          )) {
+        throw new Error("nflverse refresh lost previously included games");
+      }
+      const result = { ...ranked, metadata: { ...ranked.metadata, fetchedAt: source.fetchedAt, stale: false } };
+      await reference.set(result);
+      res.status(200).send(result);
+    } catch (error) {
+      console.error("Failed to refresh nflverse defense rankings:", error);
+      if (cached) {
+        res.status(200).send({ ...cached, metadata: { ...cached.metadata, stale: true } });
+      } else {
+        res.status(503).send({ error: "Matchup rankings are not available yet" });
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load defense rankings:", error);
+    res.status(500).send({ error: "Failed to load matchup rankings" });
+  }
 });
 
 export default router;

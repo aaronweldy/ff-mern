@@ -14,7 +14,7 @@ export const useLeagueScoringData = (id: string) => {
     week
   );
   const nflScheduleQuery = useNflSchedule();
-  const defenseStatsQuery = useNflDefenseStats();
+  const defenseStatsQuery = useNflDefenseStats(id, league?.scoringSettings);
   useEffect(() => {
     if (league?.lastScoredWeek !== undefined) {
       setWeek(league.lastScoredWeek || 1);

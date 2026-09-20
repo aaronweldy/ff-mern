@@ -1,6 +1,7 @@
+import { DefenseStatsMetadata } from "../../../hooks/query/useNflDefenseStats";
 import React from 'react';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { AbbreviatedNflTeam, TeamSchedule, Week, TeamFantasyPositionPerformance, FinalizedPlayer, FullTeamToAbbreviation, FullNflTeam } from "@ff-mern/ff-types";
+import { AbbreviatedNflTeam, AbbreviationToFullTeam, TeamSchedule, Week, TeamFantasyPositionPerformance, FinalizedPlayer, FullTeamToAbbreviation, FullNflTeam } from "@ff-mern/ff-types";
 import { NflRankedText } from "../NflRankedText";
 import { InlineTeamTile } from "../InlineTeamTile";
 
@@ -9,6 +10,7 @@ interface MatchupOverlayProps {
     opponentTeam: TeamSchedule | undefined;
     week: Week;
     nflDefenseStats: TeamFantasyPositionPerformance;
+    metadata?: DefenseStatsMetadata;
 }
 
 const formatNflOpponent = (opp: TeamSchedule | undefined, week: Week, withHomeAway = false) => {
@@ -37,8 +39,10 @@ export const MatchupOverlay: React.FC<MatchupOverlayProps> = ({
     opponentTeam,
     week,
     nflDefenseStats,
+    metadata,
 }) => {
-    const opponentName = opponentTeam?.[week]?.opponent as FullNflTeam | undefined;
+    const opponentCode = opponentTeam?.[week]?.opponent;
+    const opponentName = (AbbreviationToFullTeam[opponentCode as AbbreviatedNflTeam] ?? opponentCode) as FullNflTeam | undefined;
     // Defense stats can be empty or missing an opponent (e.g. stale schedule
     // format, "BYE", or a failed scrape). Never let a missing entry crash the
     // page — fall back to "n/a" like the no-game case.
@@ -57,10 +61,21 @@ export const MatchupOverlay: React.FC<MatchupOverlayProps> = ({
                             "n/a"
                         )
                     }
+                    <div>1 = easiest; 32 = hardest</div>
+                    {metadata && opponentName && (
+                        <div>
+                            {metadata.season} season · {metadata.gamesPlayed[opponentName] ?? 0} games
+                            <br />
+                            League scoring · nflverse
+                            <br />
+                            Updated {new Date(metadata.fetchedAt).toLocaleString()}
+                            {metadata.stale && <div>Refresh unavailable; showing saved rankings.</div>}
+                        </div>
+                    )}
                 </Tooltip>
             }
         >
-            <div className="d-flex flex-column align-items-center">
+            <div tabIndex={0} className="d-flex flex-column align-items-center">
                 <InlineTeamTile
                     team={formatNflOpponent(opponentTeam, week, true) as AbbreviatedNflTeam}
                 />
