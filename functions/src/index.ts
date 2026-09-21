@@ -9,9 +9,7 @@ import {
   ProjectedPlayer,
   sanitizePlayerName,
   ScrapedADPData,
-  SinglePosition,
   singlePositionTypes,
-  TeamFantasyPositionPerformance,
   TeamToSchedule,
   Week,
 } from "@ff-mern/ff-types";
@@ -271,22 +269,6 @@ export const markFetched = async (docId: string): Promise<void> => {
     );
 };
 
-// ---------- Defense-vs-position ----------
-//
-// Computed in-house instead of scraped: for each week, every player's
-// FantasyPros FPTS are attributed to the defense they faced (via the
-// schedule), averaged per game, and ranked 1-32 per position. Rank 1
-// surrenders the most points (easiest matchup), matching the old data's
-// convention and the frontend's coloring.
-
-const DEFENSE_FPTS_POSITIONS = [
-  { pos: "QB" as SinglePosition, fp: "qb" },
-  { pos: "RB" as SinglePosition, fp: "rb" },
-  { pos: "WR" as SinglePosition, fp: "wr" },
-  { pos: "TE" as SinglePosition, fp: "te" },
-  { pos: "K" as SinglePosition, fp: "k" },
-];
-
 // nflverse includes historical team abbreviations in the all-seasons schedule.
 // Normalize them to the current codes used by the rest of the application.
 const NFLVERSE_TEAM_CODE_ALIASES: Record<string, string> = {
@@ -372,182 +354,6 @@ const fetchGamesCsvInfo = async (): Promise<GamesCsvInfo> => {
     }
   }
   return info;
-};
-
-type DefenseWeekStat = {
-  team: AbbreviatedNflTeam;
-  position: SinglePosition;
-  fpts: number;
-};
-
-const parseDefensePlayerRow = (
-  row: Record<string, string>,
-  pos: SinglePosition
-): DefenseWeekStat | null => {
-  const rawName = row["Player"];
-  if (!rawName) {
-    return null;
-  }
-  const open = rawName.lastIndexOf("(");
-  const close = rawName.lastIndexOf(")");
-  if (open < 0 || close < 0 || close <= open + 1) {
-    return null;
-  }
-  const team = rawName.slice(open + 1, close).toUpperCase();
-  if (!playerTeamIsNflAbbreviation(team)) {
-    return null;
-  }
-  const fpts = parseFloat(row["FPTS"]);
-  if (isNaN(fpts)) {
-    return null;
-  }
-  return { team, position: pos, fpts };
-};
-
-/**
- * Weekly stats backing the defense computation. Cached in Firestore so the
- * 5 position pages are only scraped once per season/week. Uses its own
- * collection to stay out of the scoring pipeline's way.
- */
-const fetchDefenseWeekStats = async (
-  season: number,
-  week: number
-): Promise<Record<string, DefenseWeekStat> | null> => {
-  const docId = `${season}week${week}`;
-  const cached = await db.collection("defenseWeekStats").doc(docId).get();
-  if (cached.exists) {
-    const playerMap = cached.data()?.playerMap as
-      | Record<string, DefenseWeekStat>
-      | undefined;
-    if (playerMap && Object.keys(playerMap).length >= 50) {
-      return playerMap;
-    }
-  }
-  const pages = await Promise.all(
-    DEFENSE_FPTS_POSITIONS.map(async ({ pos, fp }) => {
-      try {
-        const table = await get(
-          `https://www.fantasypros.com/nfl/stats/${fp}.php?year=${season}&week=${week}&range=week`
-        );
-        return { pos, rows: (table[0] ?? []) as Record<string, string>[] };
-      } catch (err) {
-        console.error(
-          `Defense scrape failed for ${pos} season ${season} week ${week}:`,
-          err
-        );
-        return { pos, rows: [] as Record<string, string>[] };
-      }
-    })
-  );
-  if (pages.some((page) => page.rows.length === 0)) {
-    console.warn(
-      `Incomplete stats for season ${season} week ${week}, skipping week.`
-    );
-    return null;
-  }
-  const stats: Record<string, DefenseWeekStat> = {};
-  for (const { pos, rows } of pages) {
-    for (const row of rows) {
-      const parsed = parseDefensePlayerRow(row, pos);
-      if (parsed) {
-        stats[sanitizePlayerName(row["Player"])] = parsed;
-      }
-    }
-  }
-  if (Object.keys(stats).length < 50) {
-    console.warn(
-      `Too few usable rows for season ${season} week ${week}, skipping week.`
-    );
-    return null;
-  }
-  await db.collection("defenseWeekStats").doc(docId).set({ playerMap: stats });
-  return stats;
-};
-
-const fetchTeamDefensePerformance = async () => {
-  const csvInfo = await fetchGamesCsvInfo();
-  const currentSeason = getCurrentSeason();
-  // Use the current season once it has scored games, otherwise fall back
-  // to the last completed season (e.g. preseason).
-  const season =
-    (csvInfo.latestScoredWeek[currentSeason] ?? 0) >= 1
-      ? currentSeason
-      : currentSeason - 1;
-  const maxWeek = csvInfo.latestScoredWeek[season] ?? 0;
-  const schedule = csvInfo.opponents[season] ?? {};
-  if (maxWeek < 1 || Object.keys(schedule).length === 0) {
-    console.error(
-      `No completed games found for season ${season}, keeping existing defense stats.`
-    );
-    return;
-  }
-  const totals: Record<string, Record<SinglePosition, number>> = {};
-  const games: Record<string, number> = {};
-  const blankTotals = (): Record<SinglePosition, number> => ({
-    QB: 0,
-    RB: 0,
-    WR: 0,
-    TE: 0,
-    K: 0,
-  });
-  for (let week = 1; week <= maxWeek; week++) {
-    const stats = await fetchDefenseWeekStats(season, week);
-    if (!stats) {
-      continue;
-    }
-    const weekKey = String(week);
-    for (const [team, weeks] of Object.entries(schedule)) {
-      if (weeks[weekKey]) {
-        games[team] = (games[team] ?? 0) + 1;
-      }
-    }
-    for (const stat of Object.values(stats)) {
-      const teamFull = AbbreviationToFullTeam[stat.team];
-      const opponent = schedule[teamFull]?.[weekKey];
-      if (!opponent) {
-        continue;
-      }
-      if (!totals[opponent]) {
-        totals[opponent] = blankTotals();
-      }
-      totals[opponent][stat.position] += stat.fpts;
-    }
-  }
-  const updateData = {} as TeamFantasyPositionPerformance;
-  const defenses = Object.keys(games).filter((team) => games[team] > 0);
-  for (const { pos } of DEFENSE_FPTS_POSITIONS) {
-    defenses
-      .map((def) => ({
-        def,
-        avg: (totals[def]?.[pos] ?? 0) / (games[def] || 1),
-      }))
-      .sort((a, b) => b.avg - a.avg)
-      .forEach(({ def }, index) => {
-        if (!updateData[def as FullNflTeam]) {
-          updateData[def as FullNflTeam] = { QB: 0, RB: 0, WR: 0, TE: 0, K: 0 };
-        }
-        updateData[def as FullNflTeam][pos] = index + 1;
-      });
-  }
-  // Never wipe good data: only overwrite with a complete 32-team table.
-  const teams = Object.keys(updateData);
-  const complete =
-    teams.length === 32 &&
-    teams.every((team) =>
-      DEFENSE_FPTS_POSITIONS.every(
-        ({ pos }) => typeof updateData[team as FullNflTeam][pos] === "number"
-      )
-    );
-  if (!complete) {
-    console.error(
-      `Incomplete defense data (${teams.length}/32 teams), keeping existing stats.`
-    );
-    return;
-  }
-  await db.collection("nflDefenseVsPositionStats").doc("dist").set(updateData);
-  console.log(
-    `Updated defense-vs-position from ${season} season (${maxWeek} weeks).`
-  );
 };
 
 const parsePlayerFromScrapedData = (playerString: string) => {
@@ -706,11 +512,6 @@ export const fetchRankings = onSchedule(
     if (await hasFetchedRecently("fetchRankings")) {
       console.log("fetchRankings already ran recently, skipping (idempotent).");
       return;
-    }
-    try {
-      await fetchTeamDefensePerformance();
-    } catch (err) {
-      console.error("fetchTeamDefensePerformance failed:", err);
     }
     try {
       await fetchSeasonProjections();

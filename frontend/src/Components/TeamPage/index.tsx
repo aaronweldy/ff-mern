@@ -245,6 +245,7 @@ const TeamPage = () => {
               positionsInTable={league.lineupSettings}
               nflSchedule={nflScheduleQuery?.data}
               nflDefenseStats={defenseStatsQuery?.data?.data}
+              nflDefenseMetadata={defenseStatsQuery?.data?.metadata}
               name="starters"
               week={week.toString() as Week}
               handleBenchPlayer={onBench}
@@ -263,6 +264,7 @@ const TeamPage = () => {
               positionsInTable={{ bench: 1 } as LineupSettings}
               nflSchedule={nflScheduleQuery?.data}
               nflDefenseStats={defenseStatsQuery?.data?.data}
+              nflDefenseMetadata={defenseStatsQuery?.data?.metadata}
               name="bench"
               week={week.toString() as Week}
               handleBenchPlayer={onBench}

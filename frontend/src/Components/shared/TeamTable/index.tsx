@@ -1,3 +1,4 @@
+import { DefenseStatsMetadata } from "../../../hooks/query/useNflDefenseStats";
 import React from "react";
 import { Table } from "react-bootstrap";
 import {
@@ -28,6 +29,7 @@ type TeamTableProps = {
   positionsInTable: LineupSettings;
   nflSchedule?: NFLSchedule;
   nflDefenseStats?: TeamFantasyPositionPerformance;
+  nflDefenseMetadata?: DefenseStatsMetadata;
   name: TableType;
   week: Week;
   isOwner: boolean;
@@ -75,6 +77,7 @@ export const TeamTable = ({
   positionsInTable,
   nflSchedule,
   nflDefenseStats,
+  nflDefenseMetadata,
   name,
   week,
   isOwner,
@@ -162,6 +165,7 @@ export const TeamTable = ({
                               opponentTeam={opponentTeam}
                               week={week}
                               nflDefenseStats={nflDefenseStats}
+                              metadata={nflDefenseMetadata}
                             />
                           ) : 'n/a'}
                         </div>

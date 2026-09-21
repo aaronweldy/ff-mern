@@ -38,7 +38,7 @@ export default function AdjustLineups() {
     setHighestProjectedLineupMutation,
   } = useSingleTeam(selectedTeamId);
   const scheduleQuery = useNflSchedule();
-  const defenseStatsQuery = useNflDefenseStats();
+  const defenseStatsQuery = useNflDefenseStats(id, league?.scoringSettings);
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
   const currentLineup = useMemo(() => {
     if (selectedTeam && league) {
@@ -114,8 +114,7 @@ export default function AdjustLineups() {
       </Row>
       {selectedTeam &&
         league &&
-        scheduleQuery.isSuccess &&
-        defenseStatsQuery.isSuccess && (
+        scheduleQuery.isSuccess && (
           <Row className="mt-3">
             <Col sm={2}>
               <h2>{selectedTeam.name}</h2>
@@ -136,6 +135,7 @@ export default function AdjustLineups() {
                 positionsInTable={league.lineupSettings}
                 name="starters"
                 nflDefenseStats={defenseStatsQuery.data?.data}
+                nflDefenseMetadata={defenseStatsQuery.data?.metadata}
                 nflSchedule={scheduleQuery.data}
                 week={week.toString() as Week}
                 handleBenchPlayer={onBench}
@@ -154,6 +154,7 @@ export default function AdjustLineups() {
                 positionsInTable={{ bench: 1 } as LineupSettings}
                 name="bench"
                 nflDefenseStats={defenseStatsQuery.data?.data}
+                nflDefenseMetadata={defenseStatsQuery.data?.metadata}
                 nflSchedule={scheduleQuery.data}
                 week={week.toString() as Week}
                 handleBenchPlayer={onBench}
