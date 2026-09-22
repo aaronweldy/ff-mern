@@ -20,6 +20,8 @@ import {
   scoreAllPlayers,
 } from "../utils/fetchRoutes.js";
 import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
+import { withRosterScoreAliases } from "../utils/scoringNames.js";
+import { consolidateCumulativeScores } from "../utils/cumulativeScoring.js";
 import {
   resolveScoringLineup,
   fetchCompletedTeams,
@@ -93,7 +95,7 @@ const getHistoricalCumulativePlayerScores = async (
     });
   });
 
-  return getSortedCumulativePlayerScores(scores);
+  return getSortedCumulativePlayerScores(consolidateCumulativeScores(scores));
 };
 
 const getAvailableCumulativeScoreYears = async (leagueId: string) => {
@@ -476,11 +478,16 @@ router.post(
           db.collection("teams").where("league", "==", leagueId)
         );
         await updateCumulativeStats(leagueId, week, data, transaction);
+        const scoringData = withRosterScoreAliases(
+          data,
+          snapshot.docs.map((doc) => doc.data() as Team),
+          week
+        );
         const teams: Team[] = [];
         const errors: ScoringError[] = [];
         for (const doc of snapshot.docs) {
           const team = doc.data() as Team;
-          const resolved = resolveScoringLineup(team, week, data, completed);
+          const resolved = resolveScoringLineup(team, week, scoringData, completed);
           errors.push(...resolved.errors);
           team.weekInfo[week] = {
             ...team.weekInfo[week],
@@ -495,7 +502,7 @@ router.post(
           db
             .collection("leagueScoringData")
             .doc(`${getCurrentSeason()}${week}${leagueId}`),
-          { playerData: data }
+          { playerData: scoringData }
         );
         transaction.update(leagueRef, {
           lastScoredWeek: Math.max(
@@ -503,9 +510,9 @@ router.post(
             leagueSnapshot.data()?.lastScoredWeek || 0
           ),
         });
-        return { teams, errors };
+        return { teams, errors, data: scoringData };
       });
-      res.status(200).json({ ...result, data });
+      res.status(200).json(result);
       console.log(`successful runScores for league ${leagueId}`);
     } catch (error) {
       next(error);
@@ -543,6 +550,8 @@ router.post("/:leagueId/playerScores/", requireAuth, async (req, res) => {
     res.status(200).send(resp);
     return;
   }
+
+  data.playerData = withRosterScoreAliases(data.playerData, teams, week);
 
   if (!players) {
     const resp: PlayerScoresResponse = {
@@ -614,7 +623,7 @@ router.get("/:id/cumulativePlayerScores/", async (req, res) => {
     return;
   }
   const retData = cumulativeData.data() as CumulativePlayerScores;
-  res.status(200).send(getSortedCumulativePlayerScores(retData));
+  res.status(200).send(getSortedCumulativePlayerScores(consolidateCumulativeScores(retData)));
 });
 
 router.get("/:leagueId/:userId/isCommissioner", (req, res) => {

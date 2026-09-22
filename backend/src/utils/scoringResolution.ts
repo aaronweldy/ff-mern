@@ -6,6 +6,7 @@ import {
   lineupSorter,
   Position,
 } from "@ff-mern/ff-types";
+import { scoringName } from "./scoringNames.js";
 
 const normalizeTeam = (team: string) =>
   team.replace(/^WAS$/, "WSH").replace(/^JAC$/, "JAX");
@@ -25,7 +26,7 @@ export const resolveScoringLineup = (
   const used = new Set(
     Object.entries(source)
       .filter(([slot]) => slot !== "bench")
-      .flatMap(([, players]) => players.map((p) => p.sanitizedName))
+      .flatMap(([, players]) => players.map((p) => scoringName(p.sanitizedName)))
   );
   const warn = (p: FinalizedPlayer, reason: string) =>
     errors.push(new ScoringError("POSSIBLE BACKUP", reason, p, team));
@@ -57,12 +58,12 @@ export const resolveScoringLineup = (
           .sort(([a], [b]) => a.localeCompare(b))
           .find(
             ([name, value]) =>
-              name !== player.sanitizedName &&
+              scoringName(name) !== scoringName(player.sanitizedName) &&
               value.position === "K" &&
               normalizeTeam(value.team) === normalizeTeam(stats.team) &&
               Number.isFinite(value.scoring.totalPoints) &&
               value.scoring.totalPoints > 0 &&
-              !used.has(name)
+              !used.has(scoringName(name))
           );
         if (replacement)
           backup = {
@@ -74,7 +75,7 @@ export const resolveScoringLineup = (
         backup = source.bench?.find((p) => p.fullName === player.backup);
         if (
           !backup ||
-          used.has(backup.sanitizedName) ||
+          used.has(scoringName(backup.sanitizedName)) ||
           !slot.split("/").includes(backup.position) ||
           !data[backup.sanitizedName] ||
           !Number.isFinite(data[backup.sanitizedName].scoring.totalPoints)
@@ -87,7 +88,7 @@ export const resolveScoringLineup = (
         }
       }
       if (!backup) continue;
-      used.add(backup.sanitizedName);
+      used.add(scoringName(backup.sanitizedName));
       lineup[slot as Position][index] = { ...backup, lineup: slot as Position };
       const benchIndex =
         lineup.bench?.findIndex(

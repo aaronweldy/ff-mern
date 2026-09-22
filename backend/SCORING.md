@@ -2,6 +2,21 @@
 
 Run the regression suite with `pnpm --filter backend test:scoring`.
 
+Weekly nflverse scores retain their source keys. Before resolving lineups or
+returning scores, the backend also exposes scores under existing roster keys
+when a normalized name (including suffix and known nickname variants) matches
+one source player with the same position and NFL team. Exact keys take priority;
+ambiguous matches remain missing and produce the existing scoring warning.
+This covers submitted lineups, resolved lineups, and current rosters without
+renaming stored players. Cumulative scoring receives the original source data,
+before roster aliases are added. Backup usage compares normalized identities so
+an alias cannot make the same backup available twice.
+
+Cumulative totals join name variants with the same position and NFL team when
+their nonzero weekly scores do not conflict. This repairs records split by a
+provider name change while retaining one existing display name and counting
+each week's score once. Conflicting histories stay separate for review.
+
 Scoring always starts from `finalizedLineup`, the submitted lineup. The result
 is saved separately as `scoringLineup`, with a substitution record for each slot.
 The scoring breakdown displays this result; lineup editing still uses the
