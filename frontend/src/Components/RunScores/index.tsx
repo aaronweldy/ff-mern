@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Container, Button, Row, Col, Alert } from "react-bootstrap";
+import { Container, Button, Alert } from "react-bootstrap";
 import LeagueButton from "../shared/LeagueButton";
 import TeamScoringBreakdown from "./TeamScoringBreakdown";
 import EditWeek from "../shared/EditWeek";
@@ -53,15 +53,13 @@ const RunScores = () => {
 
   return (
     <Container fluid className="league-page scores-page">
-      <Row className="mt-2">
-        <Col>
-          <LeagueButton id={id} />
-        </Col>
-      </Row>
+      <div className="mt-2">
+        <LeagueButton id={id} />
+      </div>
       <h1 className="h3 mt-3">Weekly scores</h1>
       <div className="scores-controls">
         <div className="score-display-toggle">
-          <span className="mr-3">Display:</span>
+          <span>Display:</span>
           <StatTypeToggleButton
             selected={selectedDisplay}
             onChange={handleToggle}
@@ -83,33 +81,25 @@ const RunScores = () => {
           </div>
         )}
       </div>
-      {league && teams && playerData && selectedTeam && (
-        <>
-          <Row>
-            <Col>
-              <TeamScoringBreakdown
-                leagueScoringCategories={league.scoringSettings}
-                team={selectedTeam}
-                allTeams={teams}
-                week={week || 1}
-                playerData={playerData.players}
-                dataDisplay={selectedDisplay}
-              />
-            </Col>
-          </Row>
-        </>
+      {league && playerData && selectedTeam && (
+        <TeamScoringBreakdown
+          leagueScoringCategories={league.scoringSettings}
+          team={selectedTeam}
+          allTeams={teams}
+          week={week || 1}
+          playerData={playerData.players}
+          dataDisplay={selectedDisplay}
+        />
       )}
-      <Row className="mb-3">
-        <Col>
-          <Button
-            variant="success"
-            disabled={scoresLoading}
-            onClick={() => runScores()}
-          >
-            Calculate Scores
-          </Button>
-        </Col>
-      </Row>
+      <div className="mb-3">
+        <Button
+          variant="success"
+          disabled={scoresLoading}
+          onClick={() => runScores()}
+        >
+          Calculate Scores
+        </Button>
+      </div>
       {scoringError && <Alert variant="danger">{scoringError.message}</Alert>}
       {!!scoringResult?.errors.length && (
         <Alert variant="warning">

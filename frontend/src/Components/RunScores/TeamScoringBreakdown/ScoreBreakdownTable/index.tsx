@@ -87,13 +87,13 @@ export const ScoreBreakdownTable = ({
                   {player.fullName}
                 </th>
                 <td>{data?.scoring?.totalPoints?.toFixed(2) || "0.00"}</td>
-                <td className={`${styles["gray-col"]}`}>
+                <td>
                   <span>{player.lineup}</span>
                 </td>
-                <td className={`${styles["gray-col"]}`}>
+                <td>
                   <span>{player.position}</span>
                 </td>
-                <td className={`${styles["gray-col"]}`}>
+                <td>
                   <InlineTeamTile team={player.team} />
                 </td>
                 {dataDisplay === "scoring"

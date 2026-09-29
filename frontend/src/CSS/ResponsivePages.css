@@ -92,18 +92,51 @@
 .scores-controls {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   gap: 1rem 1.5rem;
   margin: 1rem 0 1.5rem;
 }
 
-.score-display-toggle {
+.score-display-toggle,
+.scores-controls .week-selector {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.scores-controls .week-selector {
+  margin: 0 !important;
+}
+
+.scores-controls .btn,
+.scores-controls .form-control {
+  min-height: 44px;
 }
 
 .score-team-select {
   flex: 0 1 24rem;
+  min-width: 0;
+}
+
+.score-team-identity {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.score-team-copy {
+  min-width: 0;
+}
+
+.score-results {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(18rem, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.score-results > section {
   min-width: 0;
 }
 
@@ -116,12 +149,6 @@
   border: 1px solid #dee2e6;
   border-radius: 0.25rem;
   margin-bottom: 1rem;
-}
-
-.table-scroll-hint {
-  color: #596168;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
 }
 
 .data-table-scroll:focus-visible,
@@ -199,6 +226,7 @@
   min-width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  border: 0;
   font-variant-numeric: tabular-nums;
 }
 
@@ -206,10 +234,41 @@
 .score-breakdown-table td {
   vertical-align: middle;
   min-width: 5rem;
+  border: 0;
+  border-right: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.score-breakdown-table tr > :last-child {
+  border-right: 0;
+}
+
+.score-breakdown-table tr > :nth-child(2),
+.score-breakdown-table tr > :nth-child(n + 6) {
+  text-align: right;
+}
+
+.score-breakdown-table tr > :nth-child(3),
+.score-breakdown-table tr > :nth-child(4),
+.score-breakdown-table tr > :nth-child(5) {
+  text-align: center;
+}
+
+.score-breakdown-table tbody tr > * {
+  background-color: #fff;
+}
+
+.score-breakdown-table tbody tr:nth-of-type(odd) > * {
+  background-color: #f2f2f2;
+}
+
+.score-breakdown-table tbody tr:hover > * {
+  background-color: #e9ecef;
 }
 
 .score-breakdown-table .sticky-th {
   font-size: 0.875rem;
+  background-color: #f8f9fa;
 }
 
 .score-breakdown-table .score-player {
@@ -219,7 +278,6 @@
   width: 11rem;
   min-width: 11rem;
   max-width: 11rem;
-  background: #f8f9fa;
   overflow-wrap: anywhere;
   box-shadow: 1px 0 #adb5bd;
 }
@@ -234,6 +292,7 @@
 
 .score-summary {
   max-width: 24rem;
+  margin-bottom: 1.5rem;
 }
 
 .score-summary td {
@@ -308,8 +367,8 @@
 }
 
 @media (max-width: 1199.98px) {
-  .weekly-standings {
-    margin-top: 1rem;
+  .score-results {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -516,8 +575,8 @@
     gap: 0.75rem;
   }
 
-  .scores-controls .week-selector {
-    margin: 0 !important;
+  .score-team-identity {
+    gap: 0.75rem;
   }
 
   .score-team-select {

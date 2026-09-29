@@ -1,5 +1,4 @@
 import React from "react";
-import { Row, Col } from "react-bootstrap";
 import {
   convertedScoringTypes,
   PlayerScoreData,
@@ -107,27 +106,17 @@ const TeamScoringBreakdown = ({
   );
   return (
     <>
-      <Row>
-        <Col>
-          <TeamHeader
-            name={team.name}
-            owner={team.ownerName}
-            logo={team.logo}
-          />
-        </Col>
-      </Row>
-      <Row>
-        <Col xl={9}>
-          <TeamFooter team={team} week={week} />
-          <h2 className="h4">Player breakdown</h2>
-          <p className="table-scroll-hint" id="score-scroll-hint">
-            Scroll sideways for all categories. Player names stay visible.
-          </p>
+      <TeamHeader name={team.name} owner={team.ownerName} logo={team.logo} />
+      <TeamFooter team={team} week={week} />
+      <div className="score-results">
+        <section aria-labelledby="player-breakdown-heading">
+          <h2 className="h4" id="player-breakdown-heading">
+            Player breakdown
+          </h2>
           <div
             className="data-table-scroll score-table-scroll"
             role="region"
             aria-label="Player scoring breakdown"
-            aria-describedby="score-scroll-hint"
             tabIndex={0}
           >
             <ScoreBreakdownTable
@@ -141,12 +130,17 @@ const TeamScoringBreakdown = ({
               getStatsData={getStatsData}
             />
           </div>
-        </Col>
-        <Col xl={3} className="weekly-standings">
-          <h2 className="h4">Week {week} standings</h2>
+        </section>
+        <section
+          className="weekly-standings"
+          aria-labelledby="weekly-standings-heading"
+        >
+          <h2 className="h4" id="weekly-standings-heading">
+            Week {week} standings
+          </h2>
           <ScorePlacementTable teams={allTeams} week={week || 1} />
-        </Col>
-      </Row>
+        </section>
+      </div>
     </>
   );
 };
