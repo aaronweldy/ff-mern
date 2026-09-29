@@ -26,6 +26,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 import { SocketProvider } from "../Context/SocketContext";
 import { DraftRoom } from "./DraftRoom";
+import "../CSS/ResponsivePages.css";
 
 const queryClient = new QueryClient();
 

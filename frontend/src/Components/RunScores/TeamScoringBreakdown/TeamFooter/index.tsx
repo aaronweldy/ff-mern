@@ -7,18 +7,14 @@ type TeamFooterProps = {
 };
 
 export const TeamFooter = ({ team, week }: TeamFooterProps) => (
-  <Table striped bordered className="w-auto">
+  <Table striped bordered className="score-summary">
     <tbody>
       <tr>
-        <td colSpan={3}>
-          <b>Point Adjustment</b>
-        </td>
+        <th scope="row">Point Adjustment</th>
         <td>{team.weekInfo[week].addedPoints}</td>
       </tr>
       <tr>
-        <td colSpan={3}>
-          <b>Total points:</b>
-        </td>
+        <th scope="row">Total points</th>
         <td>{Team.sumWeekScore(team, week).toFixed(2)}</td>
       </tr>
     </tbody>

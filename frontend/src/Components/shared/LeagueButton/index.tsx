@@ -11,7 +11,11 @@ export default function LeagueButton({ id }: LeagueButtonProps) {
   return (
     <Row>
       <Col>
-        <Button href={`/league/${id}/`} variant="outline-dark">
+        <Button
+          href={`/league/${id}/`}
+          variant="outline-dark"
+          aria-label="Back to league"
+        >
           <FaArrowLeft />
         </Button>
       </Col>

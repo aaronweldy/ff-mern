@@ -3,7 +3,7 @@ import { useAuthUser } from "@react-query-firebase/auth";
 import { getDownloadURL, ref, uploadString } from "firebase/storage";
 import cloneDeep from "lodash/cloneDeep";
 import { useMemo, useState } from "react";
-import { Button, ButtonGroup, Col, Container, Row, Toast } from "react-bootstrap";
+import { Button, Col, Container, Row, Toast } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import "../../CSS/LeaguePages.css";
 import { auth, storage } from "../../firebase-config";
@@ -97,17 +97,19 @@ const TeamPage = () => {
     ) {
       uploadString(ref(storage, `${team.id}/logo`), imageUrl, "data_url").then(
         (snapshot) => {
-          getDownloadURL(snapshot.ref).then((url) => {
-            setShowImageModal(false);
-            const tempTeam = { ...team };
-            tempTeam.logo = url;
-            if (teamName) {
-              tempTeam.name = teamName;
-            }
-            updateTeamMutation.mutate({ team: tempTeam });
-          }).catch((error) => {
-            console.error(error);
-          });
+          getDownloadURL(snapshot.ref)
+            .then((url) => {
+              setShowImageModal(false);
+              const tempTeam = { ...team };
+              tempTeam.logo = url;
+              if (teamName) {
+                tempTeam.name = teamName;
+              }
+              updateTeamMutation.mutate({ team: tempTeam });
+            })
+            .catch((error) => {
+              console.error(error);
+            });
         }
       );
     } else {
@@ -123,7 +125,11 @@ const TeamPage = () => {
   ) => {
     if (team) {
       const tempTeam = cloneDeep(team);
-      const tempLineup = getWeeklyLineup(week, tempTeam, league?.lineupSettings);
+      const tempLineup = getWeeklyLineup(
+        week,
+        tempTeam,
+        league?.lineupSettings
+      );
       const selectedTempPlayer = findPlayerInLineup(tempLineup, selectedPlayer);
       const swapTempPlayer = findPlayerInLineup(tempLineup, swapPlayer);
       console.log(selectedTempPlayer, swapTempPlayer, selectedIndex);
@@ -143,7 +149,11 @@ const TeamPage = () => {
   const onBench = (selectedPlayer: FinalizedPlayer) => {
     if (team) {
       const tempTeam = cloneDeep(team);
-      const tempLineup = getWeeklyLineup(week, tempTeam, league?.lineupSettings);
+      const tempLineup = getWeeklyLineup(
+        week,
+        tempTeam,
+        league?.lineupSettings
+      );
       const selectedTempPlayer = findPlayerInLineup(tempLineup, selectedPlayer);
       if (selectedTempPlayer) {
         handleBenchPlayer(selectedTempPlayer.player, tempLineup);
@@ -155,8 +165,9 @@ const TeamPage = () => {
   const pageIsLoading = scoringDataLoading || teamLoading || !user.isSuccess;
 
   return (
-    <Container aria-busy={pageIsLoading}>
-      {updateTeamMutation.isLoading || setHighestProjectedLineupMutation.isLoading ? (
+    <Container className="league-page team-page" aria-busy={pageIsLoading}>
+      {updateTeamMutation.isLoading ||
+      setHighestProjectedLineupMutation.isLoading ? (
         <div className="spinning-loader"></div>
       ) : null}
       <ImageModal
@@ -172,11 +183,11 @@ const TeamPage = () => {
         delay={3000}
         autohide
         style={{
-          position: 'fixed',
+          position: "fixed",
           top: 20,
           right: 20,
           minWidth: 200,
-          zIndex: 9999
+          zIndex: 9999,
         }}
       >
         <Toast.Header>
@@ -194,9 +205,9 @@ const TeamPage = () => {
         />
       ) : team && league && user.isSuccess ? (
         <>
-          <Header team={team} showModal={setShowImageModal} />
-          <Row>
-            <Col sm={2}>
+          <Header team={team} />
+          <Row className="align-items-center">
+            <Col xs={12} md="auto">
               <EditWeek
                 week={week}
                 maxWeeks={(league && league.numWeeks) || 18}
@@ -204,20 +215,14 @@ const TeamPage = () => {
               />
             </Col>
             {user.data?.uid === team.owner ? (
-              <Col className="mt-3">
-                <ButtonGroup>
+              <Col xs={12} md className="mb-3 mt-md-3">
+                <div className="page-actions team-actions">
                   {numSuperflexUsed < league.numSuperflex && canEditRoster && (
-                    <Button
-                      onClick={() => setShowSuperflexModal(true)}
-                      className="mr-2"
-                    >
+                    <Button onClick={() => setShowSuperflexModal(true)}>
                       Use Superflex Lineup
                     </Button>
                   )}
-                  <Button
-                    onClick={() => setShowImageModal(true)}
-                    className="mr-2"
-                  >
+                  <Button onClick={() => setShowImageModal(true)}>
                     Change/Set Team Info
                   </Button>
                   {canEditRoster && (
@@ -227,7 +232,7 @@ const TeamPage = () => {
                       lineupSettings={league.lineupSettings}
                     />
                   )}
-                </ButtonGroup>
+                </div>
               </Col>
             ) : null}
           </Row>
@@ -236,7 +241,7 @@ const TeamPage = () => {
             <DisplayLastUpdated lastUpdated={team.lastUpdated} />
           </Row>
           <Row>
-            <h3>Starters</h3>
+            <h2 className="h3">Starters</h2>
           </Row>
           <Row>
             <TeamTable
@@ -255,7 +260,7 @@ const TeamPage = () => {
             />
           </Row>
           <Row>
-            <h3>Bench</h3>
+            <h2 className="h3">Bench</h2>
           </Row>
           <Row>
             <TeamTable
@@ -338,13 +343,19 @@ const TeamTableLoadingState = ({ rows }: { rows: number }) => (
   <div className="team-page-skeleton-table" aria-hidden="true">
     <div className="team-page-skeleton-table__row team-page-skeleton-table__row--header">
       {Array.from({ length: 6 }, (_, index) => (
-        <div className="team-page-skeleton team-page-skeleton--cell" key={`header-${index}`} />
+        <div
+          className="team-page-skeleton team-page-skeleton--cell"
+          key={`header-${index}`}
+        />
       ))}
     </div>
     {Array.from({ length: rows }, (_, rowIndex) => (
       <div className="team-page-skeleton-table__row" key={`row-${rowIndex}`}>
         {Array.from({ length: 6 }, (_, cellIndex) => (
-          <div className="team-page-skeleton team-page-skeleton--cell" key={`cell-${rowIndex}-${cellIndex}`} />
+          <div
+            className="team-page-skeleton team-page-skeleton--cell"
+            key={`cell-${rowIndex}-${cellIndex}`}
+          />
         ))}
       </div>
     ))}

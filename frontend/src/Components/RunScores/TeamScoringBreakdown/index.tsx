@@ -34,7 +34,7 @@ const getCategoryHeaders = (
       return leagueCategories.map((stat, i) => {
         const cat = stat.category;
         return (
-          <th className="sticky-th" key={i}>
+          <th scope="col" className="sticky-th" key={i}>
             {cat.qualifier}{" "}
             {cat.qualifier === "between"
               ? `${cat.thresholdMin}/${cat.thresholdMax}`
@@ -45,7 +45,7 @@ const getCategoryHeaders = (
       });
     case "statistics":
       return scoringTypes.map((type, i) => (
-        <th className="sticky-th" key={i}>
+        <th scope="col" className="sticky-th" key={i}>
           {type}
         </th>
       ));
@@ -85,8 +85,8 @@ const getStatsData = (
       <td key={i}>
         {category in categoriesForPosition && playerData
           ? playerData.statistics[
-          categoriesForPosition[category as ScoringCategory]!
-          ]
+              categoriesForPosition[category as ScoringCategory]!
+            ]
           : 0}
       </td>
     );
@@ -117,25 +117,34 @@ const TeamScoringBreakdown = ({
         </Col>
       </Row>
       <Row>
-        <Col md={9} className="left-table-wrapper">
-          <ScoreBreakdownTable
-            team={team}
-            week={week}
-            scoringHeaders={scoringHeaders}
-            playerData={playerData}
-            dataDisplay={dataDisplay}
-            leagueScoringCategories={leagueScoringCategories}
-            getScoringData={getScoringData}
-            getStatsData={getStatsData}
-          />
-        </Col>
-        <Col>
-          <ScorePlacementTable teams={allTeams} week={week || 1} />
-        </Col>
-      </Row>
-      <Row>
-        <Col>
+        <Col xl={9}>
           <TeamFooter team={team} week={week} />
+          <h2 className="h4">Player breakdown</h2>
+          <p className="table-scroll-hint" id="score-scroll-hint">
+            Scroll sideways for all categories. Player names stay visible.
+          </p>
+          <div
+            className="data-table-scroll score-table-scroll"
+            role="region"
+            aria-label="Player scoring breakdown"
+            aria-describedby="score-scroll-hint"
+            tabIndex={0}
+          >
+            <ScoreBreakdownTable
+              team={team}
+              week={week}
+              scoringHeaders={scoringHeaders}
+              playerData={playerData}
+              dataDisplay={dataDisplay}
+              leagueScoringCategories={leagueScoringCategories}
+              getScoringData={getScoringData}
+              getStatsData={getStatsData}
+            />
+          </div>
+        </Col>
+        <Col xl={3} className="weekly-standings">
+          <h2 className="h4">Week {week} standings</h2>
+          <ScorePlacementTable teams={allTeams} week={week || 1} />
         </Col>
       </Row>
     </>

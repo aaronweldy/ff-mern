@@ -24,15 +24,13 @@ export const LiveDraftRow = ({
             <div>
               <b>Your league is drafting now!</b>
             </div>
-            <Col className="d-flex justify-content-end">
+            <Col className="page-actions draft-actions justify-content-end">
               {userIsCommissioner && draft.phase === "predraft" && (
                 <>
                   <Button variant="danger" onClick={onDelete}>
                     Delete Draft
                   </Button>
-                  <Button className="mx-3" onClick={onEdit}>
-                    Edit Draft Settings
-                  </Button>
+                  <Button onClick={onEdit}>Edit Draft Settings</Button>
                 </>
               )}
               <Button href={`/draft/${draft.settings.draftId}/`}>

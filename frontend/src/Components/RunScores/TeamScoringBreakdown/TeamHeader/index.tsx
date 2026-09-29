@@ -8,16 +8,16 @@ type HeaderProps = {
 };
 
 export const TeamHeader = ({ name, logo, owner }: HeaderProps) => (
-  <Row className="mb-3 align-items-center">
-    <Col sm="auto">
+  <Row className="mb-3 align-items-center page-identity">
+    <Col xs="auto">
       <StableImage
         size="logo"
         src={logo || import.meta.env.VITE_DEFAULT_LOGO}
         alt="Team logo"
       />
     </Col>
-    <Col sm="auto" className="align-items-center">
-      <h3>{name}</h3>
+    <Col className="align-items-center">
+      <h2 className="h3">{name}</h2>
       <div className="subtitle">{owner}</div>
     </Col>
   </Row>

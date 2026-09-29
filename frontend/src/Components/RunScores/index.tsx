@@ -52,37 +52,39 @@ const RunScores = () => {
   };
 
   return (
-    <Container fluid className="pl-5">
+    <Container fluid className="league-page scores-page">
       <Row className="mt-2">
         <Col>
           <LeagueButton id={id} />
         </Col>
       </Row>
-      <Row>
-        <Col className="mt-3">
+      <h1 className="h3 mt-3">Weekly scores</h1>
+      <div className="scores-controls">
+        <div className="score-display-toggle">
           <span className="mr-3">Display:</span>
           <StatTypeToggleButton
             selected={selectedDisplay}
             onChange={handleToggle}
           />
-        </Col>
-      </Row>
-      <EditWeek
-        week={week || 1}
-        maxWeeks={league?.numWeeks}
-        onChange={(e) => setWeek(parseInt(e.target.value))}
-      />
+        </div>
+        <EditWeek
+          week={week || 1}
+          maxWeeks={league?.numWeeks}
+          onChange={(e) => setWeek(parseInt(e.target.value))}
+        />
+        {teams.length > 0 && (
+          <div className="score-team-select">
+            <span className="d-block mb-1">Team</span>
+            <TeamSelectionDropdown
+              teams={teams}
+              selectedTeam={selectedTeamId}
+              updateTeam={updateSelectedTeam}
+            />
+          </div>
+        )}
+      </div>
       {league && teams && playerData && selectedTeam && (
         <>
-          <Row>
-            <Col xl={2}>
-              <TeamSelectionDropdown
-                teams={teams}
-                selectedTeam={selectedTeamId}
-                updateTeam={updateSelectedTeam}
-              />
-            </Col>
-          </Row>
           <Row>
             <Col>
               <TeamScoringBreakdown

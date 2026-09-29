@@ -1,5 +1,5 @@
 import { League, Team } from "@ff-mern/ff-types";
-import { OverlayTrigger, Table, Tooltip } from "react-bootstrap";
+import { Table } from "react-bootstrap";
 import { StableImage } from "../../shared/StableImage";
 
 type CumulativeScoreTableProps = {
@@ -13,18 +13,24 @@ export const CumulativeScoreTable = ({
   league,
   id,
 }: CumulativeScoreTableProps) => (
-  <Table striped hover className="hide-cells league-standings-table">
+  <Table striped hover className="league-standings-table">
     <thead>
       <tr>
-        <th />
-        <th>Team Name</th>
-        <th>Team Owner</th>
+        <th scope="col" className="standings-team">
+          Team
+        </th>
+        <th scope="col" className="standings-total">
+          Total Points
+        </th>
         {[
           ...Array(league.numWeeks)
             .fill(0)
-            .map((_, i) => <th key={i}>{i + 1}</th>),
+            .map((_, i) => (
+              <th scope="col" key={i}>
+                Week {i + 1}
+              </th>
+            )),
         ]}
-        <th>Total Points</th>
       </tr>
     </thead>
     <tbody>
@@ -36,44 +42,34 @@ export const CumulativeScoreTable = ({
             team.ownerName
           );
         return (
-          <tr key={i}>
-            <td>
-              <StableImage
-                size="thumbnail"
-                src={team.logo || import.meta.env.VITE_DEFAULT_LOGO}
-                alt="Team logo"
-              />
-            </td>
-            <td>
-              <a href={`/league/${id}/team/${team.id}/`}>{team.name}</a>
-            </td>
-            <td>
-              {league && league.commissioners.includes(team.owner) ? (
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip id={i.toString()}>Commissioner</Tooltip>}
-                >
-                  <span>
-                    <b>{linked}</b>
-                  </span>
-                </OverlayTrigger>
-              ) : (
-                <span>{linked}</span>
-              )}
-            </td>
-            {[
-              ...Array(league.numWeeks)
-                .fill(0)
-                .map((_, idx) => (
-                  <td key={idx}>
-                    {(
-                      team.weekInfo[idx + 1]?.weekScore +
-                      team.weekInfo[idx + 1]?.addedPoints
-                    ).toFixed(2)}
-                  </td>
-                )),
-            ]}
-            <td>
+          <tr key={team.id}>
+            <th scope="row" className="standings-team">
+              <div className="standings-team-identity">
+                <span className="standings-rank">
+                  <span className="sr-only">Rank </span>
+                  {i + 1}
+                </span>
+                <StableImage
+                  size="thumbnail"
+                  src={team.logo || import.meta.env.VITE_DEFAULT_LOGO}
+                  alt=""
+                />
+                <div className="standings-team-copy">
+                  <a href={`/league/${id}/team/${team.id}/`}>{team.name}</a>
+                  <div className="standings-owner">
+                    {league && league.commissioners.includes(team.owner) ? (
+                      <span>
+                        {linked}
+                        <small className="d-block">Commissioner</small>
+                      </span>
+                    ) : (
+                      <span>{linked}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </th>
+            <td className="standings-total">
               {team.weekInfo
                 .reduce(
                   (acc, _, week) => acc + Team.sumWeekScore(team, week),
@@ -81,6 +77,18 @@ export const CumulativeScoreTable = ({
                 )
                 .toFixed(2)}
             </td>
+            {[
+              ...Array(league.numWeeks)
+                .fill(0)
+                .map((_, idx) => (
+                  <td key={idx}>
+                    {(
+                      (team.weekInfo[idx + 1]?.weekScore || 0) +
+                      (team.weekInfo[idx + 1]?.addedPoints || 0)
+                    ).toFixed(2)}
+                  </td>
+                )),
+            ]}
           </tr>
         );
       })}
@@ -97,7 +105,7 @@ export const CumulativeScoreTableLoadingState = ({
   numWeeks = 18,
   rows = 10,
 }: CumulativeScoreTableLoadingStateProps) => {
-  const columns = numWeeks + 4;
+  const columns = numWeeks + 2;
 
   return (
     <div className="league-table-loading" role="status" aria-live="polite">

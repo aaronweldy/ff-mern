@@ -14,7 +14,12 @@ export const TeamSelectionDropdown = ({
   updateTeam,
 }: TeamSelectionDropdownProps) => {
   return (
-    <Form.Control as="select" value={selectedTeam} onChange={updateTeam}>
+    <Form.Control
+      as="select"
+      aria-label="Team"
+      value={selectedTeam}
+      onChange={updateTeam}
+    >
       {teams.map((team) => (
         <option key={team.id} value={team.id}>
           {team.name}

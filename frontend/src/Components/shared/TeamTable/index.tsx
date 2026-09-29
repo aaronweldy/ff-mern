@@ -18,8 +18,8 @@ import {
 } from "@ff-mern/ff-types";
 import { InlineTeamTile } from "../InlineTeamTile";
 import { usePlayerScores } from "../../../hooks/query/usePlayerScores";
-import { PlayerActionButton } from '../PlayerActionButton';
-import { MatchupOverlay } from '../MatchupOverlay';
+import { PlayerActionButton } from "../PlayerActionButton";
+import { MatchupOverlay } from "../MatchupOverlay";
 import { getStatBreakdown } from "../../../utils/statBreakdown";
 
 type TableType = "starters" | "bench" | "backup";
@@ -94,22 +94,54 @@ export const TeamTable = ({
       return acc;
     }, [])
     .sort(lineupSorter);
-  const { data: playerScores } = usePlayerScores(leagueId || "", parseInt(week));
+  const { data: playerScores } = usePlayerScores(
+    leagueId || "",
+    parseInt(week)
+  );
   return (
     <div className="team-table-wrapper">
-      <Table striped bordered hover className="w-auto left-scrollable-table">
-        <thead>
-          <tr>
-            {isOwner ? <th>Move</th> : null}
-            <th className="text-center">Position</th>
-            <th className="text-center">Player</th>
-            <th className="text-center">Matchup</th>
-            {showScores && <th className="text-center">Points</th>}
-            {showScores && <th className="text-center">Stats</th>}
-            {isOwner && name === "starters" ? <th>Backup</th> : null}
+      <Table
+        striped
+        bordered
+        hover
+        className="roster-table left-scrollable-table"
+        role="table"
+        aria-label={`${name} roster`}
+      >
+        <thead role="rowgroup">
+          <tr role="row">
+            {isOwner ? (
+              <th scope="col" role="columnheader">
+                Move
+              </th>
+            ) : null}
+            <th scope="col" role="columnheader" className="text-center">
+              Position
+            </th>
+            <th scope="col" role="columnheader" className="text-center">
+              Player
+            </th>
+            <th scope="col" role="columnheader" className="text-center">
+              Matchup
+            </th>
+            {showScores && (
+              <th scope="col" role="columnheader" className="text-center">
+                Points
+              </th>
+            )}
+            {showScores && (
+              <th scope="col" role="columnheader" className="text-center">
+                Stats
+              </th>
+            )}
+            {isOwner && name === "starters" ? (
+              <th scope="col" role="columnheader">
+                Backup
+              </th>
+            ) : null}
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           {iterablePositions.reduce((acc: JSX.Element[], pos: Position) => {
             if (positionsInTable[pos] === 0) {
               return acc;
@@ -118,25 +150,52 @@ export const TeamTable = ({
             acc = acc.concat(
               newRows.map((player, i) => {
                 let opponentTeam: TeamSchedule | undefined = undefined;
-                if (nflSchedule && player.team !== 'None' && AbbreviationToFullTeam[player.team] in nflSchedule) {
-                  opponentTeam = nflSchedule[AbbreviationToFullTeam[player.team]]
+                if (
+                  nflSchedule &&
+                  player.team !== "None" &&
+                  AbbreviationToFullTeam[player.team] in nflSchedule
+                ) {
+                  opponentTeam =
+                    nflSchedule[AbbreviationToFullTeam[player.team]];
                 }
                 return (
                   <tr
+                    role="row"
                     key={
                       player.position +
                       player.lineup +
                       player.fullName +
                       i.toString()
                     }
-                    className={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam && opponentTeam[week] && opponentTeam[week].gameTime) ? 'player-played' : ''}
+                    className={
+                      !isAdmin &&
+                      hasPlayerAlreadyPlayed(
+                        opponentTeam &&
+                          opponentTeam[week] &&
+                          opponentTeam[week].gameTime
+                      )
+                        ? "player-played"
+                        : ""
+                    }
                   >
                     {isOwner ? (
-                      <td className="centered-td align-middle">
+                      <td
+                        role="cell"
+                        className="centered-td align-middle roster-move"
+                      >
                         <PlayerActionButton
                           player={player}
-                          oppositePlayers={findOppositePlayers(player, name === "starters", players)}
-                          disabled={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
+                          oppositePlayers={findOppositePlayers(
+                            player,
+                            name === "starters",
+                            players
+                          )}
+                          disabled={
+                            !isAdmin &&
+                            hasPlayerAlreadyPlayed(
+                              opponentTeam?.[week]?.gameTime
+                            )
+                          }
                           handlePlayerChange={handlePlayerChange}
                           handleBenchPlayer={handleBenchPlayer}
                           teamId={teamId}
@@ -145,46 +204,91 @@ export const TeamTable = ({
                         />
                       </td>
                     ) : null}
-                    <td className="centered-td align-middle">
+                    <td
+                      role="cell"
+                      className="centered-td align-middle roster-position"
+                      data-label="Position"
+                    >
                       <span>
                         {name === "starters" ? player.lineup : player.position}
                       </span>
                     </td>
-                    <td className="centered-td align-middle">
+                    <td
+                      role="cell"
+                      className="centered-td align-middle roster-player"
+                    >
                       <div className="d-flex align-items-center">
                         <InlineTeamTile team={player.team} showName={false} />
-                        <span className="flex-nowrap ml-2">{player.fullName}</span>
+                        <span className="flex-nowrap ml-2">
+                          {player.fullName}
+                        </span>
                       </div>
                     </td>
-                    {nflDefenseStats && (
-                      <td className="centered-td align-middle">
-                        <div>
-                          {opponentTeam && playerTeamIsNflAbbreviation(player.team) ? (
-                            <MatchupOverlay
-                              player={player}
-                              opponentTeam={opponentTeam}
-                              week={week}
-                              nflDefenseStats={nflDefenseStats}
-                              metadata={nflDefenseMetadata}
-                            />
-                          ) : 'n/a'}
-                        </div>
+                    <td
+                      role="cell"
+                      className="centered-td align-middle roster-matchup"
+                      data-label="Matchup"
+                    >
+                      <div>
+                        {nflDefenseStats &&
+                        opponentTeam &&
+                        playerTeamIsNflAbbreviation(player.team) ? (
+                          <MatchupOverlay
+                            player={player}
+                            opponentTeam={opponentTeam}
+                            week={week}
+                            nflDefenseStats={nflDefenseStats}
+                            metadata={nflDefenseMetadata}
+                          />
+                        ) : (
+                          "n/a"
+                        )}
+                      </div>
+                    </td>
+                    {showScores && (
+                      <td
+                        role="cell"
+                        className="centered-td align-middle roster-points"
+                        data-label="Points"
+                      >
+                        {playerScores?.players[
+                          player.sanitizedName
+                        ]?.scoring?.totalPoints?.toFixed(1) || "0.00"}
                       </td>
                     )}
                     {showScores && (
-                      <td className="centered-td align-middle">
-                        {playerScores?.players[player.sanitizedName]?.scoring?.totalPoints?.toFixed(1) || '0.00'}
+                      <td
+                        role="cell"
+                        className="centered-td align-middle roster-stats"
+                        data-label="Stats"
+                      >
+                        {getStatBreakdown(
+                          player.position as SinglePosition,
+                          playerScores?.players[
+                            player.sanitizedName
+                          ] as StoredPlayerInformation
+                        )}
                       </td>
                     )}
-                    <td className="centered-td align-middle">
-                      {getStatBreakdown(player.position as SinglePosition, playerScores?.players[player.sanitizedName] as StoredPlayerInformation)}
-                    </td>
                     {isOwner && name === "starters" ? (
-                      <td>
+                      <td
+                        role="cell"
+                        className="roster-backup"
+                        data-label="Backup"
+                      >
                         <PlayerActionButton
                           player={player}
-                          oppositePlayers={findOppositePlayers(player, true, players)}
-                          disabled={!isAdmin && hasPlayerAlreadyPlayed(opponentTeam?.[week]?.gameTime)}
+                          oppositePlayers={findOppositePlayers(
+                            player,
+                            true,
+                            players
+                          )}
+                          disabled={
+                            !isAdmin &&
+                            hasPlayerAlreadyPlayed(
+                              opponentTeam?.[week]?.gameTime
+                            )
+                          }
                           handlePlayerChange={handlePlayerChange}
                           teamId={teamId}
                           actionType="backup"
