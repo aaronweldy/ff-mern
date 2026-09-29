@@ -48,7 +48,9 @@ export const CumulativePlayers = () => {
   const availableTeams = useMemo(() => {
     const playerScores = cumulativeScoresQuery.data || {};
     return Array.from(
-      new Set(Object.values(playerScores).map((playerScore) => playerScore.team))
+      new Set(
+        Object.values(playerScores).map((playerScore) => playerScore.team)
+      )
     ).sort((a, b) =>
       AbbreviationToFullTeam[a].localeCompare(AbbreviationToFullTeam[b])
     );
@@ -94,12 +96,12 @@ export const CumulativePlayers = () => {
     );
   }, [selectedFilter, selectedTeam, cumulativeScoresQuery.data]);
   return (
-    <Container fluid>
-      <Row className="mt-3 align-items-center justify-content-between">
-        <Col>
+    <Container fluid className="league-page cumulative-scores-page">
+      <div className="cumulative-controls mt-3">
+        <div>
           <LeagueButton id={id} />
-        </Col>
-        <Col xs="auto" className="d-flex align-items-center">
+        </div>
+        <div className="cumulative-filter">
           <Form.Label htmlFor="cumulative-score-year" className="mb-0">
             Season
           </Form.Label>
@@ -109,8 +111,6 @@ export const CumulativePlayers = () => {
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
             disabled={scoreYearsQuery.isLoading}
-            className="ml-2"
-            style={{ width: "auto" }}
           >
             {scoreYears.map((year) => (
               <option key={year} value={year}>
@@ -118,8 +118,8 @@ export const CumulativePlayers = () => {
               </option>
             ))}
           </Form.Control>
-        </Col>
-        <Col xs="auto" className="d-flex align-items-center">
+        </div>
+        <div className="cumulative-filter cumulative-team-filter">
           <Form.Label htmlFor="cumulative-score-team" className="mb-0">
             NFL Team
           </Form.Label>
@@ -129,28 +129,24 @@ export const CumulativePlayers = () => {
             value={selectedTeam}
             onChange={(e) => setSelectedTeam(e.target.value as TeamFilter)}
             disabled={cumulativeScoresQuery.isLoading}
-            className="ml-2"
-            style={{ width: "auto" }}
           >
             <option value="all">All teams</option>
             {availableTeams.map((team) => (
               <option key={team} value={team}>
                 {AbbreviationToFullTeam[team].replace(/\b\w/g, (letter) =>
                   letter.toUpperCase()
-                )} ({team})
+                )}{" "}
+                ({team})
               </option>
             ))}
           </Form.Control>
-        </Col>
-      </Row>
+        </div>
+      </div>
       <MenuSelector
         options={["all"].concat(positionTypes)}
         selectedOption={selectedFilter}
         onChange={onChange}
       />
-      <small className="cumulative-player-legend">
-        Players on your roster are highlighted.
-      </small>
       {cumulativeScoresQuery.isLoading && (
         <Row className="justify-content-center mt-4">
           <Col xs="auto" className="d-flex align-items-center">
