@@ -1,16 +1,19 @@
 import {
   CumulativePlayerScore,
   CumulativePlayerScores,
+  sanitizePlayerName,
 } from "@ff-mern/ff-types";
 import { Col, Row, Table } from "react-bootstrap";
 import { InlineTeamTile } from "../../shared/InlineTeamTile";
 
 export type CumulativePlayerTableProps = {
   players: CumulativePlayerScores;
+  userTeamPlayerNames: ReadonlySet<string>;
 };
 
 export const CumulativePlayerTable = ({
   players,
+  userTeamPlayerNames,
 }: CumulativePlayerTableProps) => {
   return (
     <Row className="justify-content-center mt-3">
@@ -52,7 +55,14 @@ export const CumulativePlayerTable = ({
                         pointsByWeek: Array(19).fill(0),
                       } as CumulativePlayerScore);
                 return (
-                  <tr key={player}>
+                  <tr
+                    key={player}
+                    className={
+                      userTeamPlayerNames.has(sanitizePlayerName(player))
+                        ? "user-team-player"
+                        : undefined
+                    }
+                  >
                     <td className="sticky-col sticky-td">{player}</td>
                     <td>{playerData.position}</td>
                     <td>
