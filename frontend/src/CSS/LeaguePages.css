@@ -297,6 +297,17 @@
   white-space: nowrap;
 }
 
+.cumulative-player-table tbody tr.user-team-player > td {
+  background-color: #e6f4ea;
+}
+
+.cumulative-player-legend {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #e6f4ea;
+}
+
 .spaced-span {
   display: inline-flex;
   align-items: center;
