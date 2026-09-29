@@ -14,7 +14,7 @@ export const LeagueName = ({ leagueName, imgUrl }: LeagueNameProps) => (
       alt="League logo"
       className="rounded"
     />
-    <Col sm="auto">
+    <Col className="league-name-copy">
       <h1>{leagueName}</h1>
     </Col>
   </>

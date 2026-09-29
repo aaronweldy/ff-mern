@@ -22,7 +22,7 @@ export const LogOutButtons = () => {
   }
   return (
     <>
-      <Navbar.Collapse>
+      <div className="nav-team-menu">
         <NavDropdown
           id="teamsDropdown"
           title={<span className="dropdown-text">My Teams</span>}
@@ -39,8 +39,8 @@ export const LogOutButtons = () => {
               </NavDropdown.Item>
             ))}
         </NavDropdown>
-      </Navbar.Collapse>
-      <Navbar.Collapse className="justify-content-end">
+      </div>
+      <div className="nav-account-menu ml-lg-auto">
         <Navbar.Text className="mr-3">
           Welcome
           {user.isSuccess ? (
@@ -62,7 +62,7 @@ export const LogOutButtons = () => {
         <Button variant="primary" onClick={handleClick} type="submit">
           Logout
         </Button>
-      </Navbar.Collapse>
+      </div>
     </>
   );
 };

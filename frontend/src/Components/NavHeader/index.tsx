@@ -14,7 +14,7 @@ const NavHeader = () => {
       <LoginButtons />
     );
   return (
-    <Navbar bg="dark" expand="lg" variant="dark">
+    <Navbar bg="dark" expand="lg" variant="dark" className="app-navbar">
       <Navbar.Brand href="/">
         <StableImage
           size="nav"
@@ -24,7 +24,11 @@ const NavHeader = () => {
         />
         Orca Fantasy
       </Navbar.Brand>
-      {buttons}
+      <Navbar.Toggle
+        aria-controls="app-navigation"
+        aria-label="Toggle navigation"
+      />
+      <Navbar.Collapse id="app-navigation">{buttons}</Navbar.Collapse>
     </Navbar>
   );
 };

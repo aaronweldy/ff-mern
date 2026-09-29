@@ -1,5 +1,5 @@
-import React from "react";
-import { Row, Form, Col } from "react-bootstrap";
+import React, { useId } from "react";
+import { Form } from "react-bootstrap";
 
 type EditWeekProps = {
   week: number;
@@ -8,21 +8,20 @@ type EditWeekProps = {
 };
 
 const EditWeek = ({ week, onChange, maxWeeks = 18 }: EditWeekProps) => {
+  const id = useId();
   return (
-    <Row className="mt-3 mb-3 align-items-center">
-      <Col sm="auto" className="mt-1">
-        <Form.Label>Week:</Form.Label>
-      </Col>
-      <Col sm="auto">
-        <Form.Control as="select" value={week} onChange={onChange}>
-          {[...Array(maxWeeks || 18)].map((_, i) => (
-            <option value={i + 1} key={i}>
-              {i + 1}
-            </option>
-          ))}
-        </Form.Control>
-      </Col>
-    </Row>
+    <div className="week-selector my-3">
+      <Form.Label htmlFor={id} className="mb-0">
+        Week:
+      </Form.Label>
+      <Form.Control id={id} as="select" value={week} onChange={onChange}>
+        {[...Array(maxWeeks || 18)].map((_, i) => (
+          <option value={i + 1} key={i}>
+            {i + 1}
+          </option>
+        ))}
+      </Form.Control>
+    </div>
   );
 };
 

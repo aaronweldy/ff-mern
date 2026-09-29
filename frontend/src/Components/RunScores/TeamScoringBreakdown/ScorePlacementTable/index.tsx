@@ -18,16 +18,16 @@ const ScorePlacementTable = ({ teams, week }: ScorePlacementTableProps) => {
   const teamSorter = (a: Team, b: Team) =>
     Team.sumWeekScore(b, week) - Team.sumWeekScore(a, week);
   return (
-    <Table striped bordered className="table-width">
+    <Table striped bordered className="weekly-standings-table">
       <thead>
         <tr>
-          <th>Place</th>
-          <th>Team Name</th>
-          <th>Points</th>
+          <th scope="col">Place</th>
+          <th scope="col">Team Name</th>
+          <th scope="col">Points</th>
         </tr>
       </thead>
       <tbody>
-        {teams.sort(teamSorter).map((team, i) => (
+        {[...teams].sort(teamSorter).map((team, i) => (
           <tr key={i} id={i <= 2 ? styles[backgroundIters[i]] : ""}>
             <td>{i + 1}</td>
             <td>{team.name}</td>

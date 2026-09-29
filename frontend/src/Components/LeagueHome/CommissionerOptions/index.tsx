@@ -9,20 +9,19 @@ export const CommissionerOptions = ({
   leagueId,
   setDelete,
 }: CommissionerOptionsProps) => (
-  <div>
-    <a href={`/league/${leagueId}/editTeams/`}>Edit Teams</a> |{" "}
-    <a href={`/league/${leagueId}/editScoringSettings/`}> Edit Scoring</a> |{" "}
-    <a href={`/league/${leagueId}/addPoints/`}> Adjust Weekly Scores</a> |
-    <a href={`/league/${leagueId}/adjustLineups/`}> Adjust Starting Lineups</a>{" "}
-    | <a href={`/league/${leagueId}/updateSettings/`}>Adjust Settings</a> |{" "}
+  <nav className="commissioner-options" aria-label="Commissioner tools">
+    <a href={`/league/${leagueId}/editTeams/`}>Edit Teams</a>
+    <a href={`/league/${leagueId}/editScoringSettings/`}>Edit Scoring</a>
+    <a href={`/league/${leagueId}/addPoints/`}>Adjust Weekly Scores</a>
+    <a href={`/league/${leagueId}/adjustLineups/`}>Adjust Starting Lineups</a>
+    <a href={`/league/${leagueId}/updateSettings/`}>Adjust Settings</a>
     <Button
-      className="ml-1 mb-1"
-      id="inline-button"
+      className="text-danger"
       variant="link"
       onClick={() => setDelete(true)}
     >
       {" "}
       Delete League
     </Button>
-  </div>
+  </nav>
 );

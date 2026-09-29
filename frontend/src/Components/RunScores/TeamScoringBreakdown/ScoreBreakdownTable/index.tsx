@@ -40,14 +40,29 @@ export const ScoreBreakdownTable = ({
   getScoringData,
   getStatsData,
 }: ScoreBreakdownTableProps) => (
-  <Table striped bordered hover className="left-scrollable-table">
+  <Table
+    striped
+    bordered
+    hover
+    className="left-scrollable-table score-breakdown-table"
+  >
     <thead>
       <tr>
-        <th className="sticky-th">Lineup</th>
-        <th className="sticky-th">Position</th>
-        <th className="sticky-th">Player Name</th>
-        <th className="sticky-th">Team</th>
-        <th className="sticky-th">Points</th>
+        <th scope="col" className="sticky-th score-player">
+          Player Name
+        </th>
+        <th scope="col" className="sticky-th">
+          Points
+        </th>
+        <th scope="col" className="sticky-th">
+          Lineup
+        </th>
+        <th scope="col" className="sticky-th">
+          Position
+        </th>
+        <th scope="col" className="sticky-th">
+          Team
+        </th>
         {scoringHeaders}
       </tr>
     </thead>
@@ -68,24 +83,18 @@ export const ScoreBreakdownTable = ({
                 }
                 key={player.fullName + pos + i.toString()}
               >
+                <th scope="row" className="score-player">
+                  {player.fullName}
+                </th>
+                <td>{data?.scoring?.totalPoints?.toFixed(2) || "0.00"}</td>
                 <td className={`${styles["gray-col"]}`}>
                   <span>{player.lineup}</span>
                 </td>
                 <td className={`${styles["gray-col"]}`}>
                   <span>{player.position}</span>
                 </td>
-                <td className={`sticky-td sticky-col ${styles["gray-col"]}`}>
-                  {player.fullName}
-                </td>
                 <td className={`${styles["gray-col"]}`}>
                   <InlineTeamTile team={player.team} />
-                </td>
-                <td className="align-items-center">
-                  <span>
-                    {(data?.scoring?.totalPoints === 0
-                      ? 0
-                      : data?.scoring?.totalPoints?.toFixed(2)) || 0}
-                  </span>
                 </td>
                 {dataDisplay === "scoring"
                   ? getScoringData(

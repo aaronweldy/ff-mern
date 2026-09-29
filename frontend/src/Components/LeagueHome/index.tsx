@@ -42,8 +42,7 @@ export const LeagueHome = () => {
       acc + info.weekScore + info.addedPoints;
 
     return [...initTeams].sort(
-      (a, b) =>
-        b.weekInfo.reduce(reducer, 0) - a.weekInfo.reduce(reducer, 0)
+      (a, b) => b.weekInfo.reduce(reducer, 0) - a.weekInfo.reduce(reducer, 0)
     );
   }, [initTeams]);
   const deleteDraftMutation = useDeleteDraftMutation(
@@ -60,11 +59,13 @@ export const LeagueHome = () => {
       return;
     }
     if (league.logo !== import.meta.env.VITE_DEFAULT_LOGO) {
-      getDownloadURL(ref(storage, `logos/${league.logo}`)).then((url) => {
-        setImgUrl(url);
-      }).catch((err) => {
-        console.log(err);
-      });
+      getDownloadURL(ref(storage, `logos/${league.logo}`))
+        .then((url) => {
+          setImgUrl(url);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     } else {
       setImgUrl(league.logo);
     }
@@ -106,7 +107,7 @@ export const LeagueHome = () => {
     return <Navigate to="/" />;
   }
   return (
-    <Container fluid>
+    <Container fluid className="league-page league-home">
       {draftQuery.isSuccess && liveDraftExists && (
         <LiveDraftRow
           userIsCommissioner={userIsCommissioner}
@@ -137,7 +138,7 @@ export const LeagueHome = () => {
         deleteLeague={deleteLeague}
         leagueName={league?.name}
       />
-      <Row className="mb-3 mt-3 justify-content-center align-items-center">
+      <Row className="mb-3 mt-3 justify-content-center align-items-center page-identity league-identity">
         <LeagueName leagueName={league?.name} imgUrl={imgUrl} />
       </Row>
       <Row
@@ -155,19 +156,31 @@ export const LeagueHome = () => {
           ""
         )}
       </Row>
-      <Row className="mt-3 table-wrapper pr-1">
+      <Row className="mt-3">
         <Col>
-          {leagueTableLoading ? (
-            <CumulativeScoreTableLoadingState
-              numWeeks={league?.numWeeks}
-              rows={loadingTeamRows}
-            />
-          ) : league ? (
-            <CumulativeScoreTable id={id} league={league} teams={teams} />
-          ) : null}
+          <h2 className="h4">League standings</h2>
+          <p className="table-scroll-hint" id="standings-scroll-hint">
+            Scroll sideways for weekly scores.
+          </p>
+          <div
+            className="data-table-scroll"
+            role="region"
+            aria-label="League standings"
+            aria-describedby="standings-scroll-hint"
+            tabIndex={0}
+          >
+            {leagueTableLoading ? (
+              <CumulativeScoreTableLoadingState
+                numWeeks={league?.numWeeks}
+                rows={loadingTeamRows}
+              />
+            ) : league ? (
+              <CumulativeScoreTable id={id} league={league} teams={teams} />
+            ) : null}
+          </div>
         </Col>
       </Row>
-      <Row className="justify-content-center mb-3">
+      <Row className="page-actions league-actions justify-content-center my-3">
         {user.isSuccess && league && (
           <Button variant="primary" href={`/league/${id}/runScores/`}>
             {userIsCommissioner
@@ -176,28 +189,19 @@ export const LeagueHome = () => {
           </Button>
         )}
         <Button
-          className="ml-3"
           variant="primary"
           href={`/league/${id}/cumulativePlayerScores/`}
         >
           Cumulative Player Scoring
         </Button>
-        <Button
-          className="ml-3"
-          variant="primary"
-          href={`/league/${id}/tradeCenter/`}
-        >
+        <Button variant="primary" href={`/league/${id}/tradeCenter/`}>
           Trade Center
         </Button>
         {league &&
           draftQuery.isSuccess &&
           !draftQuery.data.draft &&
           userIsCommissioner && (
-            <Button
-              className="ml-3"
-              onClick={() => setShowModal(true)}
-              variant="primary"
-            >
+            <Button onClick={() => setShowModal(true)} variant="primary">
               Create Draft
             </Button>
           )}

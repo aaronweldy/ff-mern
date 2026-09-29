@@ -1,0 +1,582 @@
+/* Keep page gutters inside the viewport, including Bootstrap rows without cols. */
+.league-page {
+  padding: 0 1.5rem 2rem;
+}
+
+.league-page > .row {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.league-page .col,
+.league-page [class*="col-"] {
+  min-width: 0;
+}
+
+.league-page .subtitle,
+.roster-table .text-muted {
+  color: #596168 !important;
+}
+
+.league-page a:not(.btn) {
+  color: #0056b3;
+}
+
+.league-page .btn-primary,
+.app-navbar .btn-primary {
+  background-color: #0062cc;
+  border-color: #0062cc;
+}
+
+.league-page .btn-primary:hover,
+.app-navbar .btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.league-page .btn-success {
+  background-color: #1e7e34;
+  border-color: #1e7e34;
+}
+
+.league-page .btn-success:hover {
+  background-color: #19692c;
+  border-color: #19692c;
+}
+
+.page-identity h1,
+.page-identity h2,
+.page-identity .subtitle {
+  overflow-wrap: anywhere;
+}
+
+.league-name-copy {
+  flex: 0 1 auto;
+}
+
+.page-actions,
+.commissioner-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.commissioner-options {
+  justify-content: center;
+}
+
+.commissioner-options a,
+.commissioner-options .btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.5rem;
+}
+
+.league-commissioner-options-row:empty {
+  display: none;
+}
+
+.week-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.week-selector .form-control {
+  width: auto;
+  min-width: 5rem;
+}
+
+.scores-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.score-display-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.score-team-select {
+  flex: 0 1 24rem;
+  min-width: 0;
+}
+
+.data-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
+  overscroll-behavior-x: contain;
+  isolation: isolate;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.table-scroll-hint {
+  color: #596168;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.data-table-scroll:focus-visible,
+.matchup-trigger:focus-visible,
+.app-navbar a:focus-visible,
+.league-page a:focus-visible {
+  outline: 3px solid #0069d9;
+  outline-offset: 2px;
+}
+
+.league-standings-table {
+  max-width: none;
+  margin: 0;
+}
+
+.league-standings-table th,
+.league-standings-table td {
+  vertical-align: middle;
+}
+
+.league-standings-table th:not(.standings-team),
+.league-standings-table td {
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-standings-table .standings-team {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 17rem;
+  max-width: 22rem;
+  background: #fff;
+  box-shadow: 1px 0 #dee2e6;
+}
+
+.league-standings-table tbody tr:nth-of-type(odd) .standings-team {
+  background: #f2f2f2;
+}
+
+.standings-team-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.standings-team-copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.standings-team-copy > a {
+  display: inline-block;
+  padding: 0.25rem 0;
+}
+
+.standings-owner,
+.standings-rank {
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.standings-total {
+  font-weight: 600;
+}
+
+.score-table-scroll {
+  max-height: 70vh;
+  max-height: 70dvh;
+}
+
+.score-breakdown-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-breakdown-table th,
+.score-breakdown-table td {
+  vertical-align: middle;
+  min-width: 5rem;
+}
+
+.score-breakdown-table .sticky-th {
+  font-size: 0.875rem;
+}
+
+.score-breakdown-table .score-player {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: 11rem;
+  min-width: 11rem;
+  max-width: 11rem;
+  background: #f8f9fa;
+  overflow-wrap: anywhere;
+  box-shadow: 1px 0 #adb5bd;
+}
+
+.score-breakdown-table thead .score-player {
+  z-index: 3;
+}
+
+.score-breakdown-table .spaced-span {
+  white-space: nowrap;
+}
+
+.score-summary {
+  max-width: 24rem;
+}
+
+.score-summary td {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.weekly-standings-table {
+  table-layout: fixed;
+}
+
+.weekly-standings-table th:first-child {
+  width: 4rem;
+}
+
+.weekly-standings-table th:last-child {
+  width: 6rem;
+}
+
+.weekly-standings-table td {
+  overflow-wrap: anywhere;
+}
+
+.weekly-standings-table td:last-child {
+  white-space: nowrap;
+}
+
+.team-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.roster-table {
+  width: 100%;
+}
+
+.roster-table .player-played {
+  opacity: 1;
+  background-color: #f0f0f0;
+}
+
+.roster-player,
+.roster-backup {
+  overflow-wrap: anywhere;
+}
+
+.matchup-trigger {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.matchup-trigger:hover {
+  border-color: #adb5bd;
+}
+
+.nav-account-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.app-navbar .navbar-text {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1199.98px) {
+  .weekly-standings {
+    margin-top: 1rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .app-navbar .navbar-collapse {
+    width: 100%;
+  }
+
+  .app-navbar .nav-account-menu {
+    flex-wrap: wrap;
+    padding: 0.5rem 0;
+  }
+
+  .app-navbar .dropdown-menu {
+    max-width: 100%;
+  }
+
+  .app-navbar .dropdown-item {
+    flex-wrap: wrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-height: 44px;
+  }
+
+  .app-navbar .nav-link {
+    min-height: 44px;
+  }
+
+  .roster-table,
+  .roster-table tbody {
+    display: block;
+    border: 0;
+  }
+
+  /* Retain table headers for assistive technology in the card layout. */
+  .roster-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .roster-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "player player"
+      "position points"
+      "matchup stats"
+      "move backup";
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 0.875rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background: #fff;
+  }
+
+  .roster-table tbody tr:hover {
+    background: #f8f9fa;
+  }
+
+  .roster-table tbody td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    text-align: left;
+  }
+
+  .roster-table td[data-label]::before {
+    display: block;
+    content: attr(data-label);
+    margin-bottom: 0.25rem;
+    color: #596168;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .roster-player {
+    grid-area: player;
+    font-weight: 600;
+  }
+  .roster-position {
+    grid-area: position;
+  }
+  .roster-points {
+    grid-area: points;
+    font-weight: 600;
+  }
+  .roster-matchup {
+    grid-area: matchup;
+  }
+  .roster-stats {
+    grid-area: stats;
+    overflow-wrap: anywhere;
+  }
+  .roster-move {
+    grid-area: move;
+    align-self: end;
+  }
+  .roster-backup {
+    grid-area: backup;
+  }
+
+  .roster-table .matchup-trigger {
+    align-items: flex-start !important;
+    text-align: left;
+    padding: 0;
+  }
+
+  .roster-table .dropdown-toggle {
+    width: 100%;
+    min-height: 44px;
+    white-space: normal;
+  }
+
+  .roster-table .dropdown-menu,
+  .team-actions .dropdown-menu {
+    max-width: calc(100vw - 3rem);
+    max-height: 60vh;
+    max-height: 60dvh;
+    overflow-y: auto;
+  }
+
+  .roster-table .dropdown-item,
+  .team-actions .dropdown-item {
+    min-height: 44px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .league-page {
+    padding: 0 1rem 1.5rem;
+  }
+
+  .league-page > .row > .col,
+  .league-page > .row > [class*="col-"] {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .page-identity .stable-image-frame--logo {
+    width: 72px;
+    height: 72px;
+  }
+
+  .league-page .page-identity > .col {
+    padding-left: 0.75rem;
+  }
+
+  .page-identity h1 {
+    font-size: 1.75rem;
+  }
+
+  .page-identity h2 {
+    font-size: 1.5rem;
+  }
+
+  .league-identity {
+    flex-wrap: nowrap;
+  }
+
+  .league-commissioner-options-row {
+    min-height: 0;
+  }
+
+  .commissioner-options {
+    justify-content: flex-start;
+    gap: 0.25rem;
+  }
+
+  .league-page .btn,
+  .league-page .form-control,
+  .app-navbar .btn,
+  .app-navbar .navbar-toggler,
+  .team-hub-page .btn {
+    min-height: 44px;
+  }
+
+  .league-page .form-control {
+    font-size: 1rem;
+  }
+
+  .team-actions > .btn,
+  .team-actions > .dropdown,
+  .league-actions > .btn {
+    flex: 1 1 100%;
+    white-space: normal;
+  }
+
+  .team-actions .dropdown-toggle {
+    width: 100%;
+  }
+
+  .scores-controls {
+    gap: 0.75rem;
+  }
+
+  .scores-controls .week-selector {
+    margin: 0 !important;
+  }
+
+  .score-team-select {
+    flex-basis: 100%;
+  }
+
+  .league-standings-table .standings-team {
+    min-width: 10rem;
+    width: 10rem;
+    max-width: 10rem;
+  }
+
+  .league-standings-table th,
+  .league-standings-table td {
+    padding: 0.625rem 0.5rem;
+  }
+
+  .standings-team-identity {
+    align-items: flex-start;
+    gap: 0.375rem;
+  }
+
+  .standings-team-identity .stable-image-frame {
+    display: none;
+  }
+
+  .standings-team-copy > a,
+  .standings-owner a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .score-breakdown-table .score-player {
+    width: 8rem;
+    min-width: 8rem;
+    max-width: 8rem;
+  }
+
+  .score-breakdown-table th,
+  .score-breakdown-table td {
+    padding: 0.625rem;
+  }
+
+  .draft-actions {
+    flex-basis: 100%;
+    justify-content: flex-start !important;
+    padding: 0;
+    margin-top: 0.75rem;
+  }
+
+  .team-page-skeleton--logo {
+    width: 72px;
+    height: 72px;
+  }
+
+  .team-page-skeleton-table,
+  .team-page-skeleton--title,
+  .team-page-skeleton--updated {
+    max-width: 100%;
+  }
+}

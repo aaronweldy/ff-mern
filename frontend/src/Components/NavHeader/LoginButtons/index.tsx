@@ -1,11 +1,11 @@
-import { Button, Navbar } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 
 export const LoginButtons = () => {
   return (
-    <Navbar.Collapse className="justify-content-end">
+    <div className="nav-account-menu ml-lg-auto">
       <Button variant="primary" href="/login/">
         Login or Create Account
       </Button>
-    </Navbar.Collapse>
+    </div>
   );
 };
