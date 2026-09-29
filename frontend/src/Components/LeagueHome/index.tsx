@@ -159,14 +159,10 @@ export const LeagueHome = () => {
       <Row className="mt-3">
         <Col>
           <h2 className="h4">League standings</h2>
-          <p className="table-scroll-hint" id="standings-scroll-hint">
-            Scroll sideways for weekly scores.
-          </p>
           <div
             className="data-table-scroll"
             role="region"
             aria-label="League standings"
-            aria-describedby="standings-scroll-hint"
             tabIndex={0}
           >
             {leagueTableLoading ? (

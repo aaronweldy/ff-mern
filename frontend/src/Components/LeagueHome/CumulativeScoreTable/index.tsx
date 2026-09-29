@@ -45,17 +45,19 @@ export const CumulativeScoreTable = ({
           <tr key={team.id}>
             <th scope="row" className="standings-team">
               <div className="standings-team-identity">
-                <span className="standings-rank">
-                  <span className="sr-only">Rank </span>
-                  {i + 1}
-                </span>
                 <StableImage
                   size="thumbnail"
                   src={team.logo || import.meta.env.VITE_DEFAULT_LOGO}
                   alt=""
                 />
                 <div className="standings-team-copy">
-                  <a href={`/league/${id}/team/${team.id}/`}>{team.name}</a>
+                  <div className="standings-team-title">
+                    <span className="standings-rank">
+                      <span className="sr-only">Rank </span>
+                      {i + 1}
+                    </span>
+                    <a href={`/league/${id}/team/${team.id}/`}>{team.name}</a>
+                  </div>
                   <div className="standings-owner">
                     {league && league.commissioners.includes(team.owner) ? (
                       <span>
