@@ -16,7 +16,8 @@ about an action's internal Node.js runtime.
 The deployment account is
 `github-action-321760236@ff-mern.iam.gserviceaccount.com`. It needs its existing
 Hosting Admin and Cloud Functions Developer roles, plus access to the Firebase
-CLI's Extensions inspection, secret metadata, and the runtime service account.
+CLI's Extensions inspection, secret metadata, the runtime service account, and
+Cloud Scheduler job provisioning for `onSchedule` functions.
 
 Apply these commands as a project administrator when provisioning CI:
 
@@ -24,6 +25,10 @@ Apply these commands as a project administrator when provisioning CI:
 gcloud projects add-iam-policy-binding ff-mern \
   --member=serviceAccount:github-action-321760236@ff-mern.iam.gserviceaccount.com \
   --role=roles/firebaseextensions.editor --condition=None
+
+gcloud projects add-iam-policy-binding ff-mern \
+  --member=serviceAccount:github-action-321760236@ff-mern.iam.gserviceaccount.com \
+  --role=roles/cloudscheduler.admin --condition=None
 
 gcloud secrets add-iam-policy-binding SCORING_SERVICE_TOKEN --project=ff-mern \
   --member=serviceAccount:github-action-321760236@ff-mern.iam.gserviceaccount.com \
@@ -45,6 +50,10 @@ permission, deployment stops with HTTP 403 at
 Secret Manager Viewer is scoped to `SCORING_SERVICE_TOKEN` and permits metadata
 inspection, not reading its value. The runtime account separately needs its
 existing Secret Accessor binding on that secret to run scheduled scoring.
+Cloud Scheduler Admin permits the CLI to create/update/delete scheduled jobs.
+Without it, function builds and updates can succeed but deployment still fails
+with `cloudscheduler.jobs.update` denied when upserting the three schedules.
+
 Do not commit service account keys or secret values to the repository.
 
 These bindings live in Google Cloud IAM. Merging the Node upgrade does not

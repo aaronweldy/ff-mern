@@ -10,7 +10,8 @@
 #
 # Both deploys use this service account. It must have Firebase Hosting Admin,
 # Cloud Functions Developer, Service Account User, and Firebase Extensions
-# Editor permissions in GCP. See docs/firebase-functions-deploy.md.
+# Editor permissions in GCP, plus Cloud Scheduler Admin and secret metadata
+# access. See docs/firebase-functions-deploy.md for scoped IAM bindings.
 
 name: Deploy to production on merge
 
