@@ -40,6 +40,7 @@ export const useUpdateAllTeamsMutation = (
                 week: week.toString(),
                 type: info.type,
                 lineupSettings,
+                isAdmin: true,
               }
             );
             return updated;

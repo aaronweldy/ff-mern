@@ -18,10 +18,10 @@ export const assertLineupUnlocked = (
   previous: Team,
   next: Team,
   schedule: NFLSchedule,
-  isCommissioner: boolean,
+  allowLockedChanges: boolean,
   now = Date.now()
 ): void => {
-  if (isCommissioner) return;
+  if (allowLockedChanges) return;
   const storedPlayers: NflPlayer[] = [
     ...previous.rosteredPlayers,
     ...previous.weekInfo.flatMap((info) =>

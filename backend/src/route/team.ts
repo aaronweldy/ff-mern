@@ -18,7 +18,8 @@ const router = Router();
 // Authorization to edit a team does not imply permission to bypass kickoff locks.
 const saveTeams = async (
   uid: string,
-  updates: { id: string; build: (previous: Team) => Team }[]
+  updates: { id: string; build: (previous: Team) => Team }[],
+  requestOverride = false
 ): Promise<Team[]> => {
   const schedule = await getNflSchedule();
   return db.runTransaction(async (transaction) => {
@@ -32,7 +33,13 @@ const saveTeams = async (
         throw new TeamUpdateError(403, "Not authorized to update this team");
       }
       const next = update.build(previous);
-      assertLineupUnlocked(previous, next, schedule, commissioner);
+      // Commissioner membership alone never unlocks the regular Team page.
+      assertLineupUnlocked(
+        previous,
+        next,
+        schedule,
+        commissioner && requestOverride
+      );
       saved.push({ ...next, lastUpdated: new Date().toLocaleString() });
     }
     // Firestore requires every read to precede every write. Validate the full
@@ -98,11 +105,13 @@ router.post("/updateTeams/", requireAuth, async (req, res) => {
 });
 
 router.put("/updateSingleTeam/", requireAuth, async (req, res) => {
-  const { team } = req.body as { team: Team; isAdmin?: boolean };
+  const { team, isAdmin } = req.body as { team: Team; isAdmin?: boolean };
   try {
-    const [saved] = await saveTeams(req.user!.uid, [
-      { id: team.id, build: () => team },
-    ]);
+    const [saved] = await saveTeams(
+      req.user!.uid,
+      [{ id: team.id, build: () => team }],
+      isAdmin === true
+    );
     res.status(200).send({ team: saved });
   } catch (error) {
     sendUpdateError(res, error);
@@ -122,11 +131,13 @@ router.post("/setLineupFromProjection/", requireAuth, async (req, res) => {
     week,
     type,
     lineupSettings,
+    isAdmin,
   }: {
     team: Team;
     week: Week;
     type: QuicksetLineupType;
     lineupSettings?: LineupSettings;
+    isAdmin?: boolean;
   } = req.body;
   const weekNum = Number(week);
   if (
@@ -162,40 +173,44 @@ router.post("/setLineupFromProjection/", requireAuth, async (req, res) => {
         );
       }
     }
-    const [saved] = await saveTeams(req.user!.uid, [
-      {
-        id: team.id,
-        build: (previous) => {
-          if (!previous.weekInfo[weekNum])
-            throw new TeamUpdateError(400, "Invalid lineup week.");
-          let lineup: FinalizedLineup;
-          try {
-            lineup =
-              type === "LastWeek"
-                ? previous.weekInfo[weekNum - 1].finalizedLineup
-                : buildProjectedLineup(
-                    previous.rosteredPlayers,
-                    previous.weekInfo[weekNum].finalizedLineup,
-                    projections,
-                    lineupSettings
-                  );
-          } catch (error) {
-            throw new TeamUpdateError(
-              422,
-              error instanceof Error
-                ? error.message
-                : "Unable to build the projected lineup."
-            );
-          }
-          return {
-            ...previous,
-            weekInfo: previous.weekInfo.map((info, index) =>
-              index === weekNum ? { ...info, finalizedLineup: lineup } : info
-            ),
-          };
+    const [saved] = await saveTeams(
+      req.user!.uid,
+      [
+        {
+          id: team.id,
+          build: (previous) => {
+            if (!previous.weekInfo[weekNum])
+              throw new TeamUpdateError(400, "Invalid lineup week.");
+            let lineup: FinalizedLineup;
+            try {
+              lineup =
+                type === "LastWeek"
+                  ? previous.weekInfo[weekNum - 1].finalizedLineup
+                  : buildProjectedLineup(
+                      previous.rosteredPlayers,
+                      previous.weekInfo[weekNum].finalizedLineup,
+                      projections,
+                      lineupSettings
+                    );
+            } catch (error) {
+              throw new TeamUpdateError(
+                422,
+                error instanceof Error
+                  ? error.message
+                  : "Unable to build the projected lineup."
+              );
+            }
+            return {
+              ...previous,
+              weekInfo: previous.weekInfo.map((info, index) =>
+                index === weekNum ? { ...info, finalizedLineup: lineup } : info
+              ),
+            };
+          },
         },
-      },
-    ]);
+      ],
+      isAdmin === true
+    );
     res.status(200).send({ team: saved });
   } catch (error) {
     sendUpdateError(res, error);

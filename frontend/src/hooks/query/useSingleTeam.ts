@@ -7,7 +7,7 @@ import { queryKeys } from "./queryKeys";
 const fetchSingleTeam = (teamId?: string) =>
   apiGet<SingleTeamResponse>(`/api/v1/team/${teamId}/`);
 
-export const useSingleTeam = (teamId?: string) => {
+export const useSingleTeam = (teamId?: string, commissionerMode = false) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { data, isLoading, isSuccess } = useQuery<SingleTeamResponse, Error>(
@@ -65,6 +65,7 @@ export const useSingleTeam = (teamId?: string) => {
         week: info.week,
         type: info.type,
         lineupSettings: info.lineupSettings,
+        isAdmin: commissionerMode,
       }),
     {
       onSuccess: (response) => {

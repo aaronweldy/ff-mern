@@ -36,7 +36,7 @@ export default function AdjustLineups() {
     team: selectedTeam,
     updateTeamMutation,
     setHighestProjectedLineupMutation,
-  } = useSingleTeam(selectedTeamId);
+  } = useSingleTeam(selectedTeamId, true);
   const scheduleQuery = useNflSchedule();
   const defenseStatsQuery = useNflDefenseStats(id, league?.scoringSettings);
   const { handlePlayerChange, handleBenchPlayer } = useTeamTable();
