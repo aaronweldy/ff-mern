@@ -1,9 +1,6 @@
 import {
-  AbbreviatedNflTeam,
-  AbbreviationToFullTeam,
   FinalizedLineup,
   LineupSettings,
-  NFLSchedule,
   QuicksetLineupType,
   Team,
   Week,
@@ -12,122 +9,103 @@ import { Router } from "express";
 import admin, { db } from "../config/firebase-config.js";
 import { getNflSchedule } from "../utils/db.js";
 import { fetchPlayerProjections } from "../utils/fetchRoutes.js";
-import { findLineupChanges } from "../utils/findLineupChanges.js";
-import {
-  isLeagueCommissioner,
-  requireAuth,
-} from "../middleware/auth.js";
+import { assertLineupUnlocked, TeamUpdateError } from "../utils/lineupLocks.js";
+import { isLeagueCommissioner, requireAuth } from "../middleware/auth.js";
 import { buildProjectedLineup } from "../utils/projectedLineup.js";
 const router = Router();
 
-// Typeguard to check if a team is a valid NFL team (not "None")
-const isValidNflTeam = (team: AbbreviatedNflTeam | "None"): team is AbbreviatedNflTeam => {
-  return team !== "None";
-};
-
-const hasPlayerAlreadyPlayed = (schedule: NFLSchedule, team: AbbreviatedNflTeam, week: Week): boolean => {
-  const fullTeam = AbbreviationToFullTeam[team];
-  if (!schedule[fullTeam] || !schedule[fullTeam][week] || !schedule[fullTeam][week].gameTime) return false;
-  const now = new Date();
-  const gameDate = new Date(schedule[fullTeam][week].gameTime);
-  return now > gameDate;
-};
-
-/** Server-side ownership/commissioner check; never trust client isAdmin. */
-const canModifyTeam = async (uid: string, teamId: string): Promise<boolean> => {
-  const doc = await db.collection("teams").doc(teamId).get();
-  if (!doc.exists) return false;
-  const team = doc.data() as Team;
-  if (team.owner === uid) return true;
-  return isLeagueCommissioner(team.league, uid);
-};
-
-router.post("/validateTeams/", requireAuth, (req, res) => {
-  const { teams } = req.body;
-  teams.forEach((team: Team) => {
-    admin
-      .auth()
-      .getUserByEmail(team.ownerName)
-      .then(async (user) => {
-        db.collection("teams")
-          .doc(team.id)
-          .update({
-            ...team,
-            lastUpdated: new Date().toLocaleString(),
-            owner: user.uid,
-          });
-      })
-      .catch(async () => {
-        db.collection("teams")
-          .doc(team.id)
-          .update({
-            owner: "default",
-            lastUpdated: new Date().toLocaleString(),
-            ...team,
-          });
-      });
+// All lineup writes validate against the latest stored team in a transaction.
+// Authorization to edit a team does not imply permission to bypass kickoff locks.
+const saveTeams = async (
+  uid: string,
+  updates: { id: string; build: (previous: Team) => Team }[]
+): Promise<Team[]> => {
+  const schedule = await getNflSchedule();
+  return db.runTransaction(async (transaction) => {
+    const saved: Team[] = [];
+    for (const update of updates) {
+      const doc = db.collection("teams").doc(update.id);
+      const previous = (await transaction.get(doc)).data() as Team | undefined;
+      if (!previous) throw new TeamUpdateError(404, "Team not found");
+      const commissioner = await isLeagueCommissioner(previous.league, uid);
+      if (previous.owner !== uid && !commissioner) {
+        throw new TeamUpdateError(403, "Not authorized to update this team");
+      }
+      const next = update.build(previous);
+      assertLineupUnlocked(previous, next, schedule, commissioner);
+      saved.push({ ...next, lastUpdated: new Date().toLocaleString() });
+    }
+    // Firestore requires every read to precede every write. Validate the full
+    // batch before queuing writes so a rejected team cannot partially save it.
+    saved.forEach((team) =>
+      transaction.set(db.collection("teams").doc(team.id), team)
+    );
+    return saved;
   });
-  res.status(200).send({ teams });
+};
+
+const sendUpdateError = (res: import("express").Response, error: unknown) => {
+  if (error instanceof TeamUpdateError) {
+    res.status(error.status).send({ message: error.message });
+  } else {
+    console.error(error);
+    res
+      .status(500)
+      .send({ message: "Unable to save the lineup. Please try again." });
+  }
+};
+
+router.post("/validateTeams/", requireAuth, async (req, res) => {
+  const { teams } = req.body as { teams: Team[] };
+  try {
+    const owners = await Promise.all(
+      teams.map(async (team) => {
+        try {
+          return (await admin.auth().getUserByEmail(team.ownerName)).uid;
+        } catch {
+          return "default";
+        }
+      })
+    );
+    // Owner validation must not replace lineups with a stale client snapshot.
+    const saved = await saveTeams(
+      req.user!.uid,
+      teams.map((team, index) => ({
+        id: team.id,
+        build: (previous) => ({ ...previous, owner: owners[index] }),
+      }))
+    );
+    res.status(200).send({ teams: saved });
+  } catch (error) {
+    sendUpdateError(res, error);
+  }
 });
 
 router.post("/updateTeams/", requireAuth, async (req, res) => {
-  const { teams } = req.body;
-  const uid = req.user!.uid;
-  for (const team of teams as Team[]) {
-    if (!(await canModifyTeam(uid, team.id))) {
-      res.status(403).send({ error: `Not authorized to update team ${team.id}` });
-      return;
-    }
+  const { teams } = req.body as { teams: Team[] };
+  try {
+    const saved = await saveTeams(
+      req.user!.uid,
+      teams.map((team) => ({
+        id: team.id,
+        build: () => team,
+      }))
+    );
+    res.status(200).send({ teams: saved });
+  } catch (error) {
+    sendUpdateError(res, error);
   }
-  for (const team of teams as Team[]) {
-    db.collection("teams")
-      .doc(team.id)
-      .update({ ...team, lastUpdated: new Date().toLocaleString() });
-  }
-  res.status(200).send({ teams });
 });
 
 router.put("/updateSingleTeam/", requireAuth, async (req, res) => {
   const { team } = req.body as { team: Team; isAdmin?: boolean };
-  const uid = req.user!.uid;
-  // Ownership verified server-side against the stored team, not req.body.
-  const doc = db.collection("teams").doc(team.id);
-  const prevData = (await doc.get()).data() as Team | undefined;
-  if (!prevData) {
-    res.status(404).send();
-    return;
-  }
-  const isOwner = prevData.owner === uid;
-  const isCommissioner = await isLeagueCommissioner(prevData.league, uid);
-  const isAdmin = isOwner || isCommissioner;
-  if (!isAdmin) {
-    console.log(`Forbidden team update: ${team.name} by ${uid}`);
-    res.status(403).send("Not authorized to update this team");
-    return;
-  }
-  console.log("Updating team: " + team.name + " by admin: " + isAdmin);
   try {
-    const lineupDiff = findLineupChanges(prevData.weekInfo, team.weekInfo);
-
-    const schedule = await getNflSchedule();
-    for (const diff of lineupDiff) {
-      if (!isAdmin && (
-        (diff.oldPlayer && isValidNflTeam(diff.oldPlayer.team) && hasPlayerAlreadyPlayed(schedule, diff.oldPlayer.team, diff.week as Week)) ||
-        (diff.newPlayer && isValidNflTeam(diff.newPlayer.team) && hasPlayerAlreadyPlayed(schedule, diff.newPlayer.team, diff.week as Week)))
-      ) {
-        return res.status(400).send("Cannot modify lineup for players who have already played");
-      }
-    }
-
-    doc
-      .set({ ...team, lastUpdated: new Date().toLocaleString() })
-      .then(async () => {
-        const teamData = (await doc.get()).data();
-        res.status(200).send({ team: teamData });
-      });
-  } catch (e) {
-    console.log(e);
-    res.status(500).send();
+    const [saved] = await saveTeams(req.user!.uid, [
+      { id: team.id, build: () => team },
+    ]);
+    res.status(200).send({ team: saved });
+  } catch (error) {
+    sendUpdateError(res, error);
   }
 });
 
@@ -150,42 +128,78 @@ router.post("/setLineupFromProjection/", requireAuth, async (req, res) => {
     type: QuicksetLineupType;
     lineupSettings?: LineupSettings;
   } = req.body;
-  if (!(await canModifyTeam(req.user!.uid, team.id))) {
-    res.status(403).send("Not authorized to update this team");
+  const weekNum = Number(week);
+  if (
+    !Number.isInteger(weekNum) ||
+    weekNum < 1 ||
+    (type !== "LastWeek" && type !== "Projection") ||
+    (type === "LastWeek" && weekNum === 1)
+  ) {
+    res.status(400).send({ message: "Invalid quick-set week or type." });
     return;
   }
-  console.log(team.name);
-  const weekNum = parseInt(week);
-  if (type === "LastWeek" && parseInt(week) > 1) {
-    team.weekInfo[weekNum].finalizedLineup =
-      team.weekInfo[weekNum - 1].finalizedLineup;
-    await db.collection("teams").doc(team.id).set(team);
-    res.status(200).send({ team });
-    return;
-  } else if (type === "LastWeek") {
-    res.status(401).send();
-    return;
-  }
-  let projections: Record<string, number>;
   try {
-    projections = await fetchPlayerProjections(week);
+    // Check authorization before fetching projections. Recheck it at commit.
+    const stored = (await db.collection("teams").doc(team.id).get()).data() as
+      | Team
+      | undefined;
+    if (!stored) throw new TeamUpdateError(404, "Team not found");
+    if (
+      stored.owner !== req.user!.uid &&
+      !(await isLeagueCommissioner(stored.league, req.user!.uid))
+    ) {
+      throw new TeamUpdateError(403, "Not authorized to update this team");
+    }
+    let projections: Record<string, number>;
+    if (type === "Projection") {
+      try {
+        projections = await fetchPlayerProjections(week);
+      } catch (error) {
+        console.error(`Projection fetch failed for week ${week}`, error);
+        throw new TeamUpdateError(
+          503,
+          `Complete projections are unavailable for week ${week}. Your lineup has not been changed. Please try again later.`
+        );
+      }
+    }
+    const [saved] = await saveTeams(req.user!.uid, [
+      {
+        id: team.id,
+        build: (previous) => {
+          if (!previous.weekInfo[weekNum])
+            throw new TeamUpdateError(400, "Invalid lineup week.");
+          let lineup: FinalizedLineup;
+          try {
+            lineup =
+              type === "LastWeek"
+                ? previous.weekInfo[weekNum - 1].finalizedLineup
+                : buildProjectedLineup(
+                    previous.rosteredPlayers,
+                    previous.weekInfo[weekNum].finalizedLineup,
+                    projections,
+                    lineupSettings
+                  );
+          } catch (error) {
+            throw new TeamUpdateError(
+              422,
+              error instanceof Error
+                ? error.message
+                : "Unable to build the projected lineup."
+            );
+          }
+          return {
+            ...previous,
+            weekInfo: previous.weekInfo.map((info, index) =>
+              index === weekNum ? { ...info, finalizedLineup: lineup } : info
+            ),
+          };
+        },
+      },
+    ]);
+    res.status(200).send({ team: saved });
   } catch (error) {
-    console.error(`Projection fetch failed for week ${week}`, error);
-    res.status(503).send({
-      message: `Complete projections are unavailable for week ${week}. Your lineup has not been changed. Please try again later.`,
-    });
-    return;
+    sendUpdateError(res, error);
   }
-  let newLineup: FinalizedLineup;
-  try {
-    newLineup = buildProjectedLineup(team.rosteredPlayers, team.weekInfo[week].finalizedLineup, projections, lineupSettings);
-  } catch (error) {
-    res.status(422).send({ message: error instanceof Error ? error.message : "Unable to build the projected lineup." });
-    return;
-  }
-  team.weekInfo[weekNum].finalizedLineup = newLineup;
-  await db.collection("teams").doc(team.id).set(team);
-  res.status(200).send({ team });
 });
 
 export default router;
