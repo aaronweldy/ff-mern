@@ -1,6 +1,6 @@
 import { DefenseStatsMetadata } from "../../../hooks/query/useNflDefenseStats";
-import React, { useId } from "react";
-import { OverlayTrigger, Tooltip } from "react-bootstrap";
+import React, { useId, useRef, useState } from "react";
+import { Overlay, Tooltip } from "react-bootstrap";
 import {
   AbbreviatedNflTeam,
   AbbreviationToFullTeam,
@@ -53,9 +53,10 @@ export const MatchupOverlay: React.FC<MatchupOverlayProps> = ({
   opponentTeam,
   week,
   nflDefenseStats,
-  metadata,
 }) => {
   const tooltipId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
   const opponentCode = opponentTeam?.[week]?.opponent;
   const opponentName = (AbbreviationToFullTeam[
     opponentCode as AbbreviatedNflTeam
@@ -67,33 +68,23 @@ export const MatchupOverlay: React.FC<MatchupOverlayProps> = ({
     ? nflDefenseStats?.[opponentName]?.[player.position]
     : undefined;
   return (
-    <OverlayTrigger
-      placement="top"
-      trigger="click"
-      rootClose
-      overlay={
-        <Tooltip id={tooltipId}>
-          Matchup vs. Position:{" "}
-          {rank != null ? <NflRankedText rank={rank} /> : "n/a"}
-          <div>1 = easiest; 32 = hardest</div>
-          {metadata && opponentName && (
-            <div>
-              {metadata.season} season ·{" "}
-              {metadata.gamesPlayed[opponentName] ?? 0} games
-              <br />
-              League scoring · nflverse
-              <br />
-              Updated {new Date(metadata.fetchedAt).toLocaleString()}
-              {metadata.stale && (
-                <div>Refresh unavailable; showing saved rankings.</div>
-              )}
-            </div>
-          )}
-        </Tooltip>
-      }
-    >
+    <>
       <button
+        ref={triggerRef}
         type="button"
+        onPointerEnter={(event) => {
+          if (event.pointerType === "mouse") setShowTooltip(true);
+        }}
+        onPointerLeave={(event) => {
+          if (event.pointerType === "mouse") setShowTooltip(false);
+        }}
+        onFocus={() => setShowTooltip(true)}
+        onBlur={() => setShowTooltip(false)}
+        onClick={() => setShowTooltip(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") setShowTooltip(false);
+        }}
+        aria-describedby={showTooltip ? tooltipId : undefined}
         className="matchup-trigger d-flex flex-column align-items-center"
         aria-label={`Matchup details for ${player.fullName}`}
       >
@@ -115,6 +106,21 @@ export const MatchupOverlay: React.FC<MatchupOverlayProps> = ({
           )}
         </small>
       </button>
-    </OverlayTrigger>
+      <Overlay
+        target={triggerRef.current}
+        show={showTooltip}
+        placement="top"
+        rootClose
+        onHide={(event) => {
+          if (triggerRef.current?.contains(event?.target as Node)) return;
+          setShowTooltip(false);
+        }}
+      >
+        <Tooltip id={tooltipId}>
+          Matchup vs. Position:{" "}
+          {rank != null ? <NflRankedText rank={rank} /> : "n/a"}
+        </Tooltip>
+      </Overlay>
+    </>
   );
 };
