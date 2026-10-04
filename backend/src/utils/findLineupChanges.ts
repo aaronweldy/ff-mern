@@ -1,56 +1,67 @@
-import { FinalizedPlayer, Position, TeamWeekInfo, Week } from "@ff-mern/ff-types"
+import {
+  FinalizedLineup,
+  FinalizedPlayer,
+  Position,
+  TeamWeekInfo,
+  Week,
+} from "@ff-mern/ff-types";
 
 export type LineupDiff = {
-    week: Week;
-    newPlayer?: FinalizedPlayer;
-    oldPlayer?: FinalizedPlayer;
-    position: Position;
-}
-
-// Finds the diff between the submitted lineups for a given team.
-export const findLineupChanges = (prevWeekInfo: TeamWeekInfo[], newWeekInfo: TeamWeekInfo[]): LineupDiff[] => {
-    const diff: LineupDiff[] = [];
-
-    prevWeekInfo.forEach((prevWeek, weekIndex) => {
-        const newWeek = newWeekInfo[weekIndex];
-        if (!newWeek) return;
-
-        const prevWeeklyLineup = prevWeek.finalizedLineup;
-        const newWeeklyLineup = newWeek.finalizedLineup;
-
-        (Object.keys(prevWeeklyLineup) as Position[]).forEach((pos) => {
-            if (pos === 'bench') return;
-
-            const prevPlayers = prevWeeklyLineup[pos];
-            const newPlayers = newWeeklyLineup[pos];
-
-            prevPlayers.forEach((prevPlayer, playerIndex) => {
-                const newPlayer = newPlayers[playerIndex];
-
-                if (!prevPlayer || !newPlayer || prevPlayer.fullName !== newPlayer.fullName) {
-                    const change: LineupDiff = {
-                        week: String(weekIndex) as Week,
-                        newPlayer: newPlayer || undefined,
-                        oldPlayer: prevPlayer || undefined,
-                        position: pos,
-                    };
-                    diff.push(change);
-
-                    console.log(
-                        `Week: ${change.week}, ` +
-                        `${getPlayerDescription(change.oldPlayer)} -> ${getPlayerDescription(change.newPlayer)} ` +
-                        `at position ${change.position}`
-                    );
-                }
-            });
-        });
-    });
-
-    return diff;
+  week: Week;
+  newPlayer?: FinalizedPlayer;
+  oldPlayer?: FinalizedPlayer;
+  position: Position;
 };
 
-function getPlayerDescription(player?: FinalizedPlayer): string {
-    if (!player) return "(Empty)";
-    if (player.fullName === "") return "(Bench)";
-    return player.fullName;
-}
+// Compare both sides: a removed week/slot and a newly filled slot are changes too.
+export const findLineupChanges = (
+  prevWeekInfo: TeamWeekInfo[],
+  newWeekInfo: TeamWeekInfo[]
+): LineupDiff[] => {
+  const diff: LineupDiff[] = [];
+  for (
+    let week = 0;
+    week < Math.max(prevWeekInfo.length, newWeekInfo.length);
+    week++
+  ) {
+    const previous: Partial<FinalizedLineup> =
+      prevWeekInfo[week]?.finalizedLineup ?? {};
+    const next: Partial<FinalizedLineup> =
+      newWeekInfo[week]?.finalizedLineup ?? {};
+    const positions = new Set([...Object.keys(previous), ...Object.keys(next)]);
+    for (const pos of positions as Set<Position>) {
+      if (pos === "bench") continue;
+      const oldPlayers = previous[pos] ?? [];
+      const newPlayers = next[pos] ?? [];
+      for (
+        let index = 0;
+        index < Math.max(oldPlayers.length, newPlayers.length);
+        index++
+      ) {
+        const oldPlayer = oldPlayers[index];
+        const newPlayer = newPlayers[index];
+        const fields = [
+          "fullName",
+          "sanitizedName",
+          "position",
+          "team",
+          "lineup",
+          "backup",
+        ] as const;
+        if (
+          fields.some(
+            (field) => (oldPlayer?.[field] ?? "") !== (newPlayer?.[field] ?? "")
+          )
+        ) {
+          diff.push({
+            week: String(week) as Week,
+            oldPlayer,
+            newPlayer,
+            position: pos,
+          });
+        }
+      }
+    }
+  }
+  return diff;
+};
