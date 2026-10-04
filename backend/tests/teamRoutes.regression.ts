@@ -39,6 +39,7 @@ test("team API enforces kickoff locks and saves only authorized complete transac
   // No credentials or external requests: all Firestore/auth calls are local fakes.
   const teams = new Map<string, Team>();
   let locked = true;
+  let liveSchedule: Record<string, unknown> | undefined;
   let failProjections = false;
   let beforeTransaction: (() => void) | undefined;
   let writes = 0;
@@ -83,6 +84,12 @@ test("team API enforces kickoff locks and saves only authorized complete transac
       assert.equal(collection, "nflSchedule");
       return {
         forEach: (callback: (doc: any) => void) => {
+          if (liveSchedule) {
+            Object.entries(liveSchedule).forEach(([id, games]) =>
+              callback({ id, data: () => games })
+            );
+            return;
+          }
           for (const [team, started] of [
             ["BUF", locked],
             ["MIA", false],
@@ -166,6 +173,7 @@ test("team API enforces kickoff locks and saves only authorized complete transac
     teams.set("team", fixture());
     writes = 0;
     locked = true;
+    liveSchedule = undefined;
     failProjections = false;
   };
   try {
@@ -187,6 +195,146 @@ test("team API enforces kickoff locks and saves only authorized complete transac
         }
       );
     }
+    await t.test(
+      "Team-page projection cannot swap Thursday Boswell for McLaughlin when the owner is commissioner",
+      async () => {
+        reset();
+        const team = fixture();
+        team.owner = "commissioner";
+        team.rosteredPlayers = [
+          new RosteredPlayer("Chris Boswell", "PIT", "K"),
+          new RosteredPlayer("Chase McLaughlin", "TB", "K"),
+        ];
+        team.weekInfo[3].finalizedLineup = {
+          K: [
+            {
+              ...new FinalizedPlayer("Chase McLaughlin", "K", "TB", "K"),
+              backup: "",
+            },
+          ],
+        } as FinalizedLineup;
+        team.weekInfo[4] = {
+          ...team.weekInfo[2],
+          finalizedLineup: {
+            K: [
+              {
+                ...new FinalizedPlayer("Chris Boswell", "K", "PIT", "K"),
+                backup: "",
+              },
+            ],
+          } as FinalizedLineup,
+        };
+        teams.set("team", clone(team));
+        liveSchedule = {
+          "pittsburgh steelers": {
+            "4": {
+              gameTime: "2026-10-02T00:15:00.000Z",
+              opponent: "cleveland browns",
+              isHome: false,
+            },
+          },
+          "tampa bay buccaneers": {
+            "4": {
+              gameTime: "2026-10-04T17:00:00.000Z",
+              opponent: "green bay packers",
+              isHome: true,
+            },
+          },
+        };
+        delete projectionData["k:fixture 0"];
+        delete projectionData["k:fixture 1"];
+        projectionData["k:chris boswell"] = 8;
+        projectionData["k:chase mclaughlin"] = 12;
+        const clock = mock.method(Date, "now", () =>
+          Date.parse("2026-10-04T12:00:00Z")
+        );
+        try {
+          const response = await request(
+            "setLineupFromProjection",
+            { team: clone(team), week: "4", type: "Projection" },
+            "commissioner"
+          );
+          assert.equal(response.status, 400);
+          assert.equal(writes, 0);
+          assert.equal(
+            teams.get("team")?.weekInfo[4].finalizedLineup.K[0].fullName,
+            "Chris Boswell"
+          );
+        } finally {
+          clock.mock.restore();
+        }
+      }
+    );
+    for (const type of ["Projection", "LastWeek"]) {
+      await t.test(
+        `${type} honors kickoff locks for a commissioner on the regular Team page`,
+        async () => {
+          reset();
+          const team = fixture();
+          team.owner = "commissioner";
+          teams.set("team", team);
+          const response = await request(
+            "setLineupFromProjection",
+            { team: clone(team), week: "2", type },
+            "commissioner"
+          );
+          assert.equal(response.status, 400);
+          assert.equal(writes, 0);
+        }
+      );
+      await t.test(
+        `${type} rejects an owner claiming commissioner override`,
+        async () => {
+          reset();
+          const response = await request(
+            "setLineupFromProjection",
+            { team: fixture(), week: "2", type, isAdmin: true },
+            "owner"
+          );
+          assert.equal(response.status, 400);
+          assert.equal(writes, 0);
+        }
+      );
+    }
+    await t.test(
+      "manual commissioner edits require an explicit override",
+      async () => {
+        reset();
+        const team = fixture();
+        team.weekInfo[2].finalizedLineup.WR = [];
+        const response = await request(
+          "updateSingleTeam",
+          { team },
+          "commissioner",
+          "PUT"
+        );
+        assert.equal(response.status, 400);
+        assert.equal(writes, 0);
+        const override = await request(
+          "updateSingleTeam",
+          { team, isAdmin: true },
+          "commissioner",
+          "PUT"
+        );
+        assert.equal(override.status, 200);
+        assert.equal(writes, 1);
+      }
+    );
+    await t.test(
+      "bulk commissioner edits honor kickoff locks by default",
+      async () => {
+        reset();
+        const team = fixture();
+        team.weekInfo[2].finalizedLineup.WR = [];
+        const response = await request(
+          "updateTeams",
+          { teams: [team] },
+          "commissioner"
+        );
+        assert.equal(response.status, 400);
+        assert.equal(writes, 0);
+      }
+    );
     await t.test(
       "forged isAdmin cannot bypass a manual owner's lock",
       async () => {
@@ -251,7 +399,7 @@ test("team API enforces kickoff locks and saves only authorized complete transac
           reset();
           const response = await request(
             "setLineupFromProjection",
-            { team: fixture(), week: "2", type },
+            { team: fixture(), week: "2", type, isAdmin: true },
             "commissioner"
           );
           assert.equal(response.status, 200);
