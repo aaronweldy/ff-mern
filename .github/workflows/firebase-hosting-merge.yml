@@ -9,7 +9,8 @@
 #   FIREBASE_SERVICE_ACCOUNT_FF_MERN (firebase init hosting:github)
 #
 # Both deploys use this service account. It must have Firebase Hosting Admin,
-# Cloud Functions Admin, and Service Account User permissions in GCP.
+# Cloud Functions Developer, Service Account User, and Firebase Extensions
+# Editor permissions in GCP. See docs/firebase-functions-deploy.md.
 
 name: Deploy to production on merge
 
@@ -23,15 +24,15 @@ jobs:
   hosting-live:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20.19.5
+          node-version: '22'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 12.3.4
           run_install: false
@@ -52,15 +53,15 @@ jobs:
   functions:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20.19.5
+          node-version: '22'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 12.3.4
           run_install: false
@@ -68,7 +69,7 @@ jobs:
       - name: Install (frozen lockfile must match package.json)
         run: pnpm install --frozen-lockfile
 
-      - name: Build functions (tsc emits lib/, predeploy is a no-op)
+      - name: Build functions (tsc emits lib/)
         run: pnpm --filter functions build
 
       - name: Configure Firebase application credentials
