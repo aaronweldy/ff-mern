@@ -14,6 +14,7 @@ import { db } from "../config/firebase-config.js";
 import { get } from './tableScraper.js';
 import { calculatePlayerScore } from "./scoring.js";
 import { loadNflverseWeeklyStats } from "./nflverseWeekStats.js";
+import { readOrRefreshNflverseStats } from "./nflverseStatsCache.js";
 
 import {
   projectionPositions,
@@ -88,7 +89,6 @@ export const fetchPlayers = () => {
   });
 };
 
-const NFLVERSE_CACHE_TTL_MS = 5 * 60 * 1000;
 const nflverseInflight = new Map<
   string,
   Promise<Record<string, DatabasePlayer>>
@@ -102,31 +102,10 @@ export const fetchNflverseWeeklyStats = async (
   const inflight = nflverseInflight.get(cacheKey);
   if (inflight) return inflight;
 
-  const loadAndCache = (async (): Promise<Record<string, DatabasePlayer>> => {
-    const reference = db.collection("nflverseWeekStats").doc(cacheKey);
-    const cached = await reference.get();
-    const fetchedAt = cached.data()?.fetchedAt as string | undefined;
-    const cachedStats = cached.data()?.playerMap as Record<string, DatabasePlayer> | undefined;
-    if (
-      cachedStats &&
-      Object.keys(cachedStats).length > 0 &&
-      fetchedAt &&
-      Date.now() - new Date(fetchedAt).getTime() < NFLVERSE_CACHE_TTL_MS
-    ) {
-      return cachedStats;
-    }
-
-    const playerMap = await loadNflverseWeeklyStats(season, week);
-    // Do not cache an empty/future week. This lets the next scoring attempt
-    // see newly published nflverse data instead of holding a false cache hit.
-    if (Object.keys(playerMap).length > 0) {
-      await reference.set({
-        fetchedAt: new Date().toISOString(),
-        playerMap,
-      });
-    }
-    return playerMap;
-  })();
+  const loadAndCache = readOrRefreshNflverseStats(
+    db.collection("nflverseWeekStats").doc(cacheKey),
+    () => loadNflverseWeeklyStats(season, week)
+  );
   nflverseInflight.set(cacheKey, loadAndCache);
   try {
     return await loadAndCache;

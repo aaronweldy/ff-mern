@@ -5,7 +5,6 @@ import { v4 } from "uuid";
 import admin, { db } from "../config/firebase-config.js";
 import {
   League,
-  ScoringError,
   Team,
   PlayerScoreData,
   CumulativePlayerScore,
@@ -19,13 +18,10 @@ import {
   getTeamsInLeague,
   scoreAllPlayers,
 } from "../utils/fetchRoutes.js";
-import { updateCumulativeStats } from "../utils/updateCumulativeStats.js";
+import { saveScoringResults } from "../utils/saveScoringResults.js";
 import { withRosterScoreAliases } from "../utils/scoringNames.js";
 import { consolidateCumulativeScores } from "../utils/cumulativeScoring.js";
-import {
-  resolveScoringLineup,
-  fetchCompletedTeams,
-} from "../utils/scoringResolution.js";
+import { fetchCompletedTeams } from "../utils/scoringResolution.js";
 import {
   isLeagueCommissioner,
   isScoringServiceRequest,
@@ -464,56 +460,20 @@ router.post(
       }
       // A failed status lookup aborts the run before any writes.
       const completed = await fetchCompletedTeams(getCurrentSeason(), week);
-      const result = await db.runTransaction(async (transaction) => {
-        const leagueSnapshot = await transaction.get(leagueRef);
-        if (
-          JSON.stringify(leagueSnapshot.data()?.scoringSettings) !==
-          JSON.stringify(league.scoringSettings)
-        ) {
-          throw new Error(
-            "Scoring settings changed during this run; please calculate scores again."
-          );
-        }
-        const snapshot = await transaction.get(
-          db.collection("teams").where("league", "==", leagueId)
-        );
-        await updateCumulativeStats(leagueId, week, data, transaction);
-        const scoringData = withRosterScoreAliases(
-          data,
-          snapshot.docs.map((doc) => doc.data() as Team),
-          week
-        );
-        const teams: Team[] = [];
-        const errors: ScoringError[] = [];
-        for (const doc of snapshot.docs) {
-          const team = doc.data() as Team;
-          const resolved = resolveScoringLineup(team, week, scoringData, completed);
-          errors.push(...resolved.errors);
-          team.weekInfo[week] = {
-            ...team.weekInfo[week],
-            weekScore: resolved.weekScore,
-            scoringLineup: resolved.lineup,
-            substitutions: resolved.substitutions,
-          };
-          transaction.update(doc.ref, { weekInfo: team.weekInfo });
-          teams.push(team);
-        }
-        transaction.set(
-          db
-            .collection("leagueScoringData")
-            .doc(`${getCurrentSeason()}${week}${leagueId}`),
-          { playerData: scoringData }
-        );
-        transaction.update(leagueRef, {
-          lastScoredWeek: Math.max(
-            week,
-            leagueSnapshot.data()?.lastScoredWeek || 0
-          ),
-        });
-        return { teams, errors, data: scoringData };
-      });
-      res.status(200).json(result);
-      console.log(`successful runScores for league ${leagueId}`);
+      const { updated, ...result } = await saveScoringResults(
+        db,
+        leagueId,
+        league,
+        week,
+        data,
+        completed
+      );
+      // The scheduled caller only checks success; browsers still receive
+      // all team results, player scores and warnings for manual recalculation.
+      res.status(200).json(isScoringServiceRequest(req) ? { updated } : result);
+      console.log(
+        `successful runScores for league ${leagueId}: ${updated ? "updated" : "unchanged"}`
+      );
     } catch (error) {
       next(error);
     }
