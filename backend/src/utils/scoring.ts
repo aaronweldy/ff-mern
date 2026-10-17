@@ -53,7 +53,9 @@ export const calculatePlayerScore = (
             Number.parseFloat(statistics[statKey as StatKey]) >= minimum.threshold
           );
         });
-        return { [hash]: minimumsPass ? points : 0 };
+        // Canonicalize zero-valued penalties so a serialized 0 does not look
+        // different from a freshly calculated -0 on every scoring run.
+        return { [hash]: minimumsPass && points !== 0 ? points : 0 };
       } catch (error) {
         console.error(`Error finding stats for ${position}:`, error);
         return { [hash]: 0 };

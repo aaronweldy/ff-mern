@@ -42,3 +42,36 @@ replace the selected week's contribution to cumulative scores.
 Game-status lookup failures abort scoring before results are saved. Previously
 mutated lineups cannot be reconstructed by this change; commissioners must
 restore their intended submitted lineup before recalculating affected weeks.
+
+## Avoiding redundant outbound bandwidth
+
+The scheduled scorer still checks every ten minutes. Each request calculates
+scores and resolves current submitted lineups and completed-game substitutions.
+Inside the transaction, it compares each team's resulting week, the weekly
+player data, cumulative scores, and `lastScoredWeek` with their stored values.
+Only changed documents are written; an identical rerun makes no score writes.
+Comparisons ignore object key order and zero-valued penalties use canonical
+zero. Cumulative totals always use original provider keys, before roster aliases.
+Existing commissioner adjustments and other weeks remain intact.
+
+All comparison reads occur before writes in the same transaction, so concurrent
+scoring or lineup saves retry against current data. A settings change during
+calculation still aborts the run. Missing outputs are regenerated normally;
+there is no saved input fingerprint that could hide a lineup change, provider
+correction, game completion, or missing output.
+
+NFL stats retain their five-minute cache TTL and in-flight request sharing.
+When a refresh returns identical stats, only `fetchedAt` is uploaded, using
+the read snapshot's update-time precondition. Changed stats replace the cache;
+empty weeks and failed downloads are not marked fresh. A conflicting cache
+update fails the request and can be retried by the scheduler.
+
+Authenticated scoring-service requests receive only `{ updated: boolean }`.
+The existing scheduler only checks the HTTP status, so this takes effect with
+the backend deployment and needs no Functions redeployment. Commissioner
+requests still receive the full `{ teams, errors, data }` response, including
+warnings on unchanged runs. Logs distinguish `updated` from `unchanged` runs.
+
+This reduces outbound writes and scoring responses, not the number of scheduled
+checks. Each run additionally reads the existing weekly scoring document to
+compare it. Actual bandwidth savings should be measured in Render after deploy.
