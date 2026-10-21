@@ -27,6 +27,22 @@ season/week, zero points, and an explicit zero games-played statistic. Missing
 participation data is not evidence that a player did not play. Bye weeks have
 no completed game and do not trigger automatic substitution.
 
+The nflverse stats feed contains participants, not zero-game rows for every
+inactive player. Each stats refresh also reads that season's weekly roster feed.
+For the requested regular-season week only, unique players explicitly marked
+inactive (`INA`), reserve (`RES`), or exempt (`EXE`) receive a zero-stat, `G: "0"`
+record when no scoring row already exists for their normalized identity. Existing
+stats take priority, and active, unknown, or ambiguous roster records do not
+establish nonparticipation. Use the weekly roster, not the season's latest roster:
+an inactive player may return the following week. Roster download/schema failures
+abort the refresh before scoring results are saved. Empty scoring weeks remain
+empty even if roster data exists. The combined data uses the existing five-minute
+stats cache; a fresh pre-deploy cache can retain the previous data until expiry.
+
+The regression suite includes source extracts from 2026 Week 6 for Love →
+Allgeier, Moore → Coleman, and Mitchell → Waddle. See
+`tests/fixtures/2026-week6/README.md` for sources and verification scope.
+
 Backups are assigned in the existing lineup display order, then array order
 within each position. A backup must be on the submitted bench, eligible for
 the slot, have finite scoring data, and not already be starting or used.
