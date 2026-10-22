@@ -59,6 +59,14 @@ Game-status lookup failures abort scoring before results are saved. Previously
 mutated lineups cannot be reconstructed by this change; commissioners must
 restore their intended submitted lineup before recalculating affected weeks.
 
+After a scoring transaction commits, each newly applied or changed substitution
+emits one JSON log with `event: "backup_substitution_applied"`, `leagueId`,
+`season`, `week`, `teamId`, `slot`, `starter`, and `backup`. Search Render logs
+for that event or either player's name. Failed commits and transaction retries
+do not emit substitution logs. An unchanged substitution is not logged again
+when its points change or the scheduler reruns; previously saved substitutions
+are not logged retroactively when this logging is deployed.
+
 ## Avoiding redundant outbound bandwidth
 
 The scheduled scorer still checks every ten minutes. Each request calculates

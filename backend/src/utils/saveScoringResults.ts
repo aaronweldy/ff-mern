@@ -20,13 +20,14 @@ export const saveScoringResults = async (
   data: PlayerScoreData,
   completed: Set<string>
 ): Promise<RunScoresResponse & { updated: boolean }> => {
+  const season = getCurrentSeason();
   const leagueRef = db.collection("leagues").doc(leagueId);
   const weeklyRef = db
     .collection("leagueScoringData")
-    .doc(`${getCurrentSeason()}${week}${leagueId}`);
+    .doc(`${season}${week}${leagueId}`);
   const cumulativeRef = db.collection("cumulativePlayerScores").doc(leagueId);
 
-  return db.runTransaction(async (transaction) => {
+  const committed = await db.runTransaction(async (transaction) => {
     // All comparisons use transactional reads, so overlapping runs and lineup
     // saves retry against current results instead of committing a stale plan.
     const [leagueSnapshot, weeklySnapshot, cumulativeSnapshot] =
@@ -49,9 +50,24 @@ export const saveScoringResults = async (
     const teams = snapshot.docs.map((doc) => doc.data() as Team);
     const scoringData = withRosterScoreAliases(data, teams, week);
     const errors: RunScoresResponse["errors"] = [];
+    const substitutionsToLog: {
+      teamId: string;
+      starter: string;
+      backup: string;
+      slot: string;
+    }[] = [];
     const teamUpdates = teams.map((team) => {
       const resolved = resolveScoringLineup(team, week, scoringData, completed);
       errors.push(...resolved.errors);
+      const previousSubstitutions = team.weekInfo[week].substitutions || [];
+      for (const substitution of resolved.substitutions) {
+        if (
+          !previousSubstitutions.some((previous) =>
+            isDeepStrictEqual(previous, substitution)
+          )
+        )
+          substitutionsToLog.push({ teamId: team.id, ...substitution });
+      }
       const info = {
         ...team.weekInfo[week],
         weekScore: resolved.weekScore,
@@ -92,6 +108,7 @@ export const saveScoringResults = async (
     if (leagueChanged) transaction.update(leagueRef, { lastScoredWeek });
 
     return {
+      substitutionsToLog,
       teams,
       errors,
       data: scoringData,
@@ -102,4 +119,18 @@ export const saveScoringResults = async (
         teamUpdates.some(Boolean),
     };
   });
+  const { substitutionsToLog, ...result } = committed;
+  // Firestore can retry the callback. Log only the committed attempt, after
+  // saving, so failed writes and unchanged scoring runs never announce a swap.
+  for (const substitution of substitutionsToLog)
+    console.log(
+      JSON.stringify({
+        event: "backup_substitution_applied",
+        leagueId,
+        season,
+        week,
+        ...substitution,
+      })
+    );
+  return result;
 };
