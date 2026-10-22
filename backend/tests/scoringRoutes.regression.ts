@@ -21,6 +21,7 @@ test("scoring API writes only changed results while preserving recalculation", a
   const weeklyPath = `leagueScoringData/${year}2league`;
   let completed = false;
   let failScoreboard = false;
+  let failCommit = false;
   let version = 0;
   let beforeTransaction: (() => void) | undefined;
   const put = (path: string, data: any) => {
@@ -32,6 +33,28 @@ test("scoring API writes only changed results while preserving recalculation", a
     ref,
     exists: state.has(pathOf(ref)),
     data: () => clone(state.get(pathOf(ref))),
+  });
+  const substitutionLogs: any[] = [];
+  const originalLog = console.log;
+  mock.method(console, "log", (message: any, ...args: any[]) => {
+    if (
+      typeof message === "string" &&
+      message.startsWith('{"event":"backup_substitution_applied"')
+    ) {
+      const entry = JSON.parse(message);
+      // A substitution must already be committed when its log is emitted.
+      assert.ok(
+        stored
+          .get(`teams/${entry.teamId}`)
+          .weekInfo[entry.week].substitutions.some(
+            (substitution: any) =>
+              substitution.starter === entry.starter &&
+              substitution.backup === entry.backup &&
+              substitution.slot === entry.slot
+          )
+      );
+      substitutionLogs.push(entry);
+    } else originalLog(message, ...args);
   });
   mock.method(db, "collection", (collection: string) => ({
     doc: (id: string) => {
@@ -98,6 +121,7 @@ test("scoring API writes only changed results while preserving recalculation", a
             }),
         });
         if (revision !== version) continue;
+        if (failCommit) throw new Error("Fixture commit failed");
         for (const write of pending) {
           put(
             write.path,
@@ -176,8 +200,10 @@ test("scoring API writes only changed results while preserving recalculation", a
   const reset = () => {
     stored.clear();
     commits.length = 0;
+    substitutionLogs.length = 0;
     completed = false;
     failScoreboard = false;
+    failCommit = false;
     beforeTransaction = undefined;
     put("leagues/league", {
       commissioners: ["commissioner"],
@@ -376,8 +402,57 @@ test("scoring API writes only changed results while preserving recalculation", a
         assert.equal(info.weekScore, 12);
         assert.equal(info.finalizedLineup.WR[0].fullName, "Starter");
         assert.equal(info.scoringLineup.WR[0].fullName, "Backup");
+        assert.deepEqual(substitutionLogs, [
+          {
+            event: "backup_substitution_applied",
+            leagueId: "league",
+            season: year,
+            week: 2,
+            teamId: "first",
+            starter: "Starter",
+            backup: "Backup",
+            slot: "WR",
+          },
+        ]);
         await request();
         assert.deepEqual(lastWrites(), []);
+        assert.equal(substitutionLogs.length, 1);
+        // A score correction with the same substitution does not announce it again.
+        stored.get(cachePath).playerMap.backup.REC = "14";
+        assert.deepEqual((await request()).body, { updated: true });
+        assert.equal(stored.get("teams/first").weekInfo[2].weekScore, 14);
+        assert.equal(substitutionLogs.length, 1);
+      }
+    );
+    await t.test(
+      "changed backup assignments log the new substitution",
+      async () => {
+        reset();
+        completed = true;
+        await request();
+        const team = stored.get("teams/first");
+        team.weekInfo[2].finalizedLineup.WR[0].backup = "Other";
+        team.weekInfo[2].finalizedLineup.bench.push(
+          new FinalizedPlayer("Other", "WR", "DET", "bench")
+        );
+        put("teams/first", team);
+        await request();
+        assert.equal(substitutionLogs.length, 2);
+        assert.equal(substitutionLogs[1].backup, "Other");
+        await request();
+        assert.equal(substitutionLogs.length, 2);
+      }
+    );
+    await t.test(
+      "failed commits never log a calculated substitution",
+      async () => {
+        reset();
+        completed = true;
+        failCommit = true;
+        const before = clone([...stored]);
+        assert.equal((await request()).status, 500);
+        assert.deepEqual(substitutionLogs, []);
+        assert.deepEqual([...stored], before);
       }
     );
     await t.test(
@@ -409,6 +484,7 @@ test("scoring API writes only changed results while preserving recalculation", a
       "overlapping identical requests retry and commit score payloads only once",
       async () => {
         reset();
+        completed = true;
         const results = await Promise.all([request(), request()]);
         assert.ok(results.every((result) => result.status === 200));
         assert.deepEqual(results.map((result) => result.body.updated).sort(), [
@@ -416,6 +492,7 @@ test("scoring API writes only changed results while preserving recalculation", a
           true,
         ]);
         assert.equal(commits.filter((writes) => writes.length > 0).length, 1);
+        assert.equal(substitutionLogs.length, 1);
       }
     );
     await t.test(
@@ -439,6 +516,7 @@ test("scoring API writes only changed results while preserving recalculation", a
       async () => {
         for (const failure of ["lineup", "scoreboard"]) {
           reset();
+          completed = true;
           if (failure === "lineup")
             delete stored.get("teams/second").weekInfo[2].finalizedLineup;
           else failScoreboard = true;
@@ -446,6 +524,7 @@ test("scoring API writes only changed results while preserving recalculation", a
           assert.equal((await request()).status, 500);
           assert.equal(commits.length, 0);
           assert.deepEqual([...stored], before);
+          assert.deepEqual(substitutionLogs, []);
         }
       }
     );
