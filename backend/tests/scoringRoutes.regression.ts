@@ -21,6 +21,10 @@ test("scoring API writes only changed results while preserving recalculation", a
   const weeklyPath = `leagueScoringData/${year}2league`;
   let completed = false;
   let failScoreboard = false;
+  let scoreboardRequests = 0;
+  let transientScoreboardFailures = 0;
+  let clock = Date.now();
+  mock.method(Date, "now", () => clock);
   let failCommit = false;
   let version = 0;
   let beforeTransaction: (() => void) | undefined;
@@ -144,7 +148,10 @@ test("scoring API writes only changed results while preserving recalculation", a
     if (!String(input).startsWith("https://site.api.espn.com/")) {
       return originalFetch(input, init);
     }
+    scoreboardRequests++;
     if (failScoreboard) throw new Error("Fixture scoreboard unavailable");
+    if (scoreboardRequests <= transientScoreboardFailures)
+      return new Response(null, { status: 403 });
     return new Response(
       JSON.stringify({
         season: { year, type: 2 },
@@ -198,11 +205,15 @@ test("scoring API writes only changed results while preserving recalculation", a
     return { status: response.status, body: await response.json() };
   };
   const reset = () => {
+    // Each fixture represents a fresh scoring interval, past the scoreboard TTL.
+    clock += 300_000;
     stored.clear();
     commits.length = 0;
     substitutionLogs.length = 0;
     completed = false;
     failScoreboard = false;
+    scoreboardRequests = 0;
+    transientScoreboardFailures = 0;
     failCommit = false;
     beforeTransaction = undefined;
     put("leagues/league", {
@@ -234,7 +245,10 @@ test("scoring API writes only changed results while preserving recalculation", a
         },
       ])
     );
-    put(cachePath, { fetchedAt: new Date().toISOString(), playerMap: stats });
+    put(cachePath, {
+      fetchedAt: new Date(clock).toISOString(),
+      playerMap: stats,
+    });
     for (const [id, name] of [
       ["first", "Starter"],
       ["second", "Other"],
@@ -278,6 +292,25 @@ test("scoring API writes only changed results while preserving recalculation", a
           assert.deepEqual(lastWrites(), []);
         }
         assert.deepEqual([...stored], before);
+        assert.equal(scoreboardRequests, 1);
+      }
+    );
+    await t.test(
+      "temporary ESPN rejection recovers before saving and subsequent runs use the cache",
+      async () => {
+        reset();
+        transientScoreboardFailures = 2;
+        assert.deepEqual(await request(), {
+          status: 200,
+          body: { updated: true },
+        });
+        assert.equal(scoreboardRequests, 3);
+        assert.equal(commits.length, 1);
+        assert.deepEqual(await request(), {
+          status: 200,
+          body: { updated: false },
+        });
+        assert.equal(scoreboardRequests, 3);
       }
     );
     await t.test(
@@ -396,6 +429,8 @@ test("scoring API writes only changed results while preserving recalculation", a
         await request();
         assert.equal(stored.get("teams/first").weekInfo[2].weekScore, 0);
         completed = true;
+        clock += 300_000;
+        stored.get(cachePath).fetchedAt = new Date(clock).toISOString();
         assert.deepEqual((await request()).body, { updated: true });
         assert.deepEqual(paths(), ["teams/first"]);
         const info = stored.get("teams/first").weekInfo[2];
@@ -486,6 +521,7 @@ test("scoring API writes only changed results while preserving recalculation", a
         reset();
         completed = true;
         const results = await Promise.all([request(), request()]);
+        assert.equal(scoreboardRequests, 1);
         assert.ok(results.every((result) => result.status === 200));
         assert.deepEqual(results.map((result) => result.body.updated).sort(), [
           false,
