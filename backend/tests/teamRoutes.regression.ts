@@ -446,6 +446,80 @@ test("team API enforces kickoff locks and saves only authorized complete transac
       }
     );
     await t.test(
+      "roster submission persists Tanner McKee and team details without replacing weekly data",
+      async () => {
+        reset();
+        const stored = teams.get("team")!;
+        stored.weekInfo[2].weekScore = 25;
+        stored.weekInfo[2].addedPoints = 3;
+        const before = clone(stored);
+        const edited = fixture();
+        edited.name = "Fritzy's Team";
+        edited.ownerName = "fritzy@example.com";
+        edited.rosteredPlayers.push(
+          new RosteredPlayer("Tanner McKee", "PHI", "QB")
+        );
+        edited.weekInfo[2].finalizedLineup.WR = [];
+        edited.owner = "forged-owner";
+        edited.league = "other-league";
+        edited.isCommissioner = true;
+        const response = await request(
+          "validateTeams",
+          { teams: [edited] },
+          "commissioner"
+        );
+        assert.equal(response.status, 200);
+        assert.equal(writes, 1);
+        const saved = teams.get("team")!;
+        assert.deepEqual(saved.rosteredPlayers, clone(edited.rosteredPlayers));
+        assert.equal(saved.name, edited.name);
+        assert.equal(saved.ownerName, edited.ownerName);
+        assert.equal(saved.owner, "owner");
+        assert.equal(saved.league, before.league);
+        assert.equal(saved.isCommissioner, before.isCommissioner);
+        assert.deepEqual(saved.weekInfo, before.weekInfo);
+        assert.deepEqual(response.body.teams, [saved]);
+        const read = await fetch(`http://127.0.0.1:${address.port}/team/team/`);
+        assert.equal(read.status, 200);
+        assert.deepEqual(
+          (await read.json()).team.rosteredPlayers,
+          clone(edited.rosteredPlayers)
+        );
+      }
+    );
+    await t.test(
+      "roster removal persists while keeping a locked weekly lineup",
+      async () => {
+        reset();
+        const before = clone(teams.get("team")!);
+        const edited = fixture();
+        edited.rosteredPlayers = [];
+        const response = await request("validateTeams", { teams: [edited] });
+        assert.equal(response.status, 200);
+        assert.deepEqual(teams.get("team")!.rosteredPlayers, []);
+        assert.deepEqual(teams.get("team")!.weekInfo, before.weekInfo);
+      }
+    );
+    await t.test(
+      "roster submission rejects all changes if any team is unauthorized",
+      async () => {
+        reset();
+        const before = clone(teams.get("team")!);
+        const other = fixture("other");
+        other.owner = "other-owner";
+        teams.set("other", clone(other));
+        const edited = fixture();
+        edited.rosteredPlayers.push(
+          new RosteredPlayer("Tanner McKee", "PHI", "QB")
+        );
+        const response = await request("validateTeams", { teams: [edited, other] });
+        assert.equal(response.status, 403);
+        assert.equal(writes, 0);
+        assert.deepEqual(teams.get("team"), before);
+        assert.deepEqual(teams.get("other"), other);
+      }
+    );
+    await t.test(
       "owner validation cannot overwrite a lineup from the client",
       async () => {
         reset();
