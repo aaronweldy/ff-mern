@@ -59,6 +59,19 @@ Game-status lookup failures abort scoring before results are saved. Previously
 mutated lineups cannot be reconstructed by this change; commissioners must
 restore their intended submitted lineup before recalculating affected weeks.
 
+ESPN scoreboard results are cached by season/week for five minutes in each
+backend process. Concurrent league requests share one lookup and retry sequence.
+Game completion can take up to that TTL to become visible. Failed requests and
+scoreboards with mismatched season/week/type are never cached; expired results
+are not used if a refresh fails. HTTP 403, 429, 5xx, network and timeout failures
+receive up to three attempts, with 250 ms then 500 ms backoff and a five-second
+timeout per attempt. Other HTTP failures abort immediately.
+
+Each failed attempt emits `event: "game_status_request_failed"` with the
+season/week, attempt, retry decision and error details. HTTP errors include the
+endpoint, status text, content type, server, Retry-After and upstream request ID
+when available. Cookies, authorization headers and response bodies are omitted.
+
 After a scoring transaction commits, each newly applied or changed substitution
 emits one JSON log with `event: "backup_substitution_applied"`, `leagueId`,
 `season`, `week`, `teamId`, `slot`, `starter`, and `backup`. Search Render logs
