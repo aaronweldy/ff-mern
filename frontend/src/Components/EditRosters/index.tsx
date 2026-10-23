@@ -5,9 +5,12 @@ import {
   setPlayerName,
   SinglePosition,
   singlePositionTypes,
+  Team,
 } from "@ff-mern/ff-types";
+import { cloneDeep } from "lodash";
 import React, { useState } from "react";
 import {
+  Alert,
   Button,
   Card,
   Col,
@@ -43,14 +46,16 @@ const EditRosters = () => {
   const [newPlayerTeam, setNewPlayerTeam] = useState<AbbreviatedNflTeam>("ARI");
   const [newPlayerPosition, setNewPlayerPosition] = useState<SinglePosition>("QB");
   const { id } = useParams() as { id: string };
-  const { teams, setTeams, query: teamsQuery } = useTeams(id);
-  const { mutate: validateTeams } = useUpdateTeamsMutation(id, teams, true);
+  const { teams: savedTeams, query: teamsQuery } = useTeams(id);
+  const [draftTeams, setTeams] = useState<Team[] | null>(null);
+  const teams = draftTeams ?? savedTeams;
+  const saveTeams = useUpdateTeamsMutation(id, teams, true);
   const playersQuery = usePlayers();
   const resetRosters = useResetRostersMutation(id);
   const syncPlayers = useSyncPlayersMutation();
   const addPlayerToGlobal = useAddPlayerToGlobalMutation();
   const handleAddPlayer = (idx: number) => {
-    const tempTeams = [...teams];
+    const tempTeams = cloneDeep(teams);
     tempTeams[idx].rosteredPlayers.push(
       new RosteredPlayer("", "" as AbbreviatedNflTeam, "QB")
     );
@@ -62,7 +67,7 @@ const EditRosters = () => {
     teamIdx: number,
     playerIdx: number
   ) => {
-    const tempTeams = [...teams];
+    const tempTeams = cloneDeep(teams);
     tempTeams[teamIdx].rosteredPlayers.splice(playerIdx, 1);
     setTeams(tempTeams);
   };
@@ -72,7 +77,7 @@ const EditRosters = () => {
     name: string,
     idx: number
   ) => {
-    const tempTeams = [...teams];
+    const tempTeams = cloneDeep(teams);
     switch (name) {
       case "name":
         tempTeams[idx].name = e.target.value;
@@ -88,7 +93,7 @@ const EditRosters = () => {
   };
 
   const handleInputChange = (team: number, player: number, input: string) => {
-    const tempTeams = [...teams];
+    const tempTeams = cloneDeep(teams);
     setPlayerName(tempTeams[team].rosteredPlayers[player], input);
     setTeams(tempTeams);
   };
@@ -99,19 +104,22 @@ const EditRosters = () => {
     selected: RosteredPlayer[]
   ) => {
     if (selected.length === 1) {
-      const tempTeams = [...teams];
-      tempTeams[team].rosteredPlayers[player] = selected[0];
+      const tempTeams = cloneDeep(teams);
+      tempTeams[team].rosteredPlayers[player] = { ...selected[0] };
       setTeams(tempTeams);
     }
   };
 
   const sendUpdatedTeams = () => {
-    validateTeams();
-    setRedirect(true);
+    saveTeams.mutate(undefined, {
+      onSuccess: () => setRedirect(true),
+    });
   };
 
   const onResetConfirm = () => {
-    resetRosters.mutate();
+    resetRosters.mutate(undefined, {
+      onSuccess: () => setTeams(null),
+    });
     setShow(false);
   };
 
@@ -135,6 +143,7 @@ const EditRosters = () => {
   } else if (
     teamsQuery.isLoading ||
     playersQuery.isLoading ||
+    saveTeams.isLoading ||
     resetRosters.isLoading ||
     syncPlayers.isLoading ||
     addPlayerToGlobal.isLoading
@@ -345,6 +354,12 @@ const EditRosters = () => {
           </Row>
           <Row className="my-5">
             <Col>
+              {saveTeams.isError && (
+                <Alert variant="danger">
+                  Unable to save rosters: {saveTeams.error?.message} Your edits
+                  are still here. Please try again.
+                </Alert>
+              )}
               <Button onClick={sendUpdatedTeams} variant="success">
                 Submit Teams
               </Button>

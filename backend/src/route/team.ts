@@ -74,12 +74,19 @@ router.post("/validateTeams/", requireAuth, async (req, res) => {
         }
       })
     );
-    // Owner validation must not replace lineups with a stale client snapshot.
+    // Edit Rosters submits team details and roster membership. Merge only those
+    // fields so stale client lineups and scoring data cannot replace stored data.
     const saved = await saveTeams(
       req.user!.uid,
       teams.map((team, index) => ({
         id: team.id,
-        build: (previous) => ({ ...previous, owner: owners[index] }),
+        build: (previous) => ({
+          ...previous,
+          name: team.name,
+          ownerName: team.ownerName,
+          owner: owners[index],
+          rosteredPlayers: team.rosteredPlayers,
+        }),
       }))
     );
     res.status(200).send({ teams: saved });
